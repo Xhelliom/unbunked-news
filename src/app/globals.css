@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --radius: 0.625rem;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  /* Brand accent — indigo #6366F1 */
+  --primary: oklch(0.585 0.233 277.117);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.585 0.233 277.117);
+
+  /* Verdict palette — the brand signature */
+  --verdict-reliable: #059669;
+  --verdict-reliable-bg: #ecfdf5;
+  --verdict-reliable-fg: #047857;
+  --verdict-nuanced: #f59e0b;
+  --verdict-nuanced-bg: #fffbeb;
+  --verdict-nuanced-fg: #b45309;
+  --verdict-biased: #ea580c;
+  --verdict-biased-bg: #fff7ed;
+  --verdict-biased-fg: #c2410c;
+  --verdict-debunked: #dc2626;
+  --verdict-debunked-bg: #fef2f2;
+  --verdict-debunked-fg: #b91c1c;
+  --verdict-unverifiable: #71717a;
+  --verdict-unverifiable-bg: #f4f4f5;
+  --verdict-unverifiable-fg: #52525b;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  --primary: oklch(0.585 0.233 277.117);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.673 0.182 276.935);
+
+  --verdict-reliable: #34d399;
+  --verdict-reliable-bg: #0c2e26;
+  --verdict-reliable-fg: #6ee7b7;
+  --verdict-nuanced: #fbbf24;
+  --verdict-nuanced-bg: #2e2510;
+  --verdict-nuanced-fg: #fcd34d;
+  --verdict-biased: #fb923c;
+  --verdict-biased-bg: #2e1d12;
+  --verdict-biased-fg: #fdba74;
+  --verdict-debunked: #f87171;
+  --verdict-debunked-bg: #2e1414;
+  --verdict-debunked-fg: #fca5a5;
+  --verdict-unverifiable: #a1a1aa;
+  --verdict-unverifiable-bg: #26262a;
+  --verdict-unverifiable-fg: #d4d4d8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-verdict-reliable: var(--verdict-reliable);
+  --color-verdict-reliable-bg: var(--verdict-reliable-bg);
+  --color-verdict-reliable-fg: var(--verdict-reliable-fg);
+  --color-verdict-nuanced: var(--verdict-nuanced);
+  --color-verdict-nuanced-bg: var(--verdict-nuanced-bg);
+  --color-verdict-nuanced-fg: var(--verdict-nuanced-fg);
+  --color-verdict-biased: var(--verdict-biased);
+  --color-verdict-biased-bg: var(--verdict-biased-bg);
+  --color-verdict-biased-fg: var(--verdict-biased-fg);
+  --color-verdict-debunked: var(--verdict-debunked);
+  --color-verdict-debunked-bg: var(--verdict-debunked-bg);
+  --color-verdict-debunked-fg: var(--verdict-debunked-fg);
+  --color-verdict-unverifiable: var(--verdict-unverifiable);
+  --color-verdict-unverifiable-bg: var(--verdict-unverifiable-bg);
+  --color-verdict-unverifiable-fg: var(--verdict-unverifiable-fg);
+
+  --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

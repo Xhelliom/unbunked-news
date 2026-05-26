@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "title": "Unbunked — Le fact-checking de l'actu",
+    "description": "Unbunked vérifie l'information claim par claim et lui attribue un verdict, sources à l'appui."
+  },
+  "common": {
+    "brand": "Unbunked",
+    "tagline": "Le fact-checking de l'actu, vérifié claim par claim"
+  },
+  "nav": {
+    "home": "À la une",
+    "tech": "Tech",
+    "politics": "Politique",
+    "environment": "Environnement",
+    "health": "Santé",
+    "submit": "Proposer un article"
+  },
+  "themeToggle": {
+    "label": "Changer de thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "localeSwitcher": {
+    "label": "Changer de langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "footer": {
+    "tagline": "Le fact-checking de l'actu, vérifié claim par claim.",
+    "sectionsTitle": "Rubriques",
+    "aboutTitle": "À propos",
+    "about": "Notre mission",
+    "method": "Méthodologie",
+    "submit": "Proposer un article",
+    "rights": "Tous droits réservés."
+  },
+  "verdicts": {
+    "title": "Notre échelle de verdicts",
+    "subtitle": "Chaque analyse reçoit l'un de ces cinq verdicts.",
+    "reliable": {
+      "label": "Fiable",
+      "description": "Affirmation solide, bien sourcée et conforme aux faits."
+    },
+    "nuanced": {
+      "label": "Nuancé",
+      "description": "Globalement vrai, mais incomplet ou dépendant du contexte."
+    },
+    "biased": {
+      "label": "Orienté",
+      "description": "Cadrage partial ou sélection orientée des faits."
+    },
+    "debunked": {
+      "label": "Débunké",
+      "description": "Affirmation fausse ou trompeuse."
+    },
+    "unverifiable": {
+      "label": "Non vérifiable",
+      "description": "Sources insuffisantes pour trancher."
+    }
+  },
+  "home": {
+    "kicker": "Chantier en cours",
+    "title": "Les fondations d'Unbunked sont posées",
+    "body": "Thème clair/sombre, internationalisation et système de verdicts sont en place. Le feed d'articles arrive à l'étape suivante."
+  }
+}

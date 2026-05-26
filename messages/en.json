@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "title": "Unbunked — Fact-checking the news",
+    "description": "Unbunked verifies the news claim by claim and assigns it a verdict, backed by sources."
+  },
+  "common": {
+    "brand": "Unbunked",
+    "tagline": "Fact-checking the news, verified claim by claim"
+  },
+  "nav": {
+    "home": "Top stories",
+    "tech": "Tech",
+    "politics": "Politics",
+    "environment": "Environment",
+    "health": "Health",
+    "submit": "Submit an article"
+  },
+  "themeToggle": {
+    "label": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "localeSwitcher": {
+    "label": "Switch language",
+    "fr": "Français",
+    "en": "English"
+  },
+  "footer": {
+    "tagline": "Fact-checking the news, verified claim by claim.",
+    "sectionsTitle": "Sections",
+    "aboutTitle": "About",
+    "about": "Our mission",
+    "method": "Methodology",
+    "submit": "Submit an article",
+    "rights": "All rights reserved."
+  },
+  "verdicts": {
+    "title": "Our verdict scale",
+    "subtitle": "Every analysis is assigned one of these five verdicts.",
+    "reliable": {
+      "label": "Reliable",
+      "description": "Solid, well-sourced and consistent with the facts."
+    },
+    "nuanced": {
+      "label": "Nuanced",
+      "description": "Largely true, but incomplete or context-dependent."
+    },
+    "biased": {
+      "label": "Biased",
+      "description": "Partial framing or selective use of the facts."
+    },
+    "debunked": {
+      "label": "Debunked",
+      "description": "False or misleading claim."
+    },
+    "unverifiable": {
+      "label": "Unverifiable",
+      "description": "Not enough sources to decide."
+    }
+  },
+  "home": {
+    "kicker": "Work in progress",
+    "title": "Unbunked's foundations are in place",
+    "body": "Light/dark theme, internationalization and the verdict system are wired up. The article feed lands in the next step."
+  }
+}
