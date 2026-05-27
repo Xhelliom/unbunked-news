@@ -63,5 +63,92 @@
     "kicker": "Work in progress",
     "title": "Unbunked's foundations are in place",
     "body": "Light/dark theme, internationalization and the verdict system are wired up. The article feed lands in the next step."
+  },
+  "claimStatus": {
+    "supported": "Supported",
+    "partly_true": "Partly true",
+    "misleading": "Misleading",
+    "false": "False",
+    "unverifiable": "Unverifiable"
+  },
+  "auth": {
+    "loginTitle": "Admin sign in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "error": "Incorrect email or password.",
+    "signOut": "Sign out"
+  },
+  "admin": {
+    "title": "Administration",
+    "nav": {
+      "dashboard": "Dashboard",
+      "submit": "Submit a URL",
+      "proposals": "Proposals"
+    },
+    "dashboard": {
+      "title": "Articles",
+      "empty": "No articles yet.",
+      "draft": "Draft",
+      "published": "Published",
+      "review": "Review"
+    },
+    "submit": {
+      "title": "Analyze an article",
+      "urlLabel": "Article URL",
+      "urlPlaceholder": "https://…",
+      "start": "Start analysis",
+      "starting": "Starting…",
+      "invalidUrl": "Invalid URL."
+    },
+    "job": {
+      "title": "Analysis in progress",
+      "status": "Status",
+      "step": "Step",
+      "viewArticle": "View analysis",
+      "error": "Error",
+      "statuses": {
+        "pending": "Pending",
+        "running": "Running",
+        "succeeded": "Done",
+        "failed": "Failed"
+      },
+      "steps": {
+        "scraping": "Fetching the article",
+        "extracting": "Extracting claims",
+        "verifying": "Verifying (web search)",
+        "aggregating": "Aggregating",
+        "saving": "Saving",
+        "done": "Done"
+      }
+    },
+    "review": {
+      "title": "Review before publishing",
+      "headline": "Title",
+      "summary": "Summary",
+      "verdict": "Verdict",
+      "score": "Reliability score",
+      "source": "Original source",
+      "tags": "Tags",
+      "claims": "Analyzed claims",
+      "noClaims": "No claims.",
+      "sources": "Sources",
+      "save": "Save",
+      "saving": "Saving…",
+      "publish": "Publish",
+      "unpublish": "Unpublish"
+    },
+    "proposals": {
+      "title": "Received proposals",
+      "empty": "No proposals.",
+      "accept": "Accept and analyze",
+      "reject": "Reject",
+      "statuses": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      }
+    }
   }
 }

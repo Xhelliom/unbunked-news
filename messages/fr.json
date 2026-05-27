@@ -63,5 +63,92 @@
     "kicker": "Chantier en cours",
     "title": "Les fondations d'Unbunked sont posées",
     "body": "Thème clair/sombre, internationalisation et système de verdicts sont en place. Le feed d'articles arrive à l'étape suivante."
+  },
+  "claimStatus": {
+    "supported": "Étayé",
+    "partly_true": "Partiellement vrai",
+    "misleading": "Trompeur",
+    "false": "Faux",
+    "unverifiable": "Non vérifiable"
+  },
+  "auth": {
+    "loginTitle": "Connexion admin",
+    "email": "Email",
+    "password": "Mot de passe",
+    "signIn": "Se connecter",
+    "signingIn": "Connexion…",
+    "error": "Email ou mot de passe incorrect.",
+    "signOut": "Déconnexion"
+  },
+  "admin": {
+    "title": "Administration",
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "submit": "Soumettre une URL",
+      "proposals": "Propositions"
+    },
+    "dashboard": {
+      "title": "Articles",
+      "empty": "Aucun article pour l'instant.",
+      "draft": "Brouillon",
+      "published": "Publié",
+      "review": "Réviser"
+    },
+    "submit": {
+      "title": "Analyser un article",
+      "urlLabel": "URL de l'article",
+      "urlPlaceholder": "https://…",
+      "start": "Lancer l'analyse",
+      "starting": "Démarrage…",
+      "invalidUrl": "URL invalide."
+    },
+    "job": {
+      "title": "Analyse en cours",
+      "status": "Statut",
+      "step": "Étape",
+      "viewArticle": "Voir l'analyse",
+      "error": "Erreur",
+      "statuses": {
+        "pending": "En attente",
+        "running": "En cours",
+        "succeeded": "Terminé",
+        "failed": "Échec"
+      },
+      "steps": {
+        "scraping": "Récupération de l'article",
+        "extracting": "Extraction des claims",
+        "verifying": "Vérification (recherche web)",
+        "aggregating": "Agrégation",
+        "saving": "Enregistrement",
+        "done": "Terminé"
+      }
+    },
+    "review": {
+      "title": "Révision avant publication",
+      "headline": "Titre",
+      "summary": "Résumé",
+      "verdict": "Verdict",
+      "score": "Score de fiabilité",
+      "source": "Source d'origine",
+      "tags": "Tags",
+      "claims": "Claims analysés",
+      "noClaims": "Aucun claim.",
+      "sources": "Sources",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "publish": "Publier",
+      "unpublish": "Dépublier"
+    },
+    "proposals": {
+      "title": "Propositions reçues",
+      "empty": "Aucune proposition.",
+      "accept": "Accepter et analyser",
+      "reject": "Rejeter",
+      "statuses": {
+        "pending": "En attente",
+        "accepted": "Acceptée",
+        "rejected": "Rejetée"
+      }
+    }
   }
 }
