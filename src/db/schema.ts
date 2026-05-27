@@ -12,6 +12,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+// BetterAuth tables (user, session, account, verification).
+export * from "./auth-schema";
+
 // Verdict values are kept in sync with src/lib/verdicts.ts (the UI source).
 export const verdictEnum = pgEnum("verdict", [
   "reliable",
