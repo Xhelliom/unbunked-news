@@ -150,5 +150,33 @@
         "rejected": "Rejected"
       }
     }
+  },
+  "feed": {
+    "empty": "No published articles yet.",
+    "readAnalysis": "Read the analysis",
+    "verdictFilter": "Verdict",
+    "tagFilter": "Topic",
+    "all": "All"
+  },
+  "article": {
+    "originalSource": "Original source",
+    "readOriginal": "Read the original article",
+    "score": "Reliability score",
+    "claimsTitle": "Claim-by-claim review",
+    "sources": "Sources",
+    "publishedOn": "Published on",
+    "notFound": "Article not found."
+  },
+  "propose": {
+    "title": "Submit an article",
+    "description": "Got something to fact-check? Share the link and we'll handle the rest.",
+    "urlLabel": "Article URL",
+    "urlPlaceholder": "https://…",
+    "emailLabel": "Email (optional)",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Send proposal",
+    "submitting": "Sending…",
+    "success": "Thank you! Your proposal has been received.",
+    "invalidUrl": "Invalid URL."
   }
 }

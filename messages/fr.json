@@ -150,5 +150,33 @@
         "rejected": "Rejetée"
       }
     }
+  },
+  "feed": {
+    "empty": "Aucun article publié pour l'instant.",
+    "readAnalysis": "Lire l'analyse",
+    "verdictFilter": "Verdict",
+    "tagFilter": "Thème",
+    "all": "Tout"
+  },
+  "article": {
+    "originalSource": "Source d'origine",
+    "readOriginal": "Lire l'article original",
+    "score": "Score de fiabilité",
+    "claimsTitle": "Vérification claim par claim",
+    "sources": "Sources",
+    "publishedOn": "Publié le",
+    "notFound": "Article introuvable."
+  },
+  "propose": {
+    "title": "Proposer un article",
+    "description": "Une info à vérifier ? Partagez le lien, on s'occupe du reste.",
+    "urlLabel": "URL de l'article",
+    "urlPlaceholder": "https://…",
+    "emailLabel": "Email (optionnel)",
+    "emailPlaceholder": "vous@exemple.com",
+    "submit": "Envoyer la proposition",
+    "submitting": "Envoi…",
+    "success": "Merci ! Votre proposition a bien été reçue.",
+    "invalidUrl": "URL invalide."
   }
 }

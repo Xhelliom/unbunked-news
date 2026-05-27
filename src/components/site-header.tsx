@@ -28,7 +28,7 @@ export function SiteHeader() {
           {SECTIONS.map((section) => (
             <Link
               key={section}
-              href="/"
+              href={`/?tag=${section}`}
               className="text-muted-foreground hover:text-foreground rounded-md px-3 py-2 text-sm font-medium transition-colors"
             >
               {t(section)}
@@ -38,7 +38,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-1">
           <Button asChild variant="outline" size="sm" className="hidden sm:flex">
-            <Link href="/">{t("submit")}</Link>
+            <Link href="/submit">{t("submit")}</Link>
           </Button>
           <ThemeToggle />
           <LocaleSwitcher />

@@ -33,7 +33,7 @@ export function SiteFooter() {
             {SECTIONS.map((section) => (
               <li key={section}>
                 <Link
-                  href="/"
+                  href={`/?tag=${section}`}
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {t(section)}
@@ -64,7 +64,7 @@ export function SiteFooter() {
             </li>
             <li>
               <Link
-                href="/"
+                href="/submit"
                 className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 {tFooter("submit")}
