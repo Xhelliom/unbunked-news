@@ -1,0 +1,163 @@
+import "server-only";
+
+import { eq, inArray } from "drizzle-orm";
+
+import { db } from "@/db/client";
+import {
+  articleTags,
+  articles,
+  claimSources,
+  claims as claimsTable,
+  jobs,
+  tags as tagsTable,
+  type NewJob,
+} from "@/db/schema";
+import { scrapeArticle } from "@/lib/scrape";
+import { aggregate } from "./aggregate";
+import { extractClaims } from "./extract-claims";
+import { verifyClaims } from "./verify";
+
+const TAG_PALETTE = [
+  "#6366f1",
+  "#0ea5e9",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+];
+
+function slugify(input: string): string {
+  return input
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+function colorForTag(slug: string): string {
+  let hash = 0;
+  for (const ch of slug) {
+    hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  }
+  return TAG_PALETTE[hash % TAG_PALETTE.length];
+}
+
+async function updateJob(id: string, fields: Partial<NewJob>): Promise<void> {
+  await db.update(jobs).set(fields).where(eq(jobs.id, id));
+}
+
+export async function runPipeline(jobId: string): Promise<void> {
+  const job = await db.query.jobs.findFirst({ where: eq(jobs.id, jobId) });
+  if (!job) return;
+
+  try {
+    await updateJob(jobId, {
+      status: "running",
+      step: "scraping",
+      progress: 5,
+      startedAt: new Date(),
+      error: null,
+    });
+
+    const article = await scrapeArticle(job.url);
+
+    await updateJob(jobId, { step: "extracting", progress: 25 });
+    const claims = await extractClaims(article);
+
+    await updateJob(jobId, { step: "verifying", progress: 45 });
+    const verification = await verifyClaims(article, claims);
+
+    await updateJob(jobId, { step: "aggregating", progress: 70 });
+    const analysis = await aggregate(article, claims, verification);
+
+    await updateJob(jobId, { step: "saving", progress: 90 });
+
+    const articleId = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(articles)
+        .values({
+          slug: `${slugify(analysis.title)}-${crypto.randomUUID().slice(0, 6)}`,
+          urlOrigine: article.url,
+          sourceName: article.sourceName,
+          originalTitle: article.title,
+          title: analysis.title,
+          summary: analysis.summary,
+          imageUrl: article.imageUrl,
+          verdict: analysis.verdict,
+          reliabilityScore: analysis.reliabilityScore,
+          published: false,
+        })
+        .returning({ id: articles.id });
+
+      for (const [index, claim] of analysis.claims.entries()) {
+        const [createdClaim] = await tx
+          .insert(claimsTable)
+          .values({
+            articleId: created.id,
+            position: index,
+            claimText: claim.text,
+            status: claim.status,
+            explanation: claim.explanation,
+          })
+          .returning({ id: claimsTable.id });
+
+        if (claim.sources.length > 0) {
+          await tx.insert(claimSources).values(
+            claim.sources.map((source) => ({
+              claimId: createdClaim.id,
+              url: source.url,
+              title: source.title,
+            })),
+          );
+        }
+      }
+
+      if (analysis.tags.length > 0) {
+        const tagRows = analysis.tags.map((label) => {
+          const slug = slugify(label);
+          return { label, slug, color: colorForTag(slug) };
+        });
+        await tx
+          .insert(tagsTable)
+          .values(tagRows)
+          .onConflictDoNothing({ target: tagsTable.slug });
+
+        const stored = await tx
+          .select({ id: tagsTable.id })
+          .from(tagsTable)
+          .where(
+            inArray(
+              tagsTable.slug,
+              tagRows.map((t) => t.slug),
+            ),
+          );
+        if (stored.length > 0) {
+          await tx
+            .insert(articleTags)
+            .values(stored.map((t) => ({ articleId: created.id, tagId: t.id })))
+            .onConflictDoNothing();
+        }
+      }
+
+      return created.id;
+    });
+
+    await updateJob(jobId, {
+      status: "succeeded",
+      step: "done",
+      progress: 100,
+      articleId,
+      finishedAt: new Date(),
+    });
+  } catch (error) {
+    await updateJob(jobId, {
+      status: "failed",
+      error: error instanceof Error ? error.message : String(error),
+      finishedAt: new Date(),
+    });
+  }
+}

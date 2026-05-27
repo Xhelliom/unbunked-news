@@ -15,6 +15,13 @@
       "when": 1779863497915,
       "tag": "0001_violet_vin_gonzales",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779864397379,
+      "tag": "0002_shallow_ted_forrester",
+      "breakpoints": true
     }
   ]
 }

@@ -38,6 +38,13 @@ export const proposalStatusEnum = pgEnum("proposal_status", [
   "rejected",
 ]);
 
+export const jobStatusEnum = pgEnum("job_status", [
+  "pending",
+  "running",
+  "succeeded",
+  "failed",
+]);
+
 export const articles = pgTable(
   "articles",
   {
@@ -145,9 +152,42 @@ export const proposals = pgTable("proposals", {
     .defaultNow(),
 });
 
+// Background analysis jobs (scrape -> claims -> web search -> verdict).
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    articleId: uuid().references(() => articles.id, { onDelete: "set null" }),
+    url: text().notNull(),
+    status: jobStatusEnum().notNull().default("pending"),
+    // Human-readable current step for the admin progress UI.
+    step: text(),
+    progress: integer().notNull().default(0),
+    error: text(),
+    startedAt: timestamp({ withTimezone: true, mode: "date" }),
+    finishedAt: timestamp({ withTimezone: true, mode: "date" }),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [index("jobs_status_idx").on(table.status)],
+);
+
 export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
+  jobs: many(jobs),
+}));
+
+export const jobsRelations = relations(jobs, ({ one }) => ({
+  article: one(articles, {
+    fields: [jobs.articleId],
+    references: [articles.id],
+  }),
 }));
 
 export const claimsRelations = relations(claims, ({ one, many }) => ({
@@ -190,3 +230,5 @@ export type Tag = typeof tags.$inferSelect;
 export type NewTag = typeof tags.$inferInsert;
 export type Proposal = typeof proposals.$inferSelect;
 export type NewProposal = typeof proposals.$inferInsert;
+export type Job = typeof jobs.$inferSelect;
+export type NewJob = typeof jobs.$inferInsert;
