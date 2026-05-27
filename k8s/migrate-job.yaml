@@ -1,0 +1,20 @@
+# Run before rolling out a new app version that includes schema changes:
+#   kubectl delete job migrate -n unbunked --ignore-not-found
+#   kubectl apply -f k8s/migrate-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: unbunked
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          # Build & push the "migrator" target, then set your registry/tag here.
+          image: ghcr.io/xhelliom/unbunked-migrator:latest
+          envFrom:
+            - secretRef:
+                name: unbunked-secrets

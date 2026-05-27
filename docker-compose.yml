@@ -1,0 +1,61 @@
+# Local stack. For day-to-day dev you can run just Postgres:
+#   docker compose up -d db   &&   pnpm db:migrate   &&   pnpm dev
+# Or run the full production-like stack: docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: unbunked
+      POSTGRES_PASSWORD: unbunked
+      POSTGRES_DB: unbunked
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unbunked -d unbunked"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: postgresql://unbunked:unbunked@db:5432/unbunked
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://unbunked:unbunked@db:5432/unbunked
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Lightweight DB browser — start with: docker compose --profile tools up adminer
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["tools"]
+
+volumes:
+  db-data:

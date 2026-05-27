@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# kubernetes secrets (never commit real values)
+/k8s/secret.yaml
 
 # vercel
 .vercel
