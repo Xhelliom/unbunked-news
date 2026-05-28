@@ -36,7 +36,11 @@ export async function getPublishedArticles(filter: FeedFilter = {}) {
   return db.query.articles.findMany({
     where: and(...conditions),
     orderBy: (article, { desc }) => [desc(article.publishedAt)],
-    with: { articleTags: { with: { tag: true } } },
+    with: {
+      articleTags: { with: { tag: true } },
+      // Only the status is needed to render the claim-breakdown strip on cards.
+      claims: { columns: { status: true } },
+    },
     limit: 60,
   });
 }

@@ -1,5 +1,7 @@
 import { extract, extractFromHtml } from "@extractus/article-extractor";
 
+import { stripBoilerplate } from "@/lib/boilerplate";
+
 export type ScrapedArticle = {
   url: string;
   title: string;
@@ -57,7 +59,7 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
     url,
     title: data.title,
     sourceName: data.source ?? hostnameToSource(url),
-    content: htmlToParagraphs(data.content).join("\n\n"),
+    content: stripBoilerplate(htmlToParagraphs(data.content)).join("\n\n"),
     imageUrl: data.image ?? null,
     author: data.author ?? null,
     publishedAt: data.published ? new Date(data.published) : null,

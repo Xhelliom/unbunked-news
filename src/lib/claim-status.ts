@@ -1,3 +1,5 @@
+import type { Verdict } from "@/lib/verdicts";
+
 // Claim status values are kept in sync with the claim_status enum in
 // src/db/schema.ts. This module is the UI source of truth for their styling.
 export const CLAIM_STATUSES = [
@@ -13,6 +15,14 @@ export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 // Each status reuses a verdict color family: supported→reliable (green),
 // partly_true→nuanced (amber), misleading→biased (orange), false→debunked
 // (red), unverifiable→neutral gray.
+export const claimStatusToVerdict: Record<ClaimStatus, Verdict> = {
+  supported: "reliable",
+  partly_true: "nuanced",
+  misleading: "biased",
+  false: "debunked",
+  unverifiable: "unverifiable",
+};
+
 export const claimStatusBadgeClasses: Record<ClaimStatus, string> = {
   supported:
     "bg-verdict-reliable-bg text-verdict-reliable-fg ring-verdict-reliable/30",
@@ -32,6 +42,16 @@ export const claimStatusDotClasses: Record<ClaimStatus, string> = {
   misleading: "bg-verdict-biased",
   false: "bg-verdict-debunked",
   unverifiable: "bg-verdict-unverifiable",
+};
+
+// Inline highlight tint for a quoted passage in the reading view (background +
+// a ring colour that only shows when the highlight is the active/focused one).
+export const claimStatusHighlightClasses: Record<ClaimStatus, string> = {
+  supported: "bg-verdict-reliable-bg ring-verdict-reliable/50",
+  partly_true: "bg-verdict-nuanced-bg ring-verdict-nuanced/50",
+  misleading: "bg-verdict-biased-bg ring-verdict-biased/50",
+  false: "bg-verdict-debunked-bg ring-verdict-debunked/50",
+  unverifiable: "bg-verdict-unverifiable-bg ring-verdict-unverifiable/50",
 };
 
 // Solid border tint used to highlight an annotated paragraph by status.

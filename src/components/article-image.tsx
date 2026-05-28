@@ -6,6 +6,9 @@ type ArticleImageProps = {
   verdict: Verdict | null;
   label: string;
   className?: string;
+  // Overrides the typography of the source label shown on the abstract
+  // fallback (hero, secondary and feed cards each size it differently).
+  labelClassName?: string;
 };
 
 export function ArticleImage({
@@ -13,6 +16,7 @@ export function ArticleImage({
   verdict,
   label,
   className,
+  labelClassName,
 }: ArticleImageProps) {
   if (src) {
     return (
@@ -39,7 +43,12 @@ export function ArticleImage({
       )}
       style={{ backgroundColor: background, color }}
     >
-      <span className="px-6 text-center text-sm font-semibold tracking-wide uppercase">
+      <span
+        className={cn(
+          "px-6 text-center text-sm font-semibold tracking-wide uppercase",
+          labelClassName,
+        )}
+      >
         {label}
       </span>
     </div>
