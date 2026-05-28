@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local design-handoff bundle (reference only, not part of the app).
+    "claude-design/**",
   ]),
 ]);
 

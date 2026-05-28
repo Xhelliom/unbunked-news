@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { VERDICTS } from "@/lib/verdicts";
+import { VERDICTS, verdictDotClasses } from "@/lib/verdicts";
 
 type FilterTag = { id: string; label: string; slug: string };
 type Current = { verdict?: string; tag?: string };
@@ -17,10 +17,10 @@ function buildHref({ verdict, tag }: Current): string {
 
 function chipClass(active: boolean): string {
   return cn(
-    "rounded-full border px-3 py-1 text-sm transition-colors",
+    "inline-flex h-[26px] items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap transition-colors",
     active
-      ? "bg-primary text-primary-foreground border-transparent"
-      : "text-muted-foreground hover:text-foreground hover:border-foreground/30",
+      ? "bg-secondary text-foreground font-semibold"
+      : "text-muted-foreground hover:bg-accent hover:text-foreground",
   );
 }
 
@@ -35,11 +35,28 @@ export function FeedFilters({
   const tv = useTranslations("verdicts");
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-muted-foreground w-16 text-xs font-semibold tracking-wide uppercase">
-          {t("verdictFilter")}
-        </span>
+    <div className="flex flex-1 flex-wrap items-center justify-end gap-3.5">
+      <div className="flex flex-wrap items-center gap-1">
+        <Link
+          href={buildHref({ verdict: current.verdict })}
+          className={chipClass(!current.tag)}
+        >
+          {t("all")}
+        </Link>
+        {tags.map((tag) => (
+          <Link
+            key={tag.id}
+            href={buildHref({ verdict: current.verdict, tag: tag.slug })}
+            className={chipClass(current.tag === tag.slug)}
+          >
+            {tag.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="bg-border h-[18px] w-px" aria-hidden />
+
+      <div className="flex flex-wrap items-center gap-1">
         <Link
           href={buildHref({ tag: current.tag })}
           className={chipClass(!current.verdict)}
@@ -52,33 +69,17 @@ export function FeedFilters({
             href={buildHref({ verdict, tag: current.tag })}
             className={chipClass(current.verdict === verdict)}
           >
+            <span
+              className={cn(
+                "size-[7px] rounded-full",
+                verdictDotClasses[verdict],
+              )}
+              aria-hidden
+            />
             {tv(`${verdict}.label`)}
           </Link>
         ))}
       </div>
-
-      {tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground w-16 text-xs font-semibold tracking-wide uppercase">
-            {t("tagFilter")}
-          </span>
-          <Link
-            href={buildHref({ verdict: current.verdict })}
-            className={chipClass(!current.tag)}
-          >
-            {t("all")}
-          </Link>
-          {tags.map((tag) => (
-            <Link
-              key={tag.id}
-              href={buildHref({ verdict: current.verdict, tag: tag.slug })}
-              className={chipClass(current.tag === tag.slug)}
-            >
-              {tag.label}
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

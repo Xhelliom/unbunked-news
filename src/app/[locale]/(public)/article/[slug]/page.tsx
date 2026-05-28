@@ -1,65 +1,22 @@
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
 import { getArticleBySlug } from "@/lib/articles";
-import { anchorClaims } from "@/lib/anchor";
+import { buildReadingModel } from "@/lib/reading";
 import { cn } from "@/lib/utils";
-import {
-  CLAIM_STATUSES,
-  claimStatusBorderClasses,
-} from "@/lib/claim-status";
+import { Link } from "@/i18n/navigation";
+import { CLAIM_STATUSES, type ClaimStatus } from "@/lib/claim-status";
 import { verdictDotClasses } from "@/lib/verdicts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArticleImage } from "@/components/article-image";
 import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
-
-type ArticleDetail = NonNullable<Awaited<ReturnType<typeof getArticleBySlug>>>;
-type ArticleClaim = ArticleDetail["claims"][number];
-
-function ClaimCard({
-  claim,
-  sourcesLabel,
-}: {
-  claim: ArticleClaim;
-  sourcesLabel: string;
-}) {
-  return (
-    <div className="bg-card rounded-lg border p-4">
-      <ClaimStatusBadge status={claim.status} />
-      <p className="mt-2 text-sm font-medium">{claim.claimText}</p>
-      {claim.explanation && (
-        <p className="text-muted-foreground mt-1.5 text-sm">
-          {claim.explanation}
-        </p>
-      )}
-      {claim.sources.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold tracking-wide uppercase">
-            {sourcesLabel}
-          </p>
-          <ul className="mt-1 space-y-1">
-            {claim.sources.map((source) => (
-              <li key={source.id}>
-                <a
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-primary text-sm underline"
-                >
-                  {source.title ?? source.url}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
+import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ArticleReader } from "@/components/article-reader";
 
 export default async function ArticlePage({
   params,
@@ -78,9 +35,13 @@ export default async function ArticlePage({
   }
 
   const t = await getTranslations("article");
+  const tStatus = await getTranslations("claimStatus");
   const format = await getFormatter();
 
-  const { paragraphs, orphans } = anchorClaims(article.content, article.claims);
+  const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
+    article.content,
+    article.claims,
+  );
   const hasBody = paragraphs.length > 0;
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
@@ -88,23 +49,50 @@ export default async function ArticlePage({
     count: article.claims.filter((claim) => claim.status === status).length,
   })).filter(({ count }) => count > 0);
 
+  const toCardData = (claim: (typeof article.claims)[number]): ClaimCardData => ({
+    status: claim.status,
+    claimText: claim.claimText,
+    explanation: claim.explanation,
+    sources: claim.sources.map((source) => ({
+      id: source.id,
+      url: source.url,
+      title: source.title,
+    })),
+  });
+
+  // Flat list of located claims for the reading view; segments reference these
+  // by index.
+  const readerClaims = locatedClaims.map(toCardData);
+
+  const statusLabels = Object.fromEntries(
+    CLAIM_STATUSES.map((status) => [status, tStatus(status)]),
+  ) as Record<ClaimStatus, string>;
+
   return (
-    <article className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <div className="mx-auto max-w-3xl">
-        <div className="flex flex-wrap items-center gap-3">
+    <article className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6">
+      <div className="max-w-[760px]">
+        <Link
+          href="/"
+          className="group text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-accent inline-flex items-center gap-1.5 rounded-full border py-[5px] pr-3.5 pl-[11px] text-[13px] font-medium transition-colors"
+        >
+          <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
+          {t("backToArticles")}
+        </Link>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           {article.verdict && <VerdictBadge verdict={article.verdict} />}
-          <span className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+          <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
             {article.sourceName}
           </span>
           {article.publishedAt && (
-            <span className="text-muted-foreground text-sm">
+            <span className="text-muted-foreground text-sm whitespace-nowrap">
               {t("publishedOn")}{" "}
               {format.dateTime(article.publishedAt, { dateStyle: "long" })}
             </span>
           )}
         </div>
 
-        <h1 className="mt-4 font-serif text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+        <h1 className="mt-4 font-serif text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl">
           {article.title}
         </h1>
 
@@ -116,22 +104,25 @@ export default async function ArticlePage({
         )}
 
         {article.summary && (
-          <p className="text-muted-foreground mt-4 text-lg">{article.summary}</p>
+          <p className="text-muted-foreground mt-4 text-lg leading-[1.55]">
+            {article.summary}
+          </p>
         )}
 
-        <div className="mt-6 aspect-[16/9] overflow-hidden rounded-xl border">
+        <div className="mt-6 flex aspect-[16/9] items-center justify-center overflow-hidden rounded-[14px] border">
           <ArticleImage
             src={article.imageUrl}
             verdict={article.verdict}
             label={article.sourceName}
+            labelClassName="text-base tracking-[0.08em]"
           />
         </div>
 
-        <div className="mt-8">
+        <div className="mt-7">
           <div className="flex flex-wrap items-center gap-4">
             {article.reliabilityScore !== null && (
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">
+                <span className="text-[32px] font-bold tracking-tight">
                   {article.reliabilityScore}
                 </span>
                 <span className="text-muted-foreground text-sm">
@@ -146,6 +137,7 @@ export default async function ArticlePage({
                 rel="noreferrer noopener"
               >
                 {t("readOriginal")}
+                <ExternalLink className="size-3.5" />
               </a>
             </Button>
           </div>
@@ -163,7 +155,7 @@ export default async function ArticlePage({
         </div>
 
         {statusCounts.length > 0 && (
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
             {statusCounts.map(({ status, count }) => (
               <span key={status} className="inline-flex items-center gap-1.5">
                 <ClaimStatusBadge status={status} />
@@ -174,7 +166,7 @@ export default async function ArticlePage({
         )}
 
         {article.articleTags.length > 0 && (
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
             {article.articleTags.map(({ tag }) => (
               <Badge key={tag.id} variant="secondary">
                 {tag.label}
@@ -185,56 +177,51 @@ export default async function ArticlePage({
       </div>
 
       {hasBody && (
-        <section className="mt-12">
-          <h2 className="mx-auto max-w-3xl font-serif text-xl font-bold tracking-tight">
-            {t("readingTitle")}
-          </h2>
-          <div className="mt-6 space-y-6">
-            {paragraphs.map((paragraph, index) => (
-              <div
-                key={index}
-                className="lg:grid lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8"
-              >
-                <p
-                  className={cn(
-                    "font-serif text-lg leading-relaxed",
-                    paragraph.claims.length > 0 &&
-                      cn(
-                        "border-l-4 pl-4",
-                        claimStatusBorderClasses[paragraph.claims[0].status],
-                      ),
-                  )}
-                >
-                  {paragraph.text}
-                </p>
-                {paragraph.claims.length > 0 && (
-                  <aside className="mt-3 space-y-3 lg:mt-0">
-                    {paragraph.claims.map((claim) => (
-                      <ClaimCard
-                        key={claim.id}
-                        claim={claim}
-                        sourcesLabel={t("sources")}
-                      />
-                    ))}
-                  </aside>
-                )}
-              </div>
-            ))}
+        <section className="mt-14">
+          <header className="max-w-[720px]">
+            <h2 className="font-serif text-2xl font-bold tracking-tight">
+              {t("readingIntroTitle")}
+            </h2>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              {t("readingIntroSubtitle")}
+            </p>
+          </header>
+
+          <div
+            className="mt-6 mb-2 hidden border-b pb-3 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6"
+            aria-hidden
+          >
+            <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
+              {t("colOriginal")}
+            </span>
+            <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
+              {t("colVerification")}
+            </span>
           </div>
+
+          <ArticleReader
+            paragraphs={paragraphs}
+            claims={readerClaims}
+            statusLabels={statusLabels}
+            sourcesLabel={t("sourcesConsulted")}
+            verificationLabel={t("verificationTag")}
+            mobileLabel={t("asideMobileLabel")}
+          />
         </section>
       )}
 
       {orphans.length > 0 && (
-        <section className="mx-auto mt-12 max-w-3xl">
-          <h2 className="font-serif text-xl font-bold tracking-tight">
+        <section className="mt-14 max-w-[760px]">
+          <h2 className="font-serif text-2xl font-bold tracking-tight">
             {hasBody ? t("otherChecks") : t("claimsTitle")}
           </h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {orphans.map((claim) => (
               <ClaimCard
                 key={claim.id}
-                claim={claim}
-                sourcesLabel={t("sources")}
+                claim={toCardData(claim)}
+                sourcesLabel={t("sourcesConsulted")}
+                verificationLabel={t("verificationTag")}
               />
             ))}
           </div>
