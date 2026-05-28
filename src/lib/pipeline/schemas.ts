@@ -19,11 +19,13 @@ export type AnalysisClaim = {
   text: string;
   status: ClaimStatus;
   explanation: string;
+  sourceQuote: string;
   sources: AnalysisSource[];
 };
 export type Analysis = {
   title: string;
   summary: string;
+  language: string;
   verdict: Verdict;
   reliabilityScore: number;
   tags: string[];
@@ -64,6 +66,11 @@ export const recordAnalysisTool: Anthropic.Tool = {
         type: "string",
         description: "A one or two sentence dek summarizing the fact-check.",
       },
+      language: {
+        type: "string",
+        description:
+          "The language of the article and of your output, as a short code (e.g. 'fr', 'en').",
+      },
       verdict: {
         type: "string",
         enum: [...VERDICTS],
@@ -89,6 +96,11 @@ export const recordAnalysisTool: Anthropic.Tool = {
               type: "string",
               description: "Why this status, referencing the sources.",
             },
+            sourceQuote: {
+              type: "string",
+              description:
+                "The exact sentence(s) copied verbatim from the article body that this claim is based on, so it can be located in the original text. Empty string if the claim is not stated in a specific passage.",
+            },
             sources: {
               type: "array",
               items: {
@@ -102,12 +114,20 @@ export const recordAnalysisTool: Anthropic.Tool = {
               },
             },
           },
-          required: ["text", "status", "explanation", "sources"],
+          required: ["text", "status", "explanation", "sourceQuote", "sources"],
           additionalProperties: false,
         },
       },
     },
-    required: ["title", "summary", "verdict", "reliabilityScore", "tags", "claims"],
+    required: [
+      "title",
+      "summary",
+      "language",
+      "verdict",
+      "reliabilityScore",
+      "tags",
+      "claims",
+    ],
     additionalProperties: false,
   },
 };

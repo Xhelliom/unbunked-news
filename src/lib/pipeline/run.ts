@@ -17,6 +17,9 @@ import { aggregate } from "./aggregate";
 import { extractClaims } from "./extract-claims";
 import { verifyClaims } from "./verify";
 
+// Upper bound on the stored article body to keep rows reasonable.
+const MAX_STORED_CONTENT_CHARS = 60_000;
+
 const TAG_PALETTE = [
   "#6366f1",
   "#0ea5e9",
@@ -86,9 +89,11 @@ export async function runPipeline(jobId: string): Promise<void> {
           originalTitle: article.title,
           title: analysis.title,
           summary: analysis.summary,
+          content: article.content.slice(0, MAX_STORED_CONTENT_CHARS),
           imageUrl: article.imageUrl,
           verdict: analysis.verdict,
           reliabilityScore: analysis.reliabilityScore,
+          locale: analysis.language,
           published: false,
         })
         .returning({ id: articles.id });
@@ -102,6 +107,7 @@ export async function runPipeline(jobId: string): Promise<void> {
             claimText: claim.text,
             status: claim.status,
             explanation: claim.explanation,
+            sourceQuote: claim.sourceQuote || null,
           })
           .returning({ id: claimsTable.id });
 

@@ -65,7 +65,7 @@
     "body": "Light/dark theme, internationalization and the verdict system are wired up. The article feed lands in the next step."
   },
   "claimStatus": {
-    "supported": "Supported",
+    "supported": "Confirmed",
     "partly_true": "Partly true",
     "misleading": "Misleading",
     "false": "False",
@@ -163,6 +163,10 @@
     "readOriginal": "Read the original article",
     "score": "Reliability score",
     "claimsTitle": "Claim-by-claim review",
+    "readingTitle": "The article, checked paragraph by paragraph",
+    "originalTitle": "Original headline",
+    "claimChecked": "Claim checked",
+    "otherChecks": "Other checks",
     "sources": "Sources",
     "publishedOn": "Published on",
     "notFound": "Article not found."

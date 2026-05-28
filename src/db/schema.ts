@@ -57,6 +57,9 @@ export const articles = pgTable(
     // Our headline, framed as the claim/question under examination.
     title: text().notNull(),
     summary: text(),
+    // Original article body, paragraphs separated by blank lines, for the
+    // annotated reading view. Null for articles processed before this existed.
+    content: text(),
     // og:image from the source (with attribution) or null -> abstract fallback.
     imageUrl: text(),
     imageAttribution: text(),
@@ -90,6 +93,9 @@ export const claims = pgTable(
     claimText: text().notNull(),
     status: claimStatusEnum().notNull(),
     explanation: text(),
+    // Verbatim excerpt from the article body that this claim is drawn from,
+    // used to anchor the claim to its paragraph in the reading view.
+    sourceQuote: text(),
     createdAt: timestamp({ withTimezone: true, mode: "date" })
       .notNull()
       .defaultNow(),
