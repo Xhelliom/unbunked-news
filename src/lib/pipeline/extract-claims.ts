@@ -8,7 +8,8 @@ const SYSTEM =
   "You are a rigorous fact-checking assistant. You isolate the concrete, " +
   "checkable factual claims in a news article — statements that can be " +
   "verified against external sources. Ignore opinions, framing, and rhetoric. " +
-  "Prefer 3-8 of the most consequential claims.";
+  "Prefer 3-8 of the most consequential claims. Write each claim in the same " +
+  "language as the article; never translate.";
 
 export async function extractClaims(
   article: ScrapedArticle,

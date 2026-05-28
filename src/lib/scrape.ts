@@ -18,16 +18,33 @@ function hostnameToSource(url: string): string {
   }
 }
 
-function htmlToText(html: string): string {
-  return html
-    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
+function decodeEntities(text: string): string {
+  return text
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"');
+}
+
+// Splits article HTML into clean text paragraphs, preserving block boundaries
+// (lost if we collapsed all whitespace). Inner whitespace within a paragraph is
+// normalized to single spaces.
+function htmlToParagraphs(html: string): string[] {
+  return decodeEntities(
+    html
+      .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+      .replace(
+        /<\/(p|div|h[1-6]|li|blockquote|section|article|figcaption|tr)>/gi,
+        "\n\n",
+      )
+      .replace(/<br\s*\/?>/gi, "\n\n")
+      .replace(/<[^>]+>/g, " "),
+  )
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s+/g, " ").trim())
+    .filter((paragraph) => paragraph.length > 0);
 }
 
 type ExtractorResult = Awaited<ReturnType<typeof extract>>;
@@ -40,7 +57,7 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
     url,
     title: data.title,
     sourceName: data.source ?? hostnameToSource(url),
-    content: htmlToText(data.content),
+    content: htmlToParagraphs(data.content).join("\n\n"),
     imageUrl: data.image ?? null,
     author: data.author ?? null,
     publishedAt: data.published ? new Date(data.published) : null,

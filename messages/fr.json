@@ -65,7 +65,7 @@
     "body": "Thème clair/sombre, internationalisation et système de verdicts sont en place. Le feed d'articles arrive à l'étape suivante."
   },
   "claimStatus": {
-    "supported": "Étayé",
+    "supported": "Confirmé",
     "partly_true": "Partiellement vrai",
     "misleading": "Trompeur",
     "false": "Faux",
@@ -163,6 +163,10 @@
     "readOriginal": "Lire l'article original",
     "score": "Score de fiabilité",
     "claimsTitle": "Vérification claim par claim",
+    "readingTitle": "L'article, vérifié paragraphe par paragraphe",
+    "originalTitle": "Titre original",
+    "claimChecked": "Affirmation vérifiée",
+    "otherChecks": "Autres vérifications",
     "sources": "Sources",
     "publishedOn": "Publié le",
     "notFound": "Article introuvable."

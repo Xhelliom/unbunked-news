@@ -19,7 +19,10 @@ const SYSTEM =
   "central claim under examination. Ground every claim's status in the cited " +
   "sources; if evidence is insufficient, use 'unverifiable'. The reliability " +
   "score must reflect the overall verdict (reliable ~85-100, nuanced ~60-84, " +
-  "biased ~40-59, debunked ~0-39, unverifiable ~50).";
+  "biased ~40-59, debunked ~0-39, unverifiable ~50). Write the title, summary, " +
+  "claim text, and explanations in the same language as the article; never " +
+  "translate. For each claim, copy its source_quote verbatim from the article " +
+  "body so it can be located in the original text.";
 
 function isVerdict(value: unknown): value is Verdict {
   return (
@@ -55,6 +58,8 @@ function toClaims(value: unknown): AnalysisClaim[] {
         text: item.text,
         status: toClaimStatus(item.status),
         explanation: typeof item.explanation === "string" ? item.explanation : "",
+        sourceQuote:
+          typeof item.sourceQuote === "string" ? item.sourceQuote : "",
         sources: toSources(item.sources),
       },
     ];
@@ -116,6 +121,10 @@ export async function aggregate(
   return {
     title: typeof input.title === "string" ? input.title : article.title,
     summary: typeof input.summary === "string" ? input.summary : "",
+    language:
+      typeof input.language === "string" && input.language.trim().length > 0
+        ? input.language.trim().slice(0, 5).toLowerCase()
+        : "fr",
     verdict: isVerdict(input.verdict) ? input.verdict : "unverifiable",
     reliabilityScore,
     tags: Array.isArray(input.tags)
