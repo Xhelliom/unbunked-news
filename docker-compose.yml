@@ -1,6 +1,11 @@
 # Local stack. For day-to-day dev you can run just Postgres:
 #   docker compose up -d db   &&   pnpm db:migrate   &&   pnpm dev
 # Or run the full production-like stack: docker compose up --build
+#
+# Host ports are configurable via .env so this stack can coexist with other
+# containers. Defaults avoid the generic 3000/5432/8080 ports:
+#   DB_PORT (default 5434), APP_PORT (default 3030), ADMINER_PORT (default 8090).
+# Inside the compose network services still talk over the standard ports.
 services:
   db:
     image: postgres:16-alpine
@@ -10,7 +15,7 @@ services:
       POSTGRES_PASSWORD: unbunked
       POSTGRES_DB: unbunked
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5434}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -37,8 +42,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://unbunked:unbunked@db:5432/unbunked
+      BETTER_AUTH_URL: http://localhost:${APP_PORT:-3030}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3030}:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +57,7 @@ services:
     image: adminer:latest
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${ADMINER_PORT:-8090}:8080"
     depends_on:
       db:
         condition: service_healthy

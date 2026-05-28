@@ -8,6 +8,14 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/theme-provider";
 
+// Applies the stored/system theme class before paint to avoid a flash of the
+// wrong theme. Rendered server-side only, so it never re-runs on the client
+// (React 19 warns about <script> tags created during client rendering).
+// The "theme" key must match THEME_STORAGE_KEY in theme-provider.tsx — it is
+// inlined here because importing it (a "use client" export) into this server
+// component yields a client-reference proxy, not the string value.
+const themeScript = `(function(){try{var e=localStorage.getItem("theme")||"system",t=e==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):e,d=document.documentElement;d.classList.remove("light","dark");d.classList.add(t);d.style.colorScheme=t}catch(e){}})();`;
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -63,12 +71,8 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <ThemeProvider defaultTheme="system" disableTransitionOnChange>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </ThemeProvider>
       </body>
