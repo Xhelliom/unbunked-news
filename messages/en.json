@@ -196,10 +196,17 @@
     "publishedOn": "Published on",
     "notFound": "Article not found.",
     "originalSummaryTitle": "What the original article says",
+    "views": {
+      "aria": "Choose the article view",
+      "analysis": "Analysis",
+      "unbunked": "Unbunked version",
+      "switchHint": "Pick your view: the annotated original article, or Unbunked's rewrite."
+    },
     "unbunkedRewrite": {
       "sectionTitle": "Unbunked rewrite",
       "intro": "An Unbunked rewrite of the article in your language, with problematic passages corrected inline. The ① marks link to the matching fact-check.",
-      "fallbackNotice": "Rewrite not available in your language; showing the default."
+      "fallbackNotice": "Rewrite not available in your language; showing the default.",
+      "claimsTitle": "Fact-checks referenced in the rewrite"
     }
   },
   "propose": {

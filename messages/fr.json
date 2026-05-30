@@ -196,10 +196,17 @@
     "publishedOn": "Publié le",
     "notFound": "Article introuvable.",
     "originalSummaryTitle": "Ce que dit l'article original",
+    "views": {
+      "aria": "Choisir la vue de l'article",
+      "analysis": "Analyse",
+      "unbunked": "Version Unbunked",
+      "switchHint": "Choisissez votre vue : l'article original annoté ou la version réécrite par Unbunked."
+    },
     "unbunkedRewrite": {
       "sectionTitle": "Version Unbunked",
       "intro": "Une réécriture de l'article par Unbunked, dans votre langue, qui corrige inline les passages problématiques. Les ① renvoient à la vérification correspondante.",
-      "fallbackNotice": "Réécriture indisponible dans votre langue, affichée dans la langue par défaut."
+      "fallbackNotice": "Réécriture indisponible dans votre langue, affichée dans la langue par défaut.",
+      "claimsTitle": "Vérifications utilisées dans la réécriture"
     }
   },
   "propose": {
