@@ -17,6 +17,8 @@ type ReviewFormProps = {
   id: string;
   title: string;
   summary: string | null;
+  originalSummary: string | null;
+  showOriginal: boolean;
   verdict: Verdict | null;
   reliabilityScore: number | null;
   published: boolean;
@@ -54,6 +56,42 @@ export function ReviewForm(props: ReviewFormProps) {
             rows={3}
           />
         </div>
+        <div className="space-y-1.5">
+          <label htmlFor="originalSummary" className="text-sm font-medium">
+            {t("originalSummary")}
+          </label>
+          <Textarea
+            id="originalSummary"
+            name="originalSummary"
+            defaultValue={props.originalSummary ?? ""}
+            rows={4}
+          />
+        </div>
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">
+            {t("showOriginalLabel")}
+          </legend>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="showOriginal"
+              value="true"
+              defaultChecked={props.showOriginal}
+              className="mt-1"
+            />
+            <span>{t("showOriginalFull")}</span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="radio"
+              name="showOriginal"
+              value="false"
+              defaultChecked={!props.showOriginal}
+              className="mt-1"
+            />
+            <span>{t("showOriginalSummaryOnly")}</span>
+          </label>
+        </fieldset>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="verdict" className="text-sm font-medium">

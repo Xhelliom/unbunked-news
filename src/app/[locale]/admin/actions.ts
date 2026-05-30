@@ -4,8 +4,9 @@ import { eq } from "drizzle-orm";
 import { getLocale } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articles, proposals } from "@/db/schema";
+import { articleRewrites, articles, proposals } from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { createAnalysisJob } from "@/lib/jobs";
 import { requireSession } from "@/lib/session";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
@@ -54,6 +55,8 @@ export async function saveArticle(
     .set({
       title: String(formData.get("title") ?? ""),
       summary: String(formData.get("summary") ?? ""),
+      originalSummary: String(formData.get("originalSummary") ?? "") || null,
+      showOriginal: formData.get("showOriginal") === "true",
       verdict,
       reliabilityScore: Number.isFinite(score)
         ? Math.min(100, Math.max(0, Math.round(score)))
@@ -62,6 +65,34 @@ export async function saveArticle(
     .where(eq(articles.id, id));
 
   redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
+  return {};
+}
+
+export async function saveRewrite(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireSession();
+  const articleId = String(formData.get("articleId") ?? "");
+  const localeRaw = String(formData.get("locale") ?? "");
+  if (!(routing.locales as readonly string[]).includes(localeRaw)) {
+    return { error: "invalidLocale" };
+  }
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  if (!title || !body) {
+    return { error: "empty" };
+  }
+
+  await db
+    .insert(articleRewrites)
+    .values({ articleId, locale: localeRaw, title, body })
+    .onConflictDoUpdate({
+      target: [articleRewrites.articleId, articleRewrites.locale],
+      set: { title, body },
+    });
+
+  redirect({ href: `/admin/articles/${articleId}`, locale: await getLocale() });
   return {};
 }
 

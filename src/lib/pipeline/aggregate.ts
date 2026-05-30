@@ -20,9 +20,11 @@ const SYSTEM =
   "sources; if evidence is insufficient, use 'unverifiable'. The reliability " +
   "score must reflect the overall verdict (reliable ~85-100, nuanced ~60-84, " +
   "biased ~40-59, debunked ~0-39, unverifiable ~50). Write the title, summary, " +
-  "claim text, and explanations in the same language as the article; never " +
-  "translate. For each claim, copy its source_quote verbatim from the article " +
-  "body so it can be located in the original text.";
+  "originalSummary, claim text, and explanations in the same language as the " +
+  "article; never translate. The originalSummary must be a neutral paraphrase " +
+  "in your own words — never copy sentences from the article. For each claim, " +
+  "copy its source_quote verbatim from the article body so it can be located " +
+  "in the original text.";
 
 function isVerdict(value: unknown): value is Verdict {
   return (
@@ -121,6 +123,8 @@ export async function aggregate(
   return {
     title: typeof input.title === "string" ? input.title : article.title,
     summary: typeof input.summary === "string" ? input.summary : "",
+    originalSummary:
+      typeof input.originalSummary === "string" ? input.originalSummary : "",
     language:
       typeof input.language === "string" && input.language.trim().length > 0
         ? input.language.trim().slice(0, 5).toLowerCase()

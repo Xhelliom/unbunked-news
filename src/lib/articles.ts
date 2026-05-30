@@ -54,6 +54,7 @@ export async function getArticleBySlug(slug: string) {
         with: { sources: true },
       },
       articleTags: { with: { tag: true } },
+      rewrites: true,
     },
   });
 }

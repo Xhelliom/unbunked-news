@@ -119,6 +119,7 @@
         "extracting": "Extracting claims",
         "verifying": "Verifying (web search)",
         "aggregating": "Aggregating",
+        "rewriting": "Multilingual rewrite",
         "saving": "Saving",
         "done": "Done"
       }
@@ -127,6 +128,10 @@
       "title": "Review before publishing",
       "headline": "Title",
       "summary": "Summary",
+      "originalSummary": "Original article summary (neutral paraphrase)",
+      "showOriginalLabel": "Original article display",
+      "showOriginalFull": "Show the full annotated article",
+      "showOriginalSummaryOnly": "Show our summary only",
       "verdict": "Verdict",
       "score": "Reliability score",
       "source": "Original source",
@@ -137,7 +142,14 @@
       "save": "Save",
       "saving": "Saving…",
       "publish": "Publish",
-      "unpublish": "Unpublish"
+      "unpublish": "Unpublish",
+      "rewrites": {
+        "title": "Unbunked version (rewrite)",
+        "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",
+        "rewriteTitle": "Unbunked version title",
+        "rewriteBody": "Unbunked version body",
+        "missing": "No rewrite for this language."
+      }
     },
     "proposals": {
       "title": "Received proposals",
@@ -182,7 +194,13 @@
     "otherChecks": "Other checks",
     "sources": "Sources",
     "publishedOn": "Published on",
-    "notFound": "Article not found."
+    "notFound": "Article not found.",
+    "originalSummaryTitle": "What the original article says",
+    "unbunkedRewrite": {
+      "sectionTitle": "Unbunked rewrite",
+      "intro": "An Unbunked rewrite of the article in your language, with problematic passages corrected inline. The ① marks link to the matching fact-check.",
+      "fallbackNotice": "Rewrite not available in your language; showing the default."
+    }
   },
   "propose": {
     "title": "Submit an article",

@@ -17,6 +17,7 @@ import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ArticleReader } from "@/components/article-reader";
+import { RewriteBody } from "@/components/rewrite-body";
 
 export default async function ArticlePage({
   params,
@@ -39,10 +40,19 @@ export default async function ArticlePage({
   const format = await getFormatter();
 
   const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
-    article.content,
+    article.showOriginal ? article.content : null,
     article.claims,
   );
   const hasBody = paragraphs.length > 0;
+  const showSummaryInstead =
+    !hasBody && !article.showOriginal && Boolean(article.originalSummary);
+
+  const rewrite =
+    article.rewrites.find((r) => r.locale === locale) ??
+    article.rewrites.find((r) => r.locale === routing.defaultLocale) ??
+    null;
+  const rewriteIsFallback =
+    rewrite !== null && rewrite.locale !== locale;
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
     status,
@@ -176,6 +186,17 @@ export default async function ArticlePage({
         )}
       </div>
 
+      {showSummaryInstead && (
+        <section className="mt-12 max-w-[760px]">
+          <h2 className="font-serif text-sm font-semibold tracking-[0.05em] uppercase">
+            {t("originalSummaryTitle")}
+          </h2>
+          <p className="mt-3 font-serif text-lg leading-[1.7] text-pretty">
+            {article.originalSummary}
+          </p>
+        </section>
+      )}
+
       {hasBody && (
         <section className="mt-14">
           <header className="max-w-[720px]">
@@ -216,14 +237,44 @@ export default async function ArticlePage({
             {hasBody ? t("otherChecks") : t("claimsTitle")}
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {orphans.map((claim) => (
-              <ClaimCard
-                key={claim.id}
-                claim={toCardData(claim)}
-                sourcesLabel={t("sourcesConsulted")}
-                verificationLabel={t("verificationTag")}
-              />
+            {orphans.map((claim, index) => (
+              <div key={claim.id} id={`claim-${index + 1}`} className="scroll-mt-20">
+                <ClaimCard
+                  claim={toCardData(claim)}
+                  sourcesLabel={t("sourcesConsulted")}
+                  verificationLabel={t("verificationTag")}
+                />
+              </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {rewrite && (
+        <section className="mt-14 max-w-[760px]">
+          <header>
+            <h2 className="font-serif text-2xl font-bold tracking-tight">
+              {t("unbunkedRewrite.sectionTitle")}
+            </h2>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              {t("unbunkedRewrite.intro")}
+            </p>
+            {rewriteIsFallback && (
+              <p className="text-muted-foreground mt-2 text-xs italic">
+                {t("unbunkedRewrite.fallbackNotice")}
+              </p>
+            )}
+          </header>
+          <div className="mt-6">
+            <h3 className="font-serif text-xl font-bold tracking-tight">
+              {rewrite.title}
+            </h3>
+            <div className="mt-4">
+              <RewriteBody
+                body={rewrite.body}
+                claimCount={article.claims.length}
+              />
+            </div>
           </div>
         </section>
       )}
