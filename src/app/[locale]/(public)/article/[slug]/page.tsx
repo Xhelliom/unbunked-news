@@ -17,11 +17,17 @@ import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ArticleReader } from "@/components/article-reader";
+import { ArticleViewSwitcher } from "@/components/article-view-switcher";
+import { RewriteBody } from "@/components/rewrite-body";
+
+type View = "analysis" | "unbunked";
 
 export default async function ArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { locale, slug } = await params;
   if (!hasLocale(routing.locales, locale)) {
@@ -39,10 +45,23 @@ export default async function ArticlePage({
   const format = await getFormatter();
 
   const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
-    article.content,
+    article.showOriginal ? article.content : null,
     article.claims,
   );
   const hasBody = paragraphs.length > 0;
+  const showSummaryInstead =
+    !hasBody && !article.showOriginal && Boolean(article.originalSummary);
+
+  const rewrite =
+    article.rewrites.find((r) => r.locale === locale) ??
+    article.rewrites.find((r) => r.locale === routing.defaultLocale) ??
+    null;
+  const rewriteIsFallback =
+    rewrite !== null && rewrite.locale !== locale;
+
+  const { view: viewParam } = await searchParams;
+  const view: View =
+    viewParam === "unbunked" && rewrite ? "unbunked" : "analysis";
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
     status,
@@ -176,55 +195,125 @@ export default async function ArticlePage({
         )}
       </div>
 
-      {hasBody && (
-        <section className="mt-14">
-          <header className="max-w-[720px]">
-            <h2 className="font-serif text-2xl font-bold tracking-tight">
-              {t("readingIntroTitle")}
-            </h2>
-            <p className="text-muted-foreground mt-1.5 text-sm">
-              {t("readingIntroSubtitle")}
-            </p>
-          </header>
-
-          <div
-            className="mt-6 mb-2 hidden border-b pb-3 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6"
-            aria-hidden
-          >
-            <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
-              {t("colOriginal")}
-            </span>
-            <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
-              {t("colVerification")}
-            </span>
-          </div>
-
-          <ArticleReader
-            paragraphs={paragraphs}
-            claims={readerClaims}
-            statusLabels={statusLabels}
-            sourcesLabel={t("sourcesConsulted")}
-            verificationLabel={t("verificationTag")}
-            mobileLabel={t("asideMobileLabel")}
-          />
-        </section>
+      {rewrite && (
+        <div className="mt-10 flex justify-center">
+          <ArticleViewSwitcher current={view} />
+        </div>
       )}
 
-      {orphans.length > 0 && (
-        <section className="mt-14 max-w-[760px]">
-          <h2 className="font-serif text-2xl font-bold tracking-tight">
-            {hasBody ? t("otherChecks") : t("claimsTitle")}
-          </h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {orphans.map((claim) => (
-              <ClaimCard
-                key={claim.id}
-                claim={toCardData(claim)}
+      {view === "analysis" && (
+        <>
+          {showSummaryInstead && (
+            <section className="mt-12 max-w-[760px]">
+              <h2 className="font-serif text-sm font-semibold tracking-[0.05em] uppercase">
+                {t("originalSummaryTitle")}
+              </h2>
+              <p className="mt-3 font-serif text-lg leading-[1.7] text-pretty">
+                {article.originalSummary}
+              </p>
+            </section>
+          )}
+
+          {hasBody && (
+            <section className="mt-14">
+              <header className="max-w-[720px]">
+                <h2 className="font-serif text-2xl font-bold tracking-tight">
+                  {t("readingIntroTitle")}
+                </h2>
+                <p className="text-muted-foreground mt-1.5 text-sm">
+                  {t("readingIntroSubtitle")}
+                </p>
+              </header>
+
+              <div
+                className="mt-6 mb-2 hidden border-b pb-3 lg:grid lg:grid-cols-[1fr_320px] lg:gap-6"
+                aria-hidden
+              >
+                <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
+                  {t("colOriginal")}
+                </span>
+                <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
+                  {t("colVerification")}
+                </span>
+              </div>
+
+              <ArticleReader
+                paragraphs={paragraphs}
+                claims={readerClaims}
+                statusLabels={statusLabels}
                 sourcesLabel={t("sourcesConsulted")}
                 verificationLabel={t("verificationTag")}
+                mobileLabel={t("asideMobileLabel")}
               />
-            ))}
+            </section>
+          )}
+
+          {orphans.length > 0 && (
+            <section className="mt-14 max-w-[760px]">
+              <h2 className="font-serif text-2xl font-bold tracking-tight">
+                {hasBody ? t("otherChecks") : t("claimsTitle")}
+              </h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {orphans.map((claim) => (
+                  <ClaimCard
+                    key={claim.id}
+                    claim={toCardData(claim)}
+                    sourcesLabel={t("sourcesConsulted")}
+                    verificationLabel={t("verificationTag")}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {view === "unbunked" && rewrite && (
+        <section className="mt-12 max-w-[760px]">
+          <header>
+            <p className="text-muted-foreground text-sm">
+              {t("unbunkedRewrite.intro")}
+            </p>
+            {rewriteIsFallback && (
+              <p className="text-muted-foreground mt-2 text-xs italic">
+                {t("unbunkedRewrite.fallbackNotice")}
+              </p>
+            )}
+          </header>
+
+          <h2 className="mt-6 font-serif text-3xl leading-[1.15] font-bold tracking-tight text-balance">
+            {rewrite.title}
+          </h2>
+
+          <div className="mt-6">
+            <RewriteBody
+              body={rewrite.body}
+              claimCount={article.claims.length}
+            />
           </div>
+
+          {article.claims.length > 0 && (
+            <div className="mt-14 border-t pt-8">
+              <h3 className="font-serif text-xl font-bold tracking-tight">
+                {t("unbunkedRewrite.claimsTitle")}
+              </h3>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {article.claims.map((claim, index) => (
+                  <div
+                    key={claim.id}
+                    id={`claim-${index + 1}`}
+                    className="scroll-mt-24"
+                  >
+                    <ClaimCard
+                      claim={toCardData(claim)}
+                      sourcesLabel={t("sourcesConsulted")}
+                      verificationLabel={t("verificationTag")}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </article>

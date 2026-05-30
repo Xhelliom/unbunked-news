@@ -57,9 +57,15 @@ export const articles = pgTable(
     // Our headline, framed as the claim/question under examination.
     title: text().notNull(),
     summary: text(),
+    // Neutral paraphrase of the source article (our words), shown on the
+    // article page when the editor opts out of displaying the full original.
+    originalSummary: text(),
     // Original article body, paragraphs separated by blank lines, for the
     // annotated reading view. Null for articles processed before this existed.
     content: text(),
+    // Editorial toggle: when false, the public page hides the full original
+    // body and shows originalSummary instead. Defaults to true.
+    showOriginal: boolean().notNull().default(true),
     // og:image from the source (with attribution) or null -> abstract fallback.
     imageUrl: text(),
     imageAttribution: text(),
@@ -119,6 +125,28 @@ export const claimSources = pgTable(
       .defaultNow(),
   },
   (table) => [index("claim_sources_claim_id_idx").on(table.claimId)],
+);
+
+// Unbunked-fiable rewrite of the source article, one row per locale.
+// Markdown body; uses [[claim:N]] markers to link to claims by position.
+export const articleRewrites = pgTable(
+  "article_rewrites",
+  {
+    articleId: uuid()
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    locale: varchar({ length: 5 }).notNull(),
+    title: text().notNull(),
+    body: text().notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [primaryKey({ columns: [table.articleId, table.locale] })],
 );
 
 export const tags = pgTable("tags", {
@@ -186,8 +214,19 @@ export const jobs = pgTable(
 export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
+  rewrites: many(articleRewrites),
   jobs: many(jobs),
 }));
+
+export const articleRewritesRelations = relations(
+  articleRewrites,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleRewrites.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
 
 export const jobsRelations = relations(jobs, ({ one }) => ({
   article: one(articles, {
@@ -238,3 +277,5 @@ export type Proposal = typeof proposals.$inferSelect;
 export type NewProposal = typeof proposals.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+export type ArticleRewrite = typeof articleRewrites.$inferSelect;
+export type NewArticleRewrite = typeof articleRewrites.$inferInsert;

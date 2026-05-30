@@ -25,11 +25,18 @@ export type AnalysisClaim = {
 export type Analysis = {
   title: string;
   summary: string;
+  originalSummary: string;
   language: string;
   verdict: Verdict;
   reliabilityScore: number;
   tags: string[];
   claims: AnalysisClaim[];
+};
+
+export type Rewrite = {
+  locale: string;
+  title: string;
+  body: string;
 };
 
 export const recordClaimsTool: Anthropic.Tool = {
@@ -65,6 +72,11 @@ export const recordAnalysisTool: Anthropic.Tool = {
       summary: {
         type: "string",
         description: "A one or two sentence dek summarizing the fact-check.",
+      },
+      originalSummary: {
+        type: "string",
+        description:
+          "A neutral 3-5 sentence paraphrase of what the original article says (in your own words, NEVER copying its sentences). Same language as the article.",
       },
       language: {
         type: "string",
@@ -122,12 +134,36 @@ export const recordAnalysisTool: Anthropic.Tool = {
     required: [
       "title",
       "summary",
+      "originalSummary",
       "language",
       "verdict",
       "reliabilityScore",
       "tags",
       "claims",
     ],
+    additionalProperties: false,
+  },
+};
+
+export const recordRewriteTool: Anthropic.Tool = {
+  name: "record_rewrite",
+  description:
+    "Record an Unbunked-fiable rewrite of the article in the requested language.",
+  input_schema: {
+    type: "object",
+    properties: {
+      title: {
+        type: "string",
+        description:
+          "Rewritten title in the requested language. Reformulate; do NOT copy the original headline.",
+      },
+      body: {
+        type: "string",
+        description:
+          "Full rewritten article in markdown, in the requested language. Preserve the tone and structure of the original but write entirely in your own words — never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
+      },
+    },
+    required: ["title", "body"],
     additionalProperties: false,
   },
 };

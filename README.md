@@ -2,9 +2,10 @@
 
 Plateforme de fact-checking : on soumet l'URL d'un article, une pipeline IA
 (Claude + recherche web) extrait les affirmations vérifiables, les vérifie une
-à une avec de vraies sources, puis produit un verdict, un score de fiabilité
-et une analyse claim par claim. Le tout est publié sur un front public façon
-site d'actualité, bilingue (FR/EN) avec thème clair/sombre.
+à une avec de vraies sources, puis produit un verdict, un score de fiabilité,
+une analyse claim par claim, et une **réécriture multilingue** de l'article.
+Le tout est publié sur un front public façon site d'actualité, bilingue
+(FR/EN) avec thème clair/sombre.
 
 ## Stack
 
@@ -44,7 +45,7 @@ Ouvre `.env` et renseigne au minimum :
 | `BETTER_AUTH_SECRET` | `$(openssl rand -base64 32)` |
 
 ```bash
-# 3. Lancer Postgres en arrière-plan + appliquer les migrations
+# 3. Lancer Postgres + appliquer les migrations
 docker compose up -d db
 pnpm db:migrate
 
@@ -55,33 +56,30 @@ ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD='un-mot-de-passe-fort' pnpm db:seed-a
 pnpm dev
 ```
 
-L'application est disponible sur **http://localhost:3000**.
+L'application est disponible sur **http://localhost:3030** (port par défaut).
 
 ### Pages principales
 
 | Page | URL |
 |------|-----|
-| Feed public | `http://localhost:3000/` |
-| Proposer un article (public) | `http://localhost:3000/submit` |
-| Connexion admin | `http://localhost:3000/login` |
-| Administration | `http://localhost:3000/admin` |
+| Feed public | `http://localhost:3030/` |
+| Proposer un article (public) | `http://localhost:3030/submit` |
+| Connexion admin | `http://localhost:3030/login` |
+| Administration | `http://localhost:3030/admin` |
 
 ### Flux type
 
 1. Se connecter sur `/login` avec les identifiants du seed.
 2. Aller sur `/admin/submit`, coller l'URL d'un article.
-3. Suivre l'avancement de l'analyse (extraction → vérification web → agrégation).
-4. Réviser le brouillon (titre, résumé, verdict, score), puis **Publier**.
+3. Suivre l'avancement (scrape → extraction → vérification → agrégation → réécriture multilingue).
+4. Réviser le brouillon (titre, résumé, verdict, score, réécritures par langue), puis **Publier**.
 5. L'article apparaît sur le feed `/`.
 
 ---
 
 ## Stack complet avec Docker Compose
 
-Lance PostgreSQL, applique les migrations (service `migrate`) et démarre l'app (service `app`) :
-
 ```bash
-# Renseigne ANTHROPIC_API_KEY et BETTER_AUTH_SECRET dans .env avant tout
 docker compose up --build
 ```
 
@@ -92,11 +90,11 @@ docker compose exec app sh -c \
   'ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD="..." pnpm db:seed-admin'
 ```
 
-Accès à Adminer (inspecteur DB) :
+Adminer (inspecteur DB) :
 
 ```bash
 docker compose --profile tools up adminer
-# → http://localhost:8080
+# → http://localhost:8090
 ```
 
 ---
@@ -111,8 +109,8 @@ docker compose --profile tools up adminer
 | `pnpm lint` | ESLint |
 | `pnpm db:generate` | Génère une migration depuis le schéma Drizzle |
 | `pnpm db:migrate` | Applique les migrations en attente |
-| `pnpm db:seed-admin` | Crée le compte admin (via `ADMIN_EMAIL` / `ADMIN_PASSWORD`) |
-| `pnpm db:studio` | Ouvre Drizzle Studio (UI DB) |
+| `pnpm db:seed-admin` | Crée le compte admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) |
+| `pnpm db:studio` | Ouvre Drizzle Studio |
 
 ---
 
@@ -122,12 +120,13 @@ Toutes les variables sont documentées dans `.env.example`.
 
 | Variable | Requis | Description |
 |----------|--------|-------------|
-| `DATABASE_URL` | oui | Connexion PostgreSQL (ex. `postgresql://unbunked:unbunked@localhost:5432/unbunked`) |
-| `ANTHROPIC_API_KEY` | oui | Clé API Anthropic — pipeline IA |
-| `BETTER_AUTH_SECRET` | oui | Secret de signature des sessions (`openssl rand -base64 32`) |
-| `BETTER_AUTH_URL` | oui | URL publique de l'app (ex. `http://localhost:3000`) |
-| `ANTHROPIC_MODEL` | non | Modèle Claude (défaut : `claude-opus-4-7`) |
-| `CHROMIUM_PATH` | non | Chemin vers Chromium pour le repli Puppeteer (auto dans Docker) |
+| `DATABASE_URL` | oui | Connexion PostgreSQL |
+| `ANTHROPIC_API_KEY` | oui | Clé API Anthropic |
+| `BETTER_AUTH_SECRET` | oui | Secret des sessions (`openssl rand -base64 32`) |
+| `BETTER_AUTH_URL` | oui | URL publique de l'app |
+| `APP_PORT` / `DB_PORT` / `ADMINER_PORT` | non | Ports du stack Docker (défauts 3030/5434/8090) |
+| `ANTHROPIC_MODEL` | non | Modèle Claude |
+| `CHROMIUM_PATH` | non | Chemin vers Chromium (repli Puppeteer) |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | non | Origines de confiance en production (CSV) |
 
 ---
@@ -137,40 +136,34 @@ Toutes les variables sont documentées dans `.env.example`.
 ```
 src/
   app/[locale]/
-    (public)/            # feed, page article, formulaire de proposition
-      page.tsx           # home — feed avec filtres verdict/thème
-      article/[slug]/    # page article complète (claims + sources)
-      submit/            # formulaire public « proposer un article »
-    admin/               # interface d'administration (protégée)
-      page.tsx           # tableau de bord — liste des articles
-      submit/            # soumission d'une URL à analyser
-      jobs/[id]/         # suivi en temps réel de l'analyse
-      articles/[id]/     # révision et publication du brouillon
-      proposals/         # gestion des propositions reçues
+    (public)/            # feed, page article (lecture annotée), formulaire de proposition
+    admin/               # administration (protégée)
     login/               # connexion admin
-    api/
-      admin/jobs/[id]/   # endpoint de polling (statut du job)
-      auth/              # BetterAuth
+    api/                 # statut des jobs + BetterAuth
   components/
-    ui/                  # shadcn/ui (Button, Card, Badge, Input…)
-    admin/               # composants admin (LoginForm, JobStatus…)
-    article-card.tsx     # carte du feed public
-    feed-filters.tsx     # filtres verdict / thème
-    verdict-badge.tsx    # badge coloré verdict
+    ui/                  # shadcn/ui
+    admin/               # composants admin
+    article-reader.tsx   # lecture annotée (paragraphes + claims surlignés)
+    claim-card.tsx       # fiche claim (statut + sources)
+    hero-card.tsx        # carte "à la une" du feed
+    secondary-card.tsx   # cartes secondaires du feed
   db/
-    schema.ts            # tables Drizzle (articles, claims, sources, tags…)
+    schema.ts            # tables Drizzle
     client.ts
-    seed-admin.ts
+    seed-admin.ts / seed-articles.ts / clean-articles.ts
   lib/
-    pipeline/            # pipeline IA en 3 phases
-      extract-claims.ts  # phase 1 — extraction des claims
-      verify.ts          # phase 2 — vérification web claim par claim
-      aggregate.ts       # phase 3 — agrégation → verdict + score
-    jobs.ts              # orchestration (createAnalysisJob, getJob)
-    scrape.ts            # récupération d'article + repli Puppeteer
-    articles.ts          # requêtes publiques (feed, filtres, slug)
-    session.ts           # helpers BetterAuth côté serveur
-drizzle/                 # migrations SQL générées
+    pipeline/            # pipeline IA
+      extract-claims.ts  # phase 1 — extraction
+      verify.ts          # phase 2 — vérification web
+      aggregate.ts       # phase 3 — agrégation
+      rewrite.ts         # phase 4 — réécriture multilingue
+    jobs.ts              # orchestration
+    scrape.ts            # extraction d'article (+ Puppeteer)
+    articles.ts          # requêtes publiques
+    reading.ts           # ancre les claims aux paragraphes
+    boilerplate.ts       # nettoie pubs/CTA
+    claim-status.ts      # statuts et couleurs
+drizzle/                 # migrations SQL
 k8s/                     # manifests Kubernetes
 ```
 
@@ -178,18 +171,16 @@ k8s/                     # manifests Kubernetes
 
 ## Déploiement Kubernetes
 
-Les manifests sont dans `k8s/`. Étapes :
-
 ```bash
 # 1. Construire et pousser les images
-docker build --target runner  -t ton-registry/unbunked:latest .
+docker build --target runner   -t ton-registry/unbunked:latest .
 docker build --target migrator -t ton-registry/unbunked-migrate:latest .
 docker push ton-registry/unbunked:latest
 docker push ton-registry/unbunked-migrate:latest
 
 # 2. Créer les secrets
 cp k8s/secret.example.yaml k8s/secret.yaml
-# Renseigner les valeurs base64 dans k8s/secret.yaml
+# Renseigner les valeurs base64
 
 # 3. Appliquer
 kubectl apply -f k8s/
