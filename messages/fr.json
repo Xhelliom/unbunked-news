@@ -86,6 +86,15 @@
       "description": "L'information est-elle à jour plutôt que périmée ?"
     }
   },
+  "methodology": {
+    "title": "Comment Unbunked note l'information",
+    "intro": "Chaque article suit le même pipeline : on isole les affirmations vérifiables, on les confronte à des sources par recherche web, puis on en tire un verdict et des scores. Voici ce que mesure chacun.",
+    "scoreTitle": "Le score global et ses critères",
+    "scoreBody": "Le score de fiabilité (0-100) affiché en grand est produit par notre analyse pour rester cohérent avec le verdict. Il se décompose en critères notés chacun sur 100, qui expliquent d'où vient la note : un article peut être factuellement exact mais très orienté, ou bien intentionné mais mal sourcé.",
+    "coreTitle": "Critères toujours évalués",
+    "optionalTitle": "Critères évalués selon la pertinence",
+    "optionalHint": "Ces critères ne sont notés que lorsqu'ils peuvent l'être de façon fiable ; sinon ils sont laissés de côté plutôt que de produire une note arbitraire."
+  },
   "home": {
     "kicker": "Chantier en cours",
     "title": "Les fondations d'Unbunked sont posées",

@@ -86,6 +86,15 @@
       "description": "Is the information up to date rather than stale?"
     }
   },
+  "methodology": {
+    "title": "How Unbunked rates the news",
+    "intro": "Every article goes through the same pipeline: we isolate the checkable claims, test them against sources via web search, then derive a verdict and scores. Here is what each one measures.",
+    "scoreTitle": "The overall score and its criteria",
+    "scoreBody": "The reliability score (0-100) shown prominently is produced by our analysis so it stays coherent with the verdict. It breaks down into criteria each rated out of 100, which explain where the score comes from: an article can be factually accurate yet heavily biased, or well-meaning yet poorly sourced.",
+    "coreTitle": "Always assessed",
+    "optionalTitle": "Assessed when relevant",
+    "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number."
+  },
   "home": {
     "kicker": "Work in progress",
     "title": "Unbunked's foundations are in place",

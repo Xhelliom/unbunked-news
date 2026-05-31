@@ -56,7 +56,7 @@ export function SiteFooter() {
             </li>
             <li>
               <Link
-                href="/"
+                href="/methode"
                 className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 {tFooter("method")}
