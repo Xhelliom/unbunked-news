@@ -1,0 +1,91 @@
+name: DB migrations
+
+# Validates that the Drizzle migrations are coherent, apply cleanly to a real
+# Postgres from an empty database, are idempotent on re-run (the same Job can be
+# safely re-applied in k8s), and that schema.ts has not drifted from the
+# generated migrations.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "drizzle/**"
+      - "src/db/**"
+      - "drizzle.config.ts"
+      - ".github/workflows/db-migrations.yml"
+
+concurrency:
+  group: db-migrations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    name: Apply, re-apply, drift check
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: unbunked
+          POSTGRES_PASSWORD: unbunked
+          POSTGRES_DB: unbunked
+        ports:
+          - 5432:5432
+        # Wait until Postgres is ready before the steps run.
+        options: >-
+          --health-cmd "pg_isready -U unbunked -d unbunked"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://unbunked:unbunked@localhost:5432/unbunked
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Journal/snapshot consistency — catches a hand-edited or missing entry
+      # without needing a database.
+      - name: Check migration journal
+        run: pnpm exec drizzle-kit check
+
+      # Apply every migration to an empty database: proves the SQL is valid and
+      # ordered correctly from a clean slate (the k8s migrate Job's first run).
+      - name: Apply migrations from scratch
+        run: pnpm db:migrate
+
+      # Re-run against the now-migrated database: must be a no-op. This is the
+      # idempotence guarantee that lets the migrate Job be re-applied safely.
+      - name: Re-apply migrations (idempotent)
+        run: pnpm db:migrate
+
+      # schema.ts must already be fully captured by the committed migrations:
+      # generating again must produce no new files and no edits. A drift here
+      # means someone changed the schema without running `pnpm db:generate`.
+      # Checked via `git status --porcelain` so a brand-new (untracked)
+      # migration file is caught too — `git diff` alone misses untracked files.
+      - name: Check for uncommitted schema drift
+        run: |
+          pnpm db:generate
+          drift="$(git status --porcelain -- drizzle)"
+          if [ -n "$drift" ]; then
+            echo "::error::schema.ts has drifted from the committed migrations."
+            echo "Run 'pnpm db:generate' and commit the generated migration."
+            echo "$drift"
+            git --no-pager diff -- drizzle
+            exit 1
+          fi
+          echo "No drift: schema.ts matches the committed migrations."
