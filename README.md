@@ -58,6 +58,11 @@ pnpm dev
 
 L'application est disponible sur **http://localhost:3030** (port par défaut).
 
+En local, `pnpm dev` tourne par défaut en rôle **`hybrid`** : le même process
+sert le HTTP **et** exécute la pipeline IA. Rien à configurer — voir
+[Rôles d'exécution](#rôles-dexécution-web--worker--hybrid) pour séparer web et
+worker en production.
+
 ### Pages principales
 
 | Page | URL |
@@ -124,6 +129,8 @@ Toutes les variables sont documentées dans `.env.example`.
 | `ANTHROPIC_API_KEY` | oui | Clé API Anthropic |
 | `BETTER_AUTH_SECRET` | oui | Secret des sessions (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | oui | URL publique de l'app |
+| `APP_ROLE` | non | Rôle du process : `web`, `worker` ou `hybrid` (défaut). Voir [Rôles d'exécution](#rôles-dexécution-web--worker--hybrid) |
+| `DATABASE_POOL_MAX` | non | Connexions max du pool Postgres par process (défaut 10) |
 | `APP_PORT` / `DB_PORT` / `ADMINER_PORT` | non | Ports du stack Docker (défauts 3030/5434/8090) |
 | `ANTHROPIC_MODEL` | non | Modèle Claude |
 | `CHROMIUM_PATH` | non | Chemin vers Chromium (repli Puppeteer) |
@@ -157,7 +164,10 @@ src/
       verify.ts          # phase 2 — vérification web
       aggregate.ts       # phase 3 — agrégation
       rewrite.ts         # phase 4 — réécriture multilingue
-    jobs.ts              # orchestration
+      queue.ts           # file de jobs (claim SKIP LOCKED + reaper)
+      worker.ts          # boucle worker (draine la file)
+    runtime-role.ts      # résolution de APP_ROLE (web/worker/hybrid)
+    jobs.ts              # création des jobs (insère en pending)
     scrape.ts            # extraction d'article (+ Puppeteer)
     articles.ts          # requêtes publiques
     reading.ts           # ancre les claims aux paragraphes
@@ -166,6 +176,53 @@ src/
 drizzle/                 # migrations SQL
 k8s/                     # manifests Kubernetes
 ```
+
+---
+
+## Rôles d'exécution (web / worker / hybrid)
+
+La pipeline IA ne tourne plus « après la requête » dans le pod qui l'a reçue :
+elle passe par une **file de jobs durable en base**. Un job soumis est inséré en
+`pending`, puis un *worker* le réclame de façon atomique
+(`SELECT … FOR UPDATE SKIP LOCKED`) — deux process ne prennent jamais le même
+job. Un *reaper* requeue les jobs bloqués (pod tué en plein traitement), donc
+**plus aucun job orphelin** lors d'un redéploiement ou d'un scale-down.
+
+Une **même image** sert les trois rôles ; la variable `APP_ROLE` décide du
+comportement du process au démarrage :
+
+| `APP_ROLE` | Sert le HTTP | Draine la file | Pour qui |
+|------------|:---:|:---:|---|
+| `hybrid` *(défaut)* | ✅ | ✅ | dev local, `docker compose`, faible volume — **un seul process suffit** |
+| `web` | ✅ | ❌ | pods derrière l'ingress, qui ne doivent pas exécuter de jobs |
+| `worker` | (serveur up mais hors ingress) | ✅ | pods dédiés au traitement des jobs |
+
+```bash
+# Tout-en-un (défaut) — aucun réglage requis
+pnpm dev                 # = APP_ROLE=hybrid
+
+# Séparer les rôles (ex. deux terminaux en local)
+APP_ROLE=web    pnpm start    # sert le site, n'exécute aucun job
+APP_ROLE=worker pnpm start    # exécute les jobs, pas de trafic public
+```
+
+> La commande reste `node server.js` (resp. `pnpm start`) dans **tous** les cas :
+> c'est `instrumentation.ts` qui démarre la boucle worker quand le rôle est
+> `worker` ou `hybrid`.
+
+**Concurrence des jobs** : on traite un job à la fois par process (borne la RAM
+Chromium/LLM). Pour aller plus vite, ajoute des process `worker` — le
+`SKIP LOCKED` rend l'ajout de replicas sûr.
+
+**Connexions DB** : chaque process (web ou worker) ouvre jusqu'à
+`DATABASE_POOL_MAX` connexions. Garde la somme sous le `max_connections` de
+Postgres :
+
+```
+(replicas web max + replicas worker) × DATABASE_POOL_MAX < postgres max_connections
+```
+
+Au-delà, plafonne `DATABASE_POOL_MAX` ou place PgBouncer devant Postgres.
 
 ---
 
@@ -185,3 +242,26 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 # 3. Appliquer
 kubectl apply -f k8s/
 ```
+
+Le manifest déploie deux groupes de pods à partir de la **même image** :
+
+- **`web`** (`k8s/app.yaml`, `APP_ROLE=web`) — derrière le `Service` / `Ingress`,
+  autoscalé par le HPA (`k8s/hpa.yaml`, CPU 70 %, 2→6 replicas).
+- **`worker`** (`k8s/worker.yaml`, `APP_ROLE=worker`) — hors ingress, draine la
+  file de jobs. Monte `replicas` pour augmenter la concurrence des jobs.
+
+```bash
+# Plus de débit sur le traitement des jobs
+kubectl scale deployment/worker -n unbunked --replicas=3
+```
+
+Les **migrations** s'appliquent via un `Job` ponctuel, à lancer avant un
+déploiement qui change le schéma :
+
+```bash
+kubectl delete job migrate -n unbunked --ignore-not-found
+kubectl apply -f k8s/migrate-job.yaml
+```
+
+> Avant de monter `web` (HPA) ou `worker` en nombre de replicas, vérifie le
+> calcul des connexions DB ci-dessus.
