@@ -16,12 +16,35 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
+// Pool sizing: with N web replicas, max * N must stay below Postgres
+// max_connections. Tune DATABASE_POOL_MAX (or front the DB with PgBouncer)
+// before raising the deployment's replica count.
+const DEFAULT_DB_POOL_MAX = 10;
+// postgres.js expects these timeouts in SECONDS, not milliseconds.
+const DB_IDLE_TIMEOUT_SECONDS = 20;
+const DB_CONNECT_TIMEOUT_SECONDS = 10;
+
+function resolvePoolMax(): number {
+  const raw = process.env.DATABASE_POOL_MAX;
+  if (raw === undefined) {
+    return DEFAULT_DB_POOL_MAX;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_DB_POOL_MAX;
+}
+
 // Reuse a single client across hot reloads in dev to avoid exhausting Postgres.
 const globalForDb = globalThis as unknown as {
   client?: ReturnType<typeof postgres>;
 };
 
-const client = globalForDb.client ?? postgres(connectionString);
+const client =
+  globalForDb.client ??
+  postgres(connectionString, {
+    max: resolvePoolMax(),
+    idle_timeout: DB_IDLE_TIMEOUT_SECONDS,
+    connect_timeout: DB_CONNECT_TIMEOUT_SECONDS,
+  });
 if (process.env.NODE_ENV !== "production") {
   globalForDb.client = client;
 }

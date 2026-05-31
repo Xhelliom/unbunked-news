@@ -27,22 +27,25 @@ spec:
               value: production
           readinessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 20
             periodSeconds: 15
           resources:
             requests:
-              cpu: 100m
+              # HPA CPU utilization is computed against this request.
+              cpu: 250m
               memory: 256Mi
             limits:
-              memory: 512Mi
+              # Chromium/puppeteer scraping fallback runs in this pod and OOMs
+              # at 512Mi. No CPU limit on purpose: avoid throttling under load.
+              memory: 1Gi
 ---
 apiVersion: v1
 kind: Service

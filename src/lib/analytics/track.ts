@@ -2,10 +2,9 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
-import { eq } from "drizzle-orm";
-
 import { db } from "@/db/client";
-import { analyticsEvents, articles } from "@/db/schema";
+import { analyticsEvents } from "@/db/schema";
+import { resolveArticleIdBySlug } from "@/lib/articles";
 import { routing } from "@/i18n/routing";
 
 import {
@@ -89,21 +88,16 @@ export async function recordEvent(event: TrackEvent): Promise<void> {
   }
 
   const slug = articleSlugFromPath(path);
-  const article = slug
-    ? await db.query.articles.findFirst({
-        where: eq(articles.slug, slug),
-        columns: { id: true },
-      })
-    : null;
+  const articleId = slug ? await resolveArticleIdBySlug(slug) : null;
 
   // A "read" event is only meaningful when it maps to an article.
-  if (event.kind === "read" && !article) {
+  if (event.kind === "read" && !articleId) {
     return;
   }
 
   await db.insert(analyticsEvents).values({
     path,
-    articleId: article?.id ?? null,
+    articleId,
     locale: localeFromPath(path),
     referrerHost: referrerHost(event.referrer),
     deviceType: deviceTypeFromUserAgent(event.userAgent),

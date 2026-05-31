@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import { EVENT_KINDS, type EventKind } from "@/lib/analytics/constants";
 import { recordEvent } from "@/lib/analytics/track";
 
@@ -45,18 +47,24 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Missing path" }, { status: 400 });
   }
   const referrer = typeof body.referrer === "string" ? body.referrer : null;
+  const event = {
+    path,
+    referrer,
+    kind: parseKind(body.kind),
+    ip: clientIp(request),
+    userAgent: request.headers.get("user-agent") ?? "",
+  };
 
-  try {
-    await recordEvent({
-      path,
-      referrer,
-      kind: parseKind(body.kind),
-      ip: clientIp(request),
-      userAgent: request.headers.get("user-agent") ?? "",
-    });
-  } catch {
-    return Response.json({ error: "Invalid path" }, { status: 400 });
-  }
+  // The DB write must not block the response: schedule it after the 204 is
+  // sent. A failure discovered here can no longer become a 400, so surface it
+  // as a logged server error instead of swallowing it.
+  after(async () => {
+    try {
+      await recordEvent(event);
+    } catch (error) {
+      console.error("Failed to record analytics event", error);
+    }
+  });
 
   return new Response(null, { status: 204 });
 }
