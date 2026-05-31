@@ -8,7 +8,7 @@ import { db } from "@/db/client";
 import { analyticsEvents, articles } from "@/db/schema";
 import { routing } from "@/i18n/routing";
 
-import { MAX_TRACK_PATH_LENGTH } from "./constants";
+import { MAX_TRACK_PATH_LENGTH, type DeviceType } from "./constants";
 
 // Daily-rotating salt: combining the date with a server secret makes the
 // visitor hash impossible to reverse or correlate across days without the
@@ -60,6 +60,16 @@ export function referrerHost(referrer: string | null): string | null {
   }
 }
 
+const TABLET_RE = /ipad|tablet|playbook|silk|android(?!.*mobile)/i;
+const MOBILE_RE = /mobi|iphone|ipod|android|blackberry|iemobile|opera mini/i;
+
+// Coarse 3-way classification only; the raw user-agent is never persisted.
+function deviceTypeFromUserAgent(userAgent: string): DeviceType {
+  if (TABLET_RE.test(userAgent)) return "tablet";
+  if (MOBILE_RE.test(userAgent)) return "mobile";
+  return "desktop";
+}
+
 function dailyVisitorHash(ip: string, userAgent: string): string {
   const day = new Date().toISOString().slice(0, 10);
   return createHash("sha256")
@@ -86,6 +96,7 @@ export async function recordPageview(view: Pageview): Promise<void> {
     articleId: article?.id ?? null,
     locale: localeFromPath(path),
     referrerHost: referrerHost(view.referrer),
+    deviceType: deviceTypeFromUserAgent(view.userAgent),
     visitorHash: dailyVisitorHash(view.ip, view.userAgent),
   });
 }

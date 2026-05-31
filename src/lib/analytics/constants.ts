@@ -18,6 +18,12 @@ export const TOP_LIST_LIMIT = 10;
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
+// Coarse device buckets derived from the user-agent at ingestion. We never
+// store the raw user-agent: three buckets carry no fingerprinting risk.
+// Kept in sync with the deviceTypeEnum in src/db/schema.ts.
+export const DEVICE_TYPES = ["desktop", "mobile", "tablet"] as const;
+export type DeviceType = (typeof DEVICE_TYPES)[number];
+
 export function parseRange(raw: string | undefined): AnalyticsRange {
   const value = Number(raw);
   return (ANALYTICS_RANGES as readonly number[]).includes(value)

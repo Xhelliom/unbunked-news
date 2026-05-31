@@ -130,16 +130,27 @@
       "subtitle": "Cookieless, privacy-friendly audience measurement.",
       "rangeLabel": "Range",
       "rangeDays": "{days}d",
-      "chartTitle": "Pageviews per day",
+      "deltaLabel": "vs prev. period",
+      "chartTitle": "Pageviews & visitors per day",
+      "articleViews": "{count, plural, =0 {No article views} one {# article view} other {# article views}} in range",
       "topArticles": "Most-viewed articles",
       "topPages": "Most-viewed pages",
       "topReferrers": "Traffic sources",
+      "entryPages": "Entry pages",
+      "devices": "Devices",
+      "languages": "Languages",
       "noData": "No data for this range.",
       "noReferrers": "No external sources for this range.",
       "summary": {
-        "visitors": "Unique visitors",
+        "visitors": "Visitors",
         "pageviews": "Pageviews",
-        "articleViews": "Article views"
+        "viewsPerVisit": "Views / visit",
+        "bounceRate": "Bounce rate"
+      },
+      "deviceTypes": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "tablet": "Tablet"
       },
       "privacy": {
         "title": "Privacy & retention",

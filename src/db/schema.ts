@@ -45,6 +45,13 @@ export const jobStatusEnum = pgEnum("job_status", [
   "failed",
 ]);
 
+// Kept in sync with DEVICE_TYPES in src/lib/analytics/constants.ts.
+export const deviceTypeEnum = pgEnum("device_type", [
+  "desktop",
+  "mobile",
+  "tablet",
+]);
+
 export const articles = pgTable(
   "articles",
   {
@@ -234,6 +241,7 @@ export const analyticsEvents = pgTable(
     articleId: uuid().references(() => articles.id, { onDelete: "set null" }),
     locale: varchar({ length: 5 }).notNull(),
     referrerHost: text(),
+    deviceType: deviceTypeEnum().notNull().default("desktop"),
     visitorHash: text().notNull(),
     createdAt: timestamp({ withTimezone: true, mode: "date" })
       .notNull()
@@ -243,6 +251,7 @@ export const analyticsEvents = pgTable(
     index("analytics_events_created_at_idx").on(table.createdAt),
     index("analytics_events_article_id_idx").on(table.articleId),
     index("analytics_events_path_idx").on(table.path),
+    index("analytics_events_visitor_hash_idx").on(table.visitorHash),
   ],
 );
 

@@ -1,19 +1,23 @@
-import type { DailyViews } from "@/lib/analytics/queries";
+import type { DailyPoint } from "@/lib/analytics/queries";
 
 type AnalyticsBarChartProps = {
-  data: DailyViews[];
+  data: DailyPoint[];
+  pageviewsLabel: string;
+  visitorsLabel: string;
   emptyLabel: string;
   formatDay: (iso: string) => string;
 };
 
-// Lightweight CSS-only bar chart — no charting dependency. Bars scale to the
-// busiest day in the range.
+// Lightweight CSS-only chart, no charting dependency. Each day is an outer bar
+// (pageviews) with an inner bar (visitors, always <= pageviews) layered on top.
 export function AnalyticsBarChart({
   data,
+  pageviewsLabel,
+  visitorsLabel,
   emptyLabel,
   formatDay,
 }: AnalyticsBarChartProps) {
-  const max = data.reduce((peak, point) => Math.max(peak, point.views), 0);
+  const max = data.reduce((peak, point) => Math.max(peak, point.pageviews), 0);
 
   if (max === 0) {
     return (
@@ -23,20 +27,45 @@ export function AnalyticsBarChart({
     );
   }
 
+  const height = (value: number) => `${Math.max((value / max) * 100, value > 0 ? 2 : 0)}%`;
+
   return (
-    <div className="flex h-48 items-end gap-1" role="img">
-      {data.map((point) => (
-        <div
-          key={point.day}
-          className="group flex h-full flex-1 flex-col items-center justify-end"
-          title={`${formatDay(point.day)} · ${point.views}`}
-        >
+    <div className="space-y-3">
+      <div className="text-muted-foreground flex items-center gap-4 text-xs">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="bg-primary/30 size-2.5 rounded-sm" aria-hidden />
+          {pageviewsLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="bg-primary size-2.5 rounded-sm" aria-hidden />
+          {visitorsLabel}
+        </span>
+      </div>
+      <div
+        className="flex h-48 items-end gap-1"
+        role="img"
+        aria-label={`${pageviewsLabel} / ${visitorsLabel}`}
+      >
+        {data.map((point) => (
           <div
-            className="bg-primary/80 group-hover:bg-primary w-full rounded-t-sm transition-colors"
-            style={{ height: `${Math.max((point.views / max) * 100, 2)}%` }}
-          />
-        </div>
-      ))}
+            key={point.day}
+            className="group relative flex h-full flex-1 items-end"
+            title={`${formatDay(point.day)} · ${point.pageviews} / ${point.visitors}`}
+          >
+            <div
+              className="bg-primary/20 group-hover:bg-primary/30 relative w-full rounded-t-sm transition-colors"
+              style={{ height: height(point.pageviews) }}
+            >
+              <div
+                className="bg-primary absolute inset-x-0 bottom-0 rounded-t-sm"
+                style={{
+                  height: `${(point.visitors / Math.max(point.pageviews, 1)) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

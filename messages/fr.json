@@ -130,16 +130,27 @@
       "subtitle": "Mesure d'audience sans cookie, respectueuse de la vie privée.",
       "rangeLabel": "Période",
       "rangeDays": "{days} j",
-      "chartTitle": "Pages vues par jour",
+      "deltaLabel": "vs période préc.",
+      "chartTitle": "Pages vues & visiteurs par jour",
+      "articleViews": "{count, plural, =0 {Aucune vue d'article} one {# vue d'article} other {# vues d'articles}} sur la période",
       "topArticles": "Articles les plus vus",
       "topPages": "Pages les plus vues",
       "topReferrers": "Sources de trafic",
+      "entryPages": "Pages d'entrée",
+      "devices": "Appareils",
+      "languages": "Langues",
       "noData": "Aucune donnée sur cette période.",
       "noReferrers": "Aucune source externe sur cette période.",
       "summary": {
-        "visitors": "Visiteurs uniques",
+        "visitors": "Visiteurs",
         "pageviews": "Pages vues",
-        "articleViews": "Vues d'articles"
+        "viewsPerVisit": "Pages / visite",
+        "bounceRate": "Taux de rebond"
+      },
+      "deviceTypes": {
+        "desktop": "Ordinateur",
+        "mobile": "Mobile",
+        "tablet": "Tablette"
       },
       "privacy": {
         "title": "Confidentialité & conservation",
