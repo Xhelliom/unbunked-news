@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
 import { ArticleImage } from "@/components/article-image";
+import { LowCriterionBadge } from "@/components/low-criterion-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
@@ -30,6 +31,9 @@ export function HeroCard({ article }: { article: FeedArticle }) {
             <VerdictBadge verdict={article.verdict} />
           </div>
         )}
+        <div className="absolute bottom-[18px] left-[18px]">
+          <LowCriterionBadge scores={article} />
+        </div>
         {article.reliabilityScore !== null && (
           <span className="bg-background/90 ring-border absolute right-[18px] bottom-[18px] inline-flex items-baseline gap-1 rounded-xl px-3.5 py-2 ring-1 ring-inset backdrop-blur">
             <span className="text-muted-foreground mr-1 self-center text-[10px] font-semibold tracking-[0.08em] uppercase">

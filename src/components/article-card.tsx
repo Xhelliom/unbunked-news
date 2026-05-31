@@ -4,6 +4,7 @@ import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
 import { CLAIM_STATUSES, claimStatusDotClasses } from "@/lib/claim-status";
 import { ArticleImage } from "@/components/article-image";
+import { LowCriterionBadge } from "@/components/low-criterion-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
@@ -36,6 +37,9 @@ export function ArticleCard({ article }: { article: FeedArticle }) {
             <VerdictBadge verdict={article.verdict} />
           </div>
         )}
+        <div className="absolute bottom-3 left-3">
+          <LowCriterionBadge scores={article} />
+        </div>
         {article.reliabilityScore !== null && (
           <span className="bg-background/90 ring-border absolute right-3 bottom-3 inline-flex items-baseline gap-1 rounded-full px-2.5 py-1 ring-1 ring-inset backdrop-blur">
             <span className="text-[13px] font-bold tracking-tight">

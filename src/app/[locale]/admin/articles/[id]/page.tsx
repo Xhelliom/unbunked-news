@@ -61,6 +61,12 @@ export default async function AdminArticleReviewPage({
         showOriginal={article.showOriginal}
         verdict={article.verdict}
         reliabilityScore={article.reliabilityScore}
+        factualityScore={article.factualityScore}
+        sourcingScore={article.sourcingScore}
+        neutralityScore={article.neutralityScore}
+        completenessScore={article.completenessScore}
+        transparencyScore={article.transparencyScore}
+        recencyScore={article.recencyScore}
         published={article.published}
       />
 

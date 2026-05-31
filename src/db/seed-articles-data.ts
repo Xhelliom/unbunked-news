@@ -31,6 +31,14 @@ export type SeedArticle = {
   tagSlug: string;
   verdict: Verdict;
   reliabilityScore: number;
+  // Core sub-scores default to reliabilityScore when omitted; the optional ones
+  // stay null (the AI couldn't rate them) unless given an explicit value.
+  factualityScore?: number;
+  sourcingScore?: number;
+  neutralityScore?: number;
+  completenessScore?: number | null;
+  transparencyScore?: number | null;
+  recencyScore?: number | null;
   publishedAt: string;
   title: string;
   originalTitle: string;
@@ -58,6 +66,11 @@ export const ARTICLES: SeedArticle[] = [
     tagSlug: "politics",
     verdict: "debunked",
     reliabilityScore: 18,
+    factualityScore: 12,
+    sourcingScore: 25,
+    neutralityScore: 30,
+    completenessScore: 28,
+    transparencyScore: 45,
     publishedAt: "2026-05-12",
     title: "Non, la dette publique n'a pas doublé en six mois",
     originalTitle:
@@ -128,6 +141,11 @@ export const ARTICLES: SeedArticle[] = [
     tagSlug: "tech",
     verdict: "nuanced",
     reliabilityScore: 64,
+    factualityScore: 75,
+    sourcingScore: 62,
+    neutralityScore: 38,
+    completenessScore: 58,
+    recencyScore: 70,
     publishedAt: "2026-05-19",
     title: "L'IA bat-elle vraiment les médecins à 90 % au diagnostic ?",
     originalTitle:
@@ -192,6 +210,12 @@ export const ARTICLES: SeedArticle[] = [
     tagSlug: "environment",
     verdict: "reliable",
     reliabilityScore: 91,
+    factualityScore: 95,
+    sourcingScore: 90,
+    neutralityScore: 88,
+    completenessScore: 92,
+    transparencyScore: 85,
+    recencyScore: 90,
     publishedAt: "2026-05-21",
     title:
       "Éolien offshore : les chiffres de RTE pour 2050 résistent à la vérification",
@@ -252,6 +276,12 @@ export const ARTICLES: SeedArticle[] = [
     tagSlug: "health",
     verdict: "biased",
     reliabilityScore: 41,
+    factualityScore: 68,
+    sourcingScore: 50,
+    neutralityScore: 22,
+    completenessScore: 38,
+    transparencyScore: 55,
+    recencyScore: 60,
     publishedAt: "2026-05-08",
     title:
       "Le magnésium améliore-t-il vraiment le sommeil ? Le cadrage de l'article",
