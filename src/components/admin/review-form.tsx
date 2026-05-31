@@ -9,6 +9,7 @@ import {
   type ActionState,
 } from "@/app/[locale]/admin/actions";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { CriteriaFieldset } from "@/components/admin/criteria-fieldset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +22,12 @@ type ReviewFormProps = {
   showOriginal: boolean;
   verdict: Verdict | null;
   reliabilityScore: number | null;
+  factualityScore: number | null;
+  sourcingScore: number | null;
+  neutralityScore: number | null;
+  completenessScore: number | null;
+  transparencyScore: number | null;
+  recencyScore: number | null;
   published: boolean;
 };
 
@@ -124,6 +131,7 @@ export function ReviewForm(props: ReviewFormProps) {
             />
           </div>
         </div>
+        <CriteriaFieldset initial={props} />
         <Button type="submit" disabled={pending}>
           {pending ? t("saving") : t("save")}
         </Button>

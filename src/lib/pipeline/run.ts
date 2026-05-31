@@ -102,6 +102,12 @@ export async function runPipeline(jobId: string): Promise<void> {
           imageUrl: article.imageUrl,
           verdict: analysis.verdict,
           reliabilityScore: analysis.reliabilityScore,
+          factualityScore: analysis.factualityScore,
+          sourcingScore: analysis.sourcingScore,
+          neutralityScore: analysis.neutralityScore,
+          completenessScore: analysis.completenessScore,
+          transparencyScore: analysis.transparencyScore,
+          recencyScore: analysis.recencyScore,
           locale: analysis.language,
           published: false,
         })

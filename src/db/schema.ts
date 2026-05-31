@@ -70,7 +70,17 @@ export const articles = pgTable(
     imageUrl: text(),
     imageAttribution: text(),
     verdict: verdictEnum(),
+    // Overall reliability (0-100), produced by the AI to stay coherent with the
+    // verdict. The sub-scores below decompose it for a finer reading: the three
+    // core ones are always scored, the three optional ones are null when the AI
+    // can't judge them reliably (e.g. no funding disclosure to rate).
     reliabilityScore: integer(),
+    factualityScore: integer(),
+    sourcingScore: integer(),
+    neutralityScore: integer(),
+    completenessScore: integer(),
+    transparencyScore: integer(),
+    recencyScore: integer(),
     locale: varchar({ length: 5 }).notNull().default("fr"),
     published: boolean().notNull().default(false),
     publishedAt: timestamp({ withTimezone: true, mode: "date" }),

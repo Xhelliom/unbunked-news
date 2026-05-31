@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
+import { clampScore, NEUTRAL_SCORE } from "@/lib/score-criteria";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
 import {
@@ -19,7 +20,17 @@ const SYSTEM =
   "central claim under examination. Ground every claim's status in the cited " +
   "sources; if evidence is insufficient, use 'unverifiable'. The reliability " +
   "score must reflect the overall verdict (reliable ~85-100, nuanced ~60-84, " +
-  "biased ~40-59, debunked ~0-39, unverifiable ~50). Write the title, summary, " +
+  "biased ~40-59, debunked ~0-39, unverifiable ~50). Break that overall score " +
+  "into sub-scores (0-100). Three are mandatory: factuality judges whether the " +
+  "claims are true; sourcing judges how solid, independent and verifiable the " +
+  "cited references are; neutrality judges the absence of slanted framing or " +
+  "strategic omissions. They may diverge — a piece can be factually accurate " +
+  "yet heavily biased, or well-meaning yet thinly sourced. Three more are " +
+  "optional: completeness (are key facts present vs omitted), transparency " +
+  "(author, date, methodology, funding identifiable) and recency (information " +
+  "up to date). Provide an optional score ONLY when you can judge it reliably; " +
+  "omit the field entirely otherwise — never guess. Write the " +
+  "title, summary, " +
   "originalSummary, claim text, and explanations in the same language as the " +
   "article; never translate. The originalSummary must be a neutral paraphrase " +
   "in your own words — never copy sentences from the article. For each claim, " +
@@ -47,6 +58,16 @@ function toSources(value: unknown): AnalysisSource[] {
     }
     return [];
   });
+}
+
+function toScore(value: unknown, fallback: number): number {
+  return clampScore(value) ?? fallback;
+}
+
+// Optional criteria are absent when the model omits them; keep them null rather
+// than inventing a value.
+function toOptionalScore(value: unknown): number | null {
+  return value === null || value === undefined ? null : clampScore(value);
 }
 
 function toClaims(value: unknown): AnalysisClaim[] {
@@ -115,10 +136,7 @@ export async function aggregate(
     throw new Error("Aggregation did not return a structured analysis");
   }
 
-  const rawScore = Number(input.reliabilityScore);
-  const reliabilityScore = Number.isFinite(rawScore)
-    ? Math.min(100, Math.max(0, Math.round(rawScore)))
-    : 50;
+  const reliabilityScore = toScore(input.reliabilityScore, NEUTRAL_SCORE);
 
   return {
     title: typeof input.title === "string" ? input.title : article.title,
@@ -131,6 +149,12 @@ export async function aggregate(
         : "fr",
     verdict: isVerdict(input.verdict) ? input.verdict : "unverifiable",
     reliabilityScore,
+    factualityScore: toScore(input.factualityScore, reliabilityScore),
+    sourcingScore: toScore(input.sourcingScore, reliabilityScore),
+    neutralityScore: toScore(input.neutralityScore, reliabilityScore),
+    completenessScore: toOptionalScore(input.completenessScore),
+    transparencyScore: toOptionalScore(input.transparencyScore),
+    recencyScore: toOptionalScore(input.recencyScore),
     tags: Array.isArray(input.tags)
       ? input.tags.filter((t): t is string => typeof t === "string")
       : [],

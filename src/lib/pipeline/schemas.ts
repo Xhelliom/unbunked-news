@@ -29,6 +29,12 @@ export type Analysis = {
   language: string;
   verdict: Verdict;
   reliabilityScore: number;
+  factualityScore: number;
+  sourcingScore: number;
+  neutralityScore: number;
+  completenessScore: number | null;
+  transparencyScore: number | null;
+  recencyScore: number | null;
   tags: string[];
   claims: AnalysisClaim[];
 };
@@ -90,7 +96,38 @@ export const recordAnalysisTool: Anthropic.Tool = {
       },
       reliabilityScore: {
         type: "integer",
-        description: "Overall reliability from 0 (false) to 100 (fully reliable).",
+        description:
+          "Overall reliability from 0 (false) to 100 (fully reliable). Must stay coherent with the verdict and the three sub-scores below.",
+      },
+      factualityScore: {
+        type: "integer",
+        description:
+          "Factuality, 0-100: are the claims true and verified against the sources?",
+      },
+      sourcingScore: {
+        type: "integer",
+        description:
+          "Sourcing, 0-100: are the references cited solid, independent, primary and verifiable?",
+      },
+      neutralityScore: {
+        type: "integer",
+        description:
+          "Neutrality, 0-100: is the framing balanced, free of slanted tone or strategic omissions?",
+      },
+      completenessScore: {
+        type: "integer",
+        description:
+          "OPTIONAL completeness, 0-100: are the important facts present rather than strategically omitted? Omit this field entirely if you cannot judge it reliably.",
+      },
+      transparencyScore: {
+        type: "integer",
+        description:
+          "OPTIONAL transparency, 0-100: are the author, date, methodology and funding identifiable? Omit this field entirely if the article gives nothing to judge.",
+      },
+      recencyScore: {
+        type: "integer",
+        description:
+          "OPTIONAL recency, 0-100: is the information up to date rather than stale or superseded? Omit this field entirely if recency is not relevant or cannot be judged.",
       },
       tags: {
         type: "array",
@@ -138,6 +175,9 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "language",
       "verdict",
       "reliabilityScore",
+      "factualityScore",
+      "sourcingScore",
+      "neutralityScore",
       "tags",
       "claims",
     ],

@@ -16,6 +16,7 @@ import { ArticleImage } from "@/components/article-image";
 import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ScoreCriteria } from "@/components/score-criteria";
 import { ArticleReader } from "@/components/article-reader";
 import { ArticleViewSwitcher } from "@/components/article-view-switcher";
 import { RewriteBody } from "@/components/rewrite-body";
@@ -171,6 +172,7 @@ export default async function ArticlePage({
               />
             </div>
           )}
+          <ScoreCriteria scores={article} />
         </div>
 
         {statusCounts.length > 0 && (

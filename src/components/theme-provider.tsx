@@ -70,6 +70,7 @@ export function ThemeProvider({
   // only syncs React state — it never causes a visible flash.
   useEffect(() => {
     const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is client-only, so the persisted choice can only be read post-mount
     if (stored) setThemeState(stored);
   }, []);
 
@@ -83,6 +84,7 @@ export function ThemeProvider({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs the resolved theme to the DOM; "system" needs matchMedia, unavailable during render
     apply(theme);
   }, [theme, apply]);
 

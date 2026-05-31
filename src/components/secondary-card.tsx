@@ -1,6 +1,7 @@
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
 import { ArticleImage } from "@/components/article-image";
+import { LowCriterionBadge } from "@/components/low-criterion-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
@@ -30,6 +31,7 @@ export function SecondaryCard({ article }: { article: FeedArticle }) {
               {article.reliabilityScore}/100
             </span>
           )}
+          <LowCriterionBadge scores={article} />
         </div>
         <h3 className="group-hover:text-primary line-clamp-3 font-serif text-[15px] leading-[1.25] font-bold text-balance transition-colors">
           {article.title}
