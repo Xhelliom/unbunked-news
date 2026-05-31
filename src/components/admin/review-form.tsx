@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
@@ -8,19 +8,8 @@ import {
   setPublished,
   type ActionState,
 } from "@/app/[locale]/admin/actions";
-import { cn } from "@/lib/utils";
-import {
-  CRITERION_COLUMN,
-  NEUTRAL_SCORE,
-  OPTIONAL_CRITERIA,
-  SCORE_CRITERIA,
-  criterionValue,
-  isOptionalCriterion,
-  scoreBand,
-  type OptionalCriterion,
-  type ScoreCriterion,
-} from "@/lib/score-criteria";
-import { VERDICTS, verdictDotClasses, type Verdict } from "@/lib/verdicts";
+import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { CriteriaFieldset } from "@/components/admin/criteria-fieldset";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,33 +37,10 @@ const selectClass =
 export function ReviewForm(props: ReviewFormProps) {
   const t = useTranslations("admin.review");
   const tv = useTranslations("verdicts");
-  const tc = useTranslations("criteria");
   const [, action, pending] = useActionState<ActionState, FormData>(
     saveArticle,
     {},
   );
-
-  const [scores, setScores] = useState<Record<ScoreCriterion, number>>(
-    () =>
-      Object.fromEntries(
-        SCORE_CRITERIA.map((criterion) => [
-          criterion,
-          criterionValue(props, criterion) ?? NEUTRAL_SCORE,
-        ]),
-      ) as Record<ScoreCriterion, number>,
-  );
-  const [enabled, setEnabled] = useState<Record<OptionalCriterion, boolean>>(
-    () =>
-      Object.fromEntries(
-        OPTIONAL_CRITERIA.map((criterion) => [
-          criterion,
-          criterionValue(props, criterion) !== null,
-        ]),
-      ) as Record<OptionalCriterion, boolean>,
-  );
-
-  const isScored = (criterion: ScoreCriterion): boolean =>
-    !isOptionalCriterion(criterion) || enabled[criterion];
 
   return (
     <div className="space-y-6">
@@ -165,80 +131,7 @@ export function ReviewForm(props: ReviewFormProps) {
             />
           </div>
         </div>
-        <fieldset className="space-y-3">
-          <legend className="text-sm font-medium">{t("criteriaTitle")}</legend>
-          <p className="text-muted-foreground text-xs">{t("criteriaHint")}</p>
-          {SCORE_CRITERIA.map((criterion) => {
-            const optional = isOptionalCriterion(criterion);
-            const on = isScored(criterion);
-            const value = scores[criterion];
-            const field = CRITERION_COLUMN[criterion];
-            return (
-              <div key={criterion} className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  {optional && (
-                    <input
-                      type="checkbox"
-                      checked={enabled[criterion]}
-                      aria-label={tc(`${criterion}.label`)}
-                      onChange={(event) =>
-                        setEnabled((current) => ({
-                          ...current,
-                          [criterion]: event.target.checked,
-                        }))
-                      }
-                    />
-                  )}
-                  <label
-                    htmlFor={field}
-                    className={cn(
-                      "text-sm font-medium",
-                      !on && "text-muted-foreground",
-                    )}
-                  >
-                    {tc(`${criterion}.label`)}
-                    {optional && (
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        · {t("optional")}
-                      </span>
-                    )}
-                  </label>
-                  <span className="ml-auto font-mono text-sm tabular-nums">
-                    {on ? value : "—"}
-                  </span>
-                </div>
-                <input
-                  id={field}
-                  name={field}
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={value}
-                  disabled={!on}
-                  onChange={(event) =>
-                    setScores((current) => ({
-                      ...current,
-                      [criterion]: Number(event.target.value),
-                    }))
-                  }
-                  className="w-full disabled:opacity-40"
-                />
-                <div className="bg-muted h-1.5 overflow-hidden rounded-full">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      on
-                        ? verdictDotClasses[scoreBand(value)]
-                        : "bg-muted-foreground/30",
-                    )}
-                    style={{ width: `${on ? value : 0}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </fieldset>
+        <CriteriaFieldset initial={props} />
         <Button type="submit" disabled={pending}>
           {pending ? t("saving") : t("save")}
         </Button>
