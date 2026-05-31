@@ -1,6 +1,7 @@
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { cn } from "@/lib/utils";
 import {
   lowestWeakCriterion,
   type CriterionScores,
@@ -22,10 +23,10 @@ export function LowCriterionBadge({
 
   return (
     <span
-      className={
-        "bg-verdict-debunked-bg text-verdict-debunked-fg ring-verdict-debunked/30 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset " +
-        (className ?? "")
-      }
+      className={cn(
+        "bg-verdict-debunked-bg text-verdict-debunked-fg ring-verdict-debunked/30 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
+        className,
+      )}
     >
       <TriangleAlert className="size-3" />
       {t("lowWarning", { criterion: t(`${criterion}.label`) })}

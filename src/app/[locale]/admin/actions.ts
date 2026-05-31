@@ -12,21 +12,17 @@ import { requireSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
+  clampScore,
   type CriterionScores,
 } from "@/lib/score-criteria";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
 
-// Clamps a raw score field to 0-100, or null when absent/blank (e.g. an
-// optional criterion the editor left unscored, whose slider is disabled and
-// therefore omitted from the form data).
+// A blank field (cleared global score, or an optional criterion whose disabled
+// slider is omitted from the form data) means "unscored" -> null.
 function parseScore(raw: FormDataEntryValue | null): number | null {
-  if (raw === null || raw === "") return null;
-  const value = Number(raw);
-  return Number.isFinite(value)
-    ? Math.min(100, Math.max(0, Math.round(value)))
-    : null;
+  return raw === null || raw === "" ? null : clampScore(raw);
 }
 
 function parseUrl(raw: string): string | null {

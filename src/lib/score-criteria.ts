@@ -58,6 +58,13 @@ export function criterionValue(
   return scores[CRITERION_COLUMN[criterion]];
 }
 
+// Coerces a raw value to an integer in 0-100, or null when it isn't a finite
+// number. The single clamp used by the pipeline parser and the admin action.
+export function clampScore(value: unknown): number | null {
+  const raw = Number(value);
+  return Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : null;
+}
+
 // Maps a 0-100 sub-score to the verdict colour family used for its progress
 // bar, reusing the same bands the editor guidelines apply to the overall score.
 export function scoreBand(score: number): Verdict {

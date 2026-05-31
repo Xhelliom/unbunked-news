@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
+import { clampScore } from "@/lib/score-criteria";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
 import {
@@ -60,16 +61,13 @@ function toSources(value: unknown): AnalysisSource[] {
 }
 
 function toScore(value: unknown, fallback: number): number {
-  const raw = Number(value);
-  return Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : fallback;
+  return clampScore(value) ?? fallback;
 }
 
 // Optional criteria are absent when the model omits them; keep them null rather
 // than inventing a value.
 function toOptionalScore(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  const raw = Number(value);
-  return Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : null;
+  return value === null || value === undefined ? null : clampScore(value);
 }
 
 function toClaims(value: unknown): AnalysisClaim[] {
