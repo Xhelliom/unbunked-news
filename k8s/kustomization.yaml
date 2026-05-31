@@ -6,6 +6,8 @@ resources:
   - namespace.yaml
   - postgres.yaml
   - app.yaml
+  - worker.yaml
+  - hpa.yaml
   - ingress.yaml
   # Create k8s/secret.yaml from secret.example.yaml (never commit real secrets):
   # - secret.yaml

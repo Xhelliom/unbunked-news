@@ -1,21 +1,34 @@
+# Job queue worker. Same image as the web Deployment (app.yaml) — only
+# APP_ROLE=worker differs, so this process drains the durable job queue instead
+# of serving HTTP traffic. It still runs `node server.js` (the Next server is
+# up, which is why the health probes below work) but it is NOT behind the web
+# Service/Ingress.
+#
+# Scaling: raise `replicas` to add job concurrency. The claim uses
+# FOR UPDATE SKIP LOCKED, so multiple worker pods race for jobs without
+# double-claiming — adding replicas is safe.
+#
+# DB connection math: each worker pod opens up to DATABASE_POOL_MAX connections,
+# same as a web pod. Across the whole stack:
+#   (web maxReplicas + worker replicas) * DATABASE_POOL_MAX < postgres max_connections.
+# Front the DB with PgBouncer (or lower DATABASE_POOL_MAX) before scaling out.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web
+  name: worker
   namespace: unbunked
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: worker
   template:
     metadata:
       labels:
-        app: web
+        app: worker
     spec:
       containers:
-        - name: web
-          # Build & push the "runner" target, then set your registry/tag here.
+        - name: worker
           image: ghcr.io/xhelliom/unbunked-news:latest
           ports:
             - containerPort: 3000
@@ -25,10 +38,8 @@ spec:
           env:
             - name: NODE_ENV
               value: production
-            # Web pods serve HTTP only; the dedicated worker Deployment
-            # (worker.yaml) drains the job queue. Separation of concerns.
             - name: APP_ROLE
-              value: web
+              value: worker
           readinessProbe:
             httpGet:
               path: /api/health
@@ -43,22 +54,9 @@ spec:
             periodSeconds: 15
           resources:
             requests:
-              # HPA CPU utilization is computed against this request.
               cpu: 250m
               memory: 256Mi
             limits:
               # Chromium/puppeteer scraping fallback runs in this pod and OOMs
               # at 512Mi. No CPU limit on purpose: avoid throttling under load.
               memory: 1Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: web
-  namespace: unbunked
-spec:
-  selector:
-    app: web
-  ports:
-    - port: 80
-      targetPort: 3000

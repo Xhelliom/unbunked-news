@@ -217,6 +217,9 @@ export const jobs = pgTable(
     // Human-readable current step for the admin progress UI.
     step: text(),
     progress: integer().notNull().default(0),
+    // Number of times the queue worker has claimed this job. Bounds reaper
+    // retries so a job that repeatedly stalls eventually fails for good.
+    attempts: integer().notNull().default(0),
     error: text(),
     startedAt: timestamp({ withTimezone: true, mode: "date" }),
     finishedAt: timestamp({ withTimezone: true, mode: "date" }),

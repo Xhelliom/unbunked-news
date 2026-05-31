@@ -1,0 +1,27 @@
+# Requires metrics-server in the cluster to read pod CPU usage.
+#
+# DB connection math: worker pods (worker.yaml) open connections too, so the
+# whole stack must satisfy
+#   (web maxReplicas + worker replicas) * DATABASE_POOL_MAX < postgres max_connections.
+# With the default pool of 10, 6 web + 1 worker need ~70 connections plus
+# headroom. Front the DB with PgBouncer (or lower DATABASE_POOL_MAX) before
+# raising maxReplicas or worker replicas.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web
+  namespace: unbunked
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
