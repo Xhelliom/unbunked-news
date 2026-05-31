@@ -33,6 +33,7 @@
     "about": "Notre mission",
     "method": "Méthodologie",
     "submit": "Proposer un article",
+    "privacy": "Confidentialité",
     "rights": "Tous droits réservés."
   },
   "verdicts": {
@@ -121,7 +122,32 @@
     "nav": {
       "dashboard": "Tableau de bord",
       "submit": "Soumettre une URL",
-      "proposals": "Propositions"
+      "proposals": "Propositions",
+      "analytics": "Statistiques"
+    },
+    "analytics": {
+      "title": "Statistiques",
+      "subtitle": "Mesure d'audience sans cookie, respectueuse de la vie privée.",
+      "rangeLabel": "Période",
+      "rangeDays": "{days} j",
+      "chartTitle": "Pages vues par jour",
+      "topArticles": "Articles les plus vus",
+      "topPages": "Pages les plus vues",
+      "topReferrers": "Sources de trafic",
+      "noData": "Aucune donnée sur cette période.",
+      "noReferrers": "Aucune source externe sur cette période.",
+      "summary": {
+        "visitors": "Visiteurs uniques",
+        "pageviews": "Pages vues",
+        "articleViews": "Vues d'articles"
+      },
+      "privacy": {
+        "title": "Confidentialité & conservation",
+        "description": "Aucun cookie, aucune donnée personnelle. Les visiteurs uniques sont comptés via un identifiant anonyme qui change chaque jour.",
+        "retention": "Les données sont conservées au maximum {days} jours.",
+        "oldest": "Donnée la plus ancienne : {date}. Conservation maximale : {days} jours.",
+        "purge": "Purger les anciennes données"
+      }
     },
     "dashboard": {
       "title": "Articles",
@@ -259,5 +285,31 @@
     "submitting": "Envoi…",
     "success": "Merci ! Votre proposition a bien été reçue.",
     "invalidUrl": "URL invalide."
+  },
+  "privacy": {
+    "title": "Confidentialité",
+    "intro": "Unbunked mesure son audience sans jamais vous pister : pas de cookie, pas de profil publicitaire, aucune donnée revendue.",
+    "sections": {
+      "cookieless": {
+        "title": "Aucun cookie, aucun consentement requis",
+        "body": "Nos statistiques ne déposent aucun cookie et ne stockent rien sur votre appareil. Conformément au RGPD et à la directive ePrivacy, aucune bannière de consentement n'est donc nécessaire."
+      },
+      "collected": {
+        "title": "Ce que nous mesurons",
+        "body": "Pour chaque page consultée, nous enregistrons uniquement la page visitée, la langue d'affichage et le nom de domaine du site qui vous a éventuellement amené jusqu'à nous. La chaîne de requête (ce qui suit « ? » dans l'adresse) n'est jamais conservée."
+      },
+      "noPersonalData": {
+        "title": "Aucune donnée personnelle",
+        "body": "Votre adresse IP et votre navigateur ne sont jamais stockés. Ils servent uniquement à calculer un identifiant anonyme qui change chaque jour : nous pouvons ainsi compter les visiteurs uniques sans jamais pouvoir vous reconnaître d'un jour à l'autre ni vous réidentifier."
+      },
+      "retention": {
+        "title": "Durée de conservation",
+        "body": "Les mesures sont automatiquement purgées au-delà de 90 jours. Nous appliquons le principe de minimisation : seules des données agrégées et anonymes sont conservées, le temps strictement nécessaire."
+      },
+      "rights": {
+        "title": "Vos droits et Do Not Track",
+        "body": "Si votre navigateur envoie le signal « Do Not Track » ou « Global Privacy Control », aucune mesure n'est effectuée. Comme aucune donnée personnelle n'est collectée, il n'y a rien vous concernant à consulter, rectifier ou supprimer."
+      }
+    }
   }
 }

@@ -1,0 +1,91 @@
+import "server-only";
+
+import { createHash } from "node:crypto";
+
+import { eq } from "drizzle-orm";
+
+import { db } from "@/db/client";
+import { analyticsEvents, articles } from "@/db/schema";
+import { routing } from "@/i18n/routing";
+
+import { MAX_TRACK_PATH_LENGTH } from "./constants";
+
+// Daily-rotating salt: combining the date with a server secret makes the
+// visitor hash impossible to reverse or correlate across days without the
+// secret, so it is not a persistent identifier.
+const SALT_BASE =
+  process.env.ANALYTICS_SALT ?? process.env.BETTER_AUTH_SECRET ?? "";
+
+const ARTICLE_PATH = /^\/(?:[a-z]{2}\/)?article\/([^/]+)\/?$/;
+
+export type Pageview = {
+  path: string;
+  referrer: string | null;
+  ip: string;
+  userAgent: string;
+};
+
+// Strip query string and hash; keep a leading-slash pathname under the cap.
+// Returns null when the input can't be a real internal path.
+export function normalizePath(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("/") || trimmed.length > MAX_TRACK_PATH_LENGTH) {
+    return null;
+  }
+  const path = trimmed.split(/[?#]/, 1)[0];
+  return path.length > 0 ? path : null;
+}
+
+function localeFromPath(path: string): string {
+  const segment = path.split("/")[1];
+  return (routing.locales as readonly string[]).includes(segment)
+    ? segment
+    : routing.defaultLocale;
+}
+
+function articleSlugFromPath(path: string): string | null {
+  const match = ARTICLE_PATH.exec(path);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// Keep only the host of an external referrer; drop the full URL for privacy.
+export function referrerHost(referrer: string | null): string | null {
+  if (!referrer) return null;
+  try {
+    const url = new URL(referrer);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.hostname || null;
+  } catch {
+    return null;
+  }
+}
+
+function dailyVisitorHash(ip: string, userAgent: string): string {
+  const day = new Date().toISOString().slice(0, 10);
+  return createHash("sha256")
+    .update(`${day}:${SALT_BASE}:${ip}:${userAgent}`)
+    .digest("hex");
+}
+
+export async function recordPageview(view: Pageview): Promise<void> {
+  const path = normalizePath(view.path);
+  if (!path) {
+    throw new Error("Invalid analytics path");
+  }
+
+  const slug = articleSlugFromPath(path);
+  const article = slug
+    ? await db.query.articles.findFirst({
+        where: eq(articles.slug, slug),
+        columns: { id: true },
+      })
+    : null;
+
+  await db.insert(analyticsEvents).values({
+    path,
+    articleId: article?.id ?? null,
+    locale: localeFromPath(path),
+    referrerHost: referrerHost(view.referrer),
+    visitorHash: dailyVisitorHash(view.ip, view.userAgent),
+  });
+}
