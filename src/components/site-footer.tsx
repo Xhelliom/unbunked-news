@@ -70,6 +70,14 @@ export function SiteFooter() {
                 {tFooter("submit")}
               </Link>
             </li>
+            <li>
+              <Link
+                href="/confidentialite"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+              >
+                {tFooter("privacy")}
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

@@ -33,6 +33,7 @@
     "about": "Our mission",
     "method": "Methodology",
     "submit": "Submit an article",
+    "privacy": "Privacy",
     "rights": "All rights reserved."
   },
   "verdicts": {
@@ -121,7 +122,54 @@
     "nav": {
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
-      "proposals": "Proposals"
+      "proposals": "Proposals",
+      "analytics": "Analytics"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "Cookieless, privacy-friendly audience measurement.",
+      "rangeLabel": "Range",
+      "rangeDays": "{days}d",
+      "deltaLabel": "vs prev. period",
+      "chartTitle": "Pageviews & visitors per day",
+      "peakHours": "Peak hours",
+      "peakHoursHint": "Pageviews per hour (UTC).",
+      "topArticles": "Most-viewed articles",
+      "byVerdict": "Audience by verdict",
+      "byTopic": "Audience by topic",
+      "topPages": "Most-viewed pages",
+      "topReferrers": "Traffic sources",
+      "direct": "Direct",
+      "entryPages": "Entry pages",
+      "exitPages": "Exit pages",
+      "devices": "Devices",
+      "languages": "Languages",
+      "noData": "No data for this range.",
+      "noReferrers": "No external sources for this range.",
+      "summary": {
+        "visitors": "Visits",
+        "pageviews": "Pageviews",
+        "viewsPerVisit": "Views / visit",
+        "bounceRate": "Bounce rate"
+      },
+      "secondary": {
+        "articleViews": "Article views",
+        "readRate": "Read-through rate",
+        "proposals": "Proposals received",
+        "conversion": "Conversion rate"
+      },
+      "deviceTypes": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "tablet": "Tablet"
+      },
+      "privacy": {
+        "title": "Privacy & retention",
+        "description": "No cookies, no personal data. Unique visitors are counted with an anonymous identifier that rotates every day.",
+        "retention": "Data is kept for at most {days} days.",
+        "oldest": "Oldest data point: {date}. Maximum retention: {days} days.",
+        "purge": "Purge old data"
+      }
     },
     "dashboard": {
       "title": "Articles",
@@ -259,5 +307,31 @@
     "submitting": "Sending…",
     "success": "Thank you! Your proposal has been received.",
     "invalidUrl": "Invalid URL."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Unbunked measures its audience without ever tracking you: no cookies, no advertising profile, no data resold.",
+    "sections": {
+      "cookieless": {
+        "title": "No cookies, no consent banner",
+        "body": "Our analytics set no cookies and store nothing on your device. Under the GDPR and the ePrivacy directive, no consent banner is therefore required."
+      },
+      "collected": {
+        "title": "What we measure",
+        "body": "For each page viewed we only record the page visited, the display language and the domain name of the site that may have referred you to us. The query string (anything after the “?” in the address) is never kept."
+      },
+      "noPersonalData": {
+        "title": "No personal data",
+        "body": "Your IP address and browser are never stored. They are only used to compute an anonymous identifier that changes every day, letting us count unique visitors without ever being able to recognise you across days or re-identify you."
+      },
+      "retention": {
+        "title": "Retention period",
+        "body": "Measurements are automatically purged after 90 days. We apply data minimisation: only aggregated, anonymous data is kept, for as long as strictly necessary."
+      },
+      "rights": {
+        "title": "Your rights and Do Not Track",
+        "body": "If your browser sends the “Do Not Track” or “Global Privacy Control” signal, nothing is measured. Since no personal data is collected, there is nothing about you to access, rectify or erase."
+      }
+    }
   }
 }

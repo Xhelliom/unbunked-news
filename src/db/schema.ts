@@ -45,6 +45,16 @@ export const jobStatusEnum = pgEnum("job_status", [
   "failed",
 ]);
 
+// Kept in sync with DEVICE_TYPES in src/lib/analytics/constants.ts.
+export const deviceTypeEnum = pgEnum("device_type", [
+  "desktop",
+  "mobile",
+  "tablet",
+]);
+
+// Kept in sync with EVENT_KINDS in src/lib/analytics/constants.ts.
+export const eventKindEnum = pgEnum("event_kind", ["pageview", "read"]);
+
 export const articles = pgTable(
   "articles",
   {
@@ -221,6 +231,34 @@ export const jobs = pgTable(
   (table) => [index("jobs_status_idx").on(table.status)],
 );
 
+// Privacy-first, cookieless analytics. No personal data is stored: we keep the
+// pathname (query string stripped), the resolved article, the locale and the
+// external referrer host. `visitorHash` is a daily-rotating salted hash of
+// IP+UA — irreversible and useless across days, so it is not a persistent
+// identifier and needs no cookie consent under the GDPR/ePrivacy rules.
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    path: text().notNull(),
+    articleId: uuid().references(() => articles.id, { onDelete: "set null" }),
+    locale: varchar({ length: 5 }).notNull(),
+    referrerHost: text(),
+    deviceType: deviceTypeEnum().notNull().default("desktop"),
+    kind: eventKindEnum().notNull().default("pageview"),
+    visitorHash: text().notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("analytics_events_created_at_idx").on(table.createdAt),
+    index("analytics_events_article_id_idx").on(table.articleId),
+    index("analytics_events_path_idx").on(table.path),
+    index("analytics_events_visitor_hash_idx").on(table.visitorHash),
+  ],
+);
+
 export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
@@ -287,5 +325,7 @@ export type Proposal = typeof proposals.$inferSelect;
 export type NewProposal = typeof proposals.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 export type ArticleRewrite = typeof articleRewrites.$inferSelect;
 export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
