@@ -23,6 +23,10 @@ export type ScoreCriterion = (typeof SCORE_CRITERIA)[number];
 // cards (e.g. "Neutralité faible").
 export const LOW_CRITERION_THRESHOLD = 40;
 
+// Neutral score used as a fallback when a value is unknown: the pipeline's
+// default overall reliability and the admin slider's starting position.
+export const NEUTRAL_SCORE = 50;
+
 // Structural shape of the criterion columns on an article row. Matches the
 // nullable integer columns added in the articles table.
 export type CriterionScores = {
@@ -65,12 +69,19 @@ export function clampScore(value: unknown): number | null {
   return Number.isFinite(raw) ? Math.min(100, Math.max(0, Math.round(raw))) : null;
 }
 
+// Lower bound of each verdict colour band, mirroring the score ranges the
+// aggregate system prompt asks the model to follow (reliable ~85-100, nuanced
+// ~60-84, biased ~40-59, debunked ~0-39).
+const RELIABLE_MIN = 85;
+const NUANCED_MIN = 60;
+const BIASED_MIN = 40;
+
 // Maps a 0-100 sub-score to the verdict colour family used for its progress
 // bar, reusing the same bands the editor guidelines apply to the overall score.
 export function scoreBand(score: number): Verdict {
-  if (score >= 85) return "reliable";
-  if (score >= 60) return "nuanced";
-  if (score >= 40) return "biased";
+  if (score >= RELIABLE_MIN) return "reliable";
+  if (score >= NUANCED_MIN) return "nuanced";
+  if (score >= BIASED_MIN) return "biased";
   return "debunked";
 }
 

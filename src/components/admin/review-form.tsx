@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   CRITERION_COLUMN,
+  NEUTRAL_SCORE,
   OPTIONAL_CRITERIA,
   SCORE_CRITERIA,
   criterionValue,
@@ -41,8 +42,6 @@ type ReviewFormProps = {
   published: boolean;
 };
 
-const DEFAULT_SCORE = 50;
-
 const selectClass =
   "border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]";
 
@@ -60,7 +59,7 @@ export function ReviewForm(props: ReviewFormProps) {
       Object.fromEntries(
         SCORE_CRITERIA.map((criterion) => [
           criterion,
-          criterionValue(props, criterion) ?? DEFAULT_SCORE,
+          criterionValue(props, criterion) ?? NEUTRAL_SCORE,
         ]),
       ) as Record<ScoreCriterion, number>,
   );

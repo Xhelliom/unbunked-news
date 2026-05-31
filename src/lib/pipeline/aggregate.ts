@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
-import { clampScore } from "@/lib/score-criteria";
+import { clampScore, NEUTRAL_SCORE } from "@/lib/score-criteria";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
 import {
@@ -136,7 +136,7 @@ export async function aggregate(
     throw new Error("Aggregation did not return a structured analysis");
   }
 
-  const reliabilityScore = toScore(input.reliabilityScore, 50);
+  const reliabilityScore = toScore(input.reliabilityScore, NEUTRAL_SCORE);
 
   return {
     title: typeof input.title === "string" ? input.title : article.title,

@@ -54,6 +54,7 @@ export default async function AdminArticleReviewPage({
       </div>
 
       <ReviewForm
+        key={article.id}
         id={article.id}
         title={article.title}
         summary={article.summary}
