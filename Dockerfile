@@ -45,4 +45,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
+# Same command for every role: the APP_ROLE env var selects web / worker /
+# hybrid (worker embedded in the web process). Defaults to hybrid when unset.
 CMD ["node", "server.js"]

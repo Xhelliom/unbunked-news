@@ -41,6 +41,9 @@ services:
       target: runner
     environment:
       NODE_ENV: production
+      # hybrid runs the queue worker inside the web process, so this single
+      # container both serves and drains jobs (the default; here explicitly).
+      APP_ROLE: hybrid
       DATABASE_URL: postgresql://unbunked:unbunked@db:5432/unbunked
       BETTER_AUTH_URL: http://localhost:${APP_PORT:-3030}
     ports:
