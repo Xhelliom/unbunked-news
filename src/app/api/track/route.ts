@@ -1,4 +1,11 @@
-import { recordPageview } from "@/lib/analytics/track";
+import { EVENT_KINDS, type EventKind } from "@/lib/analytics/constants";
+import { recordEvent } from "@/lib/analytics/track";
+
+function parseKind(raw: unknown): EventKind {
+  return (EVENT_KINDS as readonly string[]).includes(raw as string)
+    ? (raw as EventKind)
+    : "pageview";
+}
 
 // Honour Do-Not-Track and Global Privacy Control: when the visitor signals it,
 // we record nothing at all.
@@ -40,9 +47,10 @@ export async function POST(request: Request): Promise<Response> {
   const referrer = typeof body.referrer === "string" ? body.referrer : null;
 
   try {
-    await recordPageview({
+    await recordEvent({
       path,
       referrer,
+      kind: parseKind(body.kind),
       ip: clientIp(request),
       userAgent: request.headers.get("user-agent") ?? "",
     });

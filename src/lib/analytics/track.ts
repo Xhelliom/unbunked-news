@@ -8,7 +8,11 @@ import { db } from "@/db/client";
 import { analyticsEvents, articles } from "@/db/schema";
 import { routing } from "@/i18n/routing";
 
-import { MAX_TRACK_PATH_LENGTH, type DeviceType } from "./constants";
+import {
+  MAX_TRACK_PATH_LENGTH,
+  type DeviceType,
+  type EventKind,
+} from "./constants";
 
 // Daily-rotating salt: combining the date with a server secret makes the
 // visitor hash impossible to reverse or correlate across days without the
@@ -18,9 +22,10 @@ const SALT_BASE =
 
 const ARTICLE_PATH = /^\/(?:[a-z]{2}\/)?article\/([^/]+)\/?$/;
 
-export type Pageview = {
+export type TrackEvent = {
   path: string;
   referrer: string | null;
+  kind: EventKind;
   ip: string;
   userAgent: string;
 };
@@ -77,8 +82,8 @@ function dailyVisitorHash(ip: string, userAgent: string): string {
     .digest("hex");
 }
 
-export async function recordPageview(view: Pageview): Promise<void> {
-  const path = normalizePath(view.path);
+export async function recordEvent(event: TrackEvent): Promise<void> {
+  const path = normalizePath(event.path);
   if (!path) {
     throw new Error("Invalid analytics path");
   }
@@ -91,12 +96,18 @@ export async function recordPageview(view: Pageview): Promise<void> {
       })
     : null;
 
+  // A "read" event is only meaningful when it maps to an article.
+  if (event.kind === "read" && !article) {
+    return;
+  }
+
   await db.insert(analyticsEvents).values({
     path,
     articleId: article?.id ?? null,
     locale: localeFromPath(path),
-    referrerHost: referrerHost(view.referrer),
-    deviceType: deviceTypeFromUserAgent(view.userAgent),
-    visitorHash: dailyVisitorHash(view.ip, view.userAgent),
+    referrerHost: referrerHost(event.referrer),
+    deviceType: deviceTypeFromUserAgent(event.userAgent),
+    kind: event.kind,
+    visitorHash: dailyVisitorHash(event.ip, event.userAgent),
   });
 }

@@ -132,20 +132,31 @@
       "rangeDays": "{days}d",
       "deltaLabel": "vs prev. period",
       "chartTitle": "Pageviews & visitors per day",
-      "articleViews": "{count, plural, =0 {No article views} one {# article view} other {# article views}} in range",
+      "peakHours": "Peak hours",
+      "peakHoursHint": "Pageviews per hour (UTC).",
       "topArticles": "Most-viewed articles",
+      "byVerdict": "Audience by verdict",
+      "byTopic": "Audience by topic",
       "topPages": "Most-viewed pages",
       "topReferrers": "Traffic sources",
+      "direct": "Direct",
       "entryPages": "Entry pages",
+      "exitPages": "Exit pages",
       "devices": "Devices",
       "languages": "Languages",
       "noData": "No data for this range.",
       "noReferrers": "No external sources for this range.",
       "summary": {
-        "visitors": "Visitors",
+        "visitors": "Visits",
         "pageviews": "Pageviews",
         "viewsPerVisit": "Views / visit",
         "bounceRate": "Bounce rate"
+      },
+      "secondary": {
+        "articleViews": "Article views",
+        "readRate": "Read-through rate",
+        "proposals": "Proposals received",
+        "conversion": "Conversion rate"
       },
       "deviceTypes": {
         "desktop": "Desktop",

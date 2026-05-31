@@ -1,12 +1,36 @@
 import "server-only";
 
-import { and, count, countDistinct, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  gte,
+  isNotNull,
+  isNull,
+  lt,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { analyticsEvents, articles } from "@/db/schema";
-import type { DeviceType } from "./constants";
+import {
+  analyticsEvents,
+  articleTags,
+  articles,
+  proposals,
+  tags,
+} from "@/db/schema";
+import type { Verdict } from "@/lib/verdicts";
 
-import { DAY_MS, TOP_LIST_LIMIT } from "./constants";
+import {
+  DAY_MS,
+  EVENT_PAGEVIEW,
+  EVENT_READ,
+  HOURS_PER_DAY,
+  TOP_LIST_LIMIT,
+  type DeviceType,
+} from "./constants";
 
 // Time window [now - (offsetDays + days), now - offsetDays). offsetDays lets us
 // fetch the immediately-preceding period for comparison KPIs.
@@ -18,6 +42,15 @@ function rangeWhere(days: number, offsetDays = 0) {
     lt(analyticsEvents.createdAt, end),
   );
 }
+
+// Most stats are about page hits; "read" events are counted separately.
+function pageviewWhere(days: number, offsetDays = 0) {
+  return and(rangeWhere(days, offsetDays), eq(analyticsEvents.kind, EVENT_PAGEVIEW));
+}
+
+// UTC day, matching the day the visitor hash rotates on, so chart buckets and
+// the zero-filled series keys always line up regardless of the DB timezone.
+const UTC_DAY = sql`date_trunc('day', ${analyticsEvents.createdAt} at time zone 'UTC')`;
 
 export type VisitMetrics = {
   visits: number;
@@ -39,7 +72,7 @@ export async function loadVisitMetrics(
         views: count().as("views"),
       })
       .from(analyticsEvents)
-      .where(rangeWhere(days, offsetDays))
+      .where(pageviewWhere(days, offsetDays))
       .groupBy(analyticsEvents.visitorHash),
   );
 
@@ -73,29 +106,43 @@ export async function loadKpis(days: number): Promise<Kpis> {
   return { current, previous };
 }
 
-export async function loadArticleViews(days: number): Promise<number> {
+export type ArticleEngagement = {
+  views: number;
+  reads: number;
+  readRate: number;
+};
+
+// Article pageviews vs "read to the end" events, for a read-through rate.
+export async function loadArticleEngagement(
+  days: number,
+): Promise<ArticleEngagement> {
   const [row] = await db
-    .select({ views: count(analyticsEvents.articleId) })
+    .select({
+      views: sql<number>`count(*) filter (where ${analyticsEvents.kind} = ${EVENT_PAGEVIEW})::int`,
+      reads: sql<number>`count(*) filter (where ${analyticsEvents.kind} = ${EVENT_READ})::int`,
+    })
     .from(analyticsEvents)
-    .where(rangeWhere(days));
-  return row?.views ?? 0;
+    .where(and(rangeWhere(days), isNotNull(analyticsEvents.articleId)));
+
+  const views = row?.views ?? 0;
+  const reads = row?.reads ?? 0;
+  return { views, reads, readRate: views > 0 ? reads / views : 0 };
 }
 
 export type DailyPoint = { day: string; pageviews: number; visitors: number };
 
 // Continuous series (zero-filled) of pageviews and unique visitors per day.
 export async function loadDailySeries(days: number): Promise<DailyPoint[]> {
-  const dayExpr = sql`date_trunc('day', ${analyticsEvents.createdAt})`;
   const rows = await db
     .select({
-      day: sql<string>`to_char(${dayExpr}, 'YYYY-MM-DD')`,
+      day: sql<string>`to_char(${UTC_DAY}, 'YYYY-MM-DD')`,
       pageviews: count(),
       visitors: countDistinct(analyticsEvents.visitorHash),
     })
     .from(analyticsEvents)
-    .where(rangeWhere(days))
-    .groupBy(dayExpr)
-    .orderBy(dayExpr);
+    .where(pageviewWhere(days))
+    .groupBy(UTC_DAY)
+    .orderBy(UTC_DAY);
 
   const byDay = new Map(rows.map((row) => [row.day, row]));
   const series: DailyPoint[] = [];
@@ -112,29 +159,47 @@ export async function loadDailySeries(days: number): Promise<DailyPoint[]> {
   return series;
 }
 
+// Pageviews per UTC hour-of-day (0-23), zero-filled.
+export async function loadHourlyDistribution(days: number): Promise<number[]> {
+  const hourExpr = sql<number>`extract(hour from ${analyticsEvents.createdAt} at time zone 'UTC')::int`;
+  const rows = await db
+    .select({ hour: hourExpr, views: count() })
+    .from(analyticsEvents)
+    .where(pageviewWhere(days))
+    .groupBy(hourExpr)
+    .orderBy(hourExpr);
+
+  const byHour = new Map(rows.map((row) => [row.hour, row.views]));
+  return Array.from({ length: HOURS_PER_DAY }, (_, hour) => byHour.get(hour) ?? 0);
+}
+
 export type PathCount = { path: string; views: number };
 
 export async function loadTopPages(days: number): Promise<PathCount[]> {
   return db
     .select({ path: analyticsEvents.path, views: count() })
     .from(analyticsEvents)
-    .where(rangeWhere(days))
+    .where(pageviewWhere(days))
     .groupBy(analyticsEvents.path)
     .orderBy(desc(count()))
     .limit(TOP_LIST_LIMIT);
 }
 
-// Landing pages: the first pageview of each visit, by count.
-export async function loadTopEntryPages(days: number): Promise<PathCount[]> {
+// First (entry) or last (exit) pageview of each visit, by count.
+async function loadEdgePages(
+  days: number,
+  edge: "ASC" | "DESC",
+): Promise<PathCount[]> {
   const start = new Date(Date.now() - days * DAY_MS);
+  const order = edge === "ASC" ? sql`asc` : sql`desc`;
   const result = await db.execute(sql`
     SELECT path, count(*)::int AS views
     FROM (
       SELECT DISTINCT ON (visitor_hash) visitor_hash, path
       FROM analytics_events
-      WHERE created_at >= ${start}
-      ORDER BY visitor_hash, created_at ASC
-    ) firsts
+      WHERE created_at >= ${start} AND kind = ${EVENT_PAGEVIEW}
+      ORDER BY visitor_hash, created_at ${order}
+    ) edges
     GROUP BY path
     ORDER BY views DESC
     LIMIT ${TOP_LIST_LIMIT}
@@ -145,17 +210,34 @@ export async function loadTopEntryPages(days: number): Promise<PathCount[]> {
   }));
 }
 
+export function loadTopEntryPages(days: number): Promise<PathCount[]> {
+  return loadEdgePages(days, "ASC");
+}
+
+export function loadTopExitPages(days: number): Promise<PathCount[]> {
+  return loadEdgePages(days, "DESC");
+}
+
 export type ReferrerCount = { host: string; views: number };
 
 export async function loadTopReferrers(days: number): Promise<ReferrerCount[]> {
   const rows = await db
     .select({ host: analyticsEvents.referrerHost, views: count() })
     .from(analyticsEvents)
-    .where(and(rangeWhere(days), isNotNull(analyticsEvents.referrerHost)))
+    .where(and(pageviewWhere(days), isNotNull(analyticsEvents.referrerHost)))
     .groupBy(analyticsEvents.referrerHost)
     .orderBy(desc(count()))
     .limit(TOP_LIST_LIMIT);
   return rows.map((row) => ({ host: row.host ?? "", views: row.views }));
+}
+
+// Pageviews with no external referrer — i.e. direct / bookmarked traffic.
+export async function loadDirectCount(days: number): Promise<number> {
+  const [row] = await db
+    .select({ views: count() })
+    .from(analyticsEvents)
+    .where(and(pageviewWhere(days), isNull(analyticsEvents.referrerHost)));
+  return row?.views ?? 0;
 }
 
 export type ArticleViews = {
@@ -175,8 +257,39 @@ export async function loadTopArticles(days: number): Promise<ArticleViews[]> {
     })
     .from(analyticsEvents)
     .innerJoin(articles, eq(analyticsEvents.articleId, articles.id))
-    .where(rangeWhere(days))
+    .where(pageviewWhere(days))
     .groupBy(articles.id, articles.title, articles.slug)
+    .orderBy(desc(count()))
+    .limit(TOP_LIST_LIMIT);
+}
+
+export type VerdictCount = { verdict: Verdict; views: number };
+
+export async function loadVerdictBreakdown(
+  days: number,
+): Promise<VerdictCount[]> {
+  const rows = await db
+    .select({ verdict: articles.verdict, views: count() })
+    .from(analyticsEvents)
+    .innerJoin(articles, eq(analyticsEvents.articleId, articles.id))
+    .where(and(pageviewWhere(days), isNotNull(articles.verdict)))
+    .groupBy(articles.verdict)
+    .orderBy(desc(count()));
+  return rows.flatMap((row) =>
+    row.verdict ? [{ verdict: row.verdict, views: row.views }] : [],
+  );
+}
+
+export type TagCount = { id: string; label: string; views: number };
+
+export async function loadTagBreakdown(days: number): Promise<TagCount[]> {
+  return db
+    .select({ id: tags.id, label: tags.label, views: count() })
+    .from(analyticsEvents)
+    .innerJoin(articleTags, eq(analyticsEvents.articleId, articleTags.articleId))
+    .innerJoin(tags, eq(articleTags.tagId, tags.id))
+    .where(pageviewWhere(days))
+    .groupBy(tags.id, tags.label)
     .orderBy(desc(count()))
     .limit(TOP_LIST_LIMIT);
 }
@@ -187,7 +300,7 @@ export async function loadDeviceBreakdown(days: number): Promise<DeviceCount[]> 
   return db
     .select({ deviceType: analyticsEvents.deviceType, views: count() })
     .from(analyticsEvents)
-    .where(rangeWhere(days))
+    .where(pageviewWhere(days))
     .groupBy(analyticsEvents.deviceType)
     .orderBy(desc(count()));
 }
@@ -198,9 +311,19 @@ export async function loadLocaleBreakdown(days: number): Promise<LocaleCount[]> 
   return db
     .select({ locale: analyticsEvents.locale, views: count() })
     .from(analyticsEvents)
-    .where(rangeWhere(days))
+    .where(pageviewWhere(days))
     .groupBy(analyticsEvents.locale)
     .orderBy(desc(count()));
+}
+
+// Article proposals submitted in the window — a privacy-free conversion goal.
+export async function loadProposalsCount(days: number): Promise<number> {
+  const start = new Date(Date.now() - days * DAY_MS);
+  const [row] = await db
+    .select({ total: count() })
+    .from(proposals)
+    .where(gte(proposals.createdAt, start));
+  return row?.total ?? 0;
 }
 
 // Oldest retained event, for the retention/purge panel.

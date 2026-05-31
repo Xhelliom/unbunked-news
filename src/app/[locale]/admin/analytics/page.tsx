@@ -7,16 +7,22 @@ import {
   parseRange,
 } from "@/lib/analytics/constants";
 import {
-  loadArticleViews,
+  loadArticleEngagement,
   loadDailySeries,
   loadDeviceBreakdown,
+  loadDirectCount,
+  loadHourlyDistribution,
   loadKpis,
   loadLocaleBreakdown,
   loadOldestEventDate,
+  loadProposalsCount,
+  loadTagBreakdown,
   loadTopArticles,
   loadTopEntryPages,
+  loadTopExitPages,
   loadTopPages,
   loadTopReferrers,
+  loadVerdictBreakdown,
 } from "@/lib/analytics/queries";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,13 +35,10 @@ import {
 } from "@/components/ui/card";
 import { AnalyticsBarChart } from "@/components/admin/analytics-bar-chart";
 import { AnalyticsBreakdowns } from "@/components/admin/analytics-breakdowns";
-import { AnalyticsKpiCard } from "@/components/admin/analytics-kpi-card";
+import { AnalyticsHourlyChart } from "@/components/admin/analytics-hourly-chart";
+import { AnalyticsKpiRow } from "@/components/admin/analytics-kpi-row";
 
 import { purgeOldEvents } from "./actions";
-
-function deltaPct(current: number, previous: number): number | null {
-  return previous > 0 ? ((current - previous) / previous) * 100 : null;
-}
 
 export default async function AdminAnalytics({
   searchParams,
@@ -46,27 +49,40 @@ export default async function AdminAnalytics({
   const days = parseRange(rangeParam);
 
   const t = await getTranslations("admin.analytics");
+  const tv = await getTranslations("verdicts");
   const format = await getFormatter();
 
   const [
     kpis,
-    articleViews,
+    engagement,
+    proposalsCount,
     daily,
+    hourly,
     topArticles,
+    verdicts,
+    topics,
+    referrers,
+    directCount,
     topPages,
-    topReferrers,
     entryPages,
+    exitPages,
     devices,
     locales,
     oldest,
   ] = await Promise.all([
     loadKpis(days),
-    loadArticleViews(days),
+    loadArticleEngagement(days),
+    loadProposalsCount(days),
     loadDailySeries(days),
+    loadHourlyDistribution(days),
     loadTopArticles(days),
-    loadTopPages(days),
+    loadVerdictBreakdown(days),
+    loadTagBreakdown(days),
     loadTopReferrers(days),
+    loadDirectCount(days),
+    loadTopPages(days),
     loadTopEntryPages(days),
+    loadTopExitPages(days),
     loadDeviceBreakdown(days),
     loadLocaleBreakdown(days),
     loadOldestEventDate(),
@@ -74,41 +90,25 @@ export default async function AdminAnalytics({
 
   const { current, previous } = kpis;
   const formatNumber = (value: number) => format.number(value);
+  const formatPercent = (value: number) =>
+    format.number(value, { style: "percent", maximumFractionDigits: 1 });
+  const formatDecimal = (value: number) =>
+    format.number(value, { maximumFractionDigits: 1 });
   const formatDay = (iso: string) =>
     format.dateTime(new Date(iso), { day: "numeric", month: "short" });
 
-  const kpiCards: {
-    key: "visitors" | "pageviews" | "viewsPerVisit" | "bounceRate";
+  const secondaryStats: {
+    key: "articleViews" | "readRate" | "proposals" | "conversion";
     value: string;
-    deltaPct: number | null;
-    goodDirection: "up" | "down";
   }[] = [
+    { key: "articleViews", value: formatNumber(engagement.views) },
+    { key: "readRate", value: formatPercent(engagement.readRate) },
+    { key: "proposals", value: formatNumber(proposalsCount) },
     {
-      key: "visitors",
-      value: formatNumber(current.visits),
-      deltaPct: deltaPct(current.visits, previous.visits),
-      goodDirection: "up" as const,
-    },
-    {
-      key: "pageviews",
-      value: formatNumber(current.pageviews),
-      deltaPct: deltaPct(current.pageviews, previous.pageviews),
-      goodDirection: "up" as const,
-    },
-    {
-      key: "viewsPerVisit",
-      value: format.number(current.viewsPerVisit, { maximumFractionDigits: 1 }),
-      deltaPct: deltaPct(current.viewsPerVisit, previous.viewsPerVisit),
-      goodDirection: "up" as const,
-    },
-    {
-      key: "bounceRate",
-      value: format.number(current.bounceRate, {
-        style: "percent",
-        maximumFractionDigits: 1,
-      }),
-      deltaPct: deltaPct(current.bounceRate, previous.bounceRate),
-      goodDirection: "down" as const,
+      key: "conversion",
+      value: formatPercent(
+        current.visits > 0 ? proposalsCount / current.visits : 0,
+      ),
     },
   ];
 
@@ -140,51 +140,83 @@ export default async function AdminAnalytics({
         </nav>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpiCards.map((card) => (
-          <AnalyticsKpiCard
-            key={card.key}
-            label={t(`summary.${card.key}`)}
-            value={card.value}
-            deltaPct={card.deltaPct}
-            goodDirection={card.goodDirection}
-            deltaLabel={t("deltaLabel")}
-          />
-        ))}
-      </div>
+      <AnalyticsKpiRow
+        current={current}
+        previous={previous}
+        formatNumber={formatNumber}
+        formatPercent={formatPercent}
+        formatDecimal={formatDecimal}
+        labels={{
+          visitors: t("summary.visitors"),
+          pageviews: t("summary.pageviews"),
+          viewsPerVisit: t("summary.viewsPerVisit"),
+          bounceRate: t("summary.bounceRate"),
+          delta: t("deltaLabel"),
+        }}
+      />
 
       <Card>
-        <CardHeader>
-          <CardTitle>{t("chartTitle")}</CardTitle>
-          <CardDescription>
-            {t("articleViews", { count: articleViews })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AnalyticsBarChart
-            data={daily}
-            pageviewsLabel={t("summary.pageviews")}
-            visitorsLabel={t("summary.visitors")}
-            emptyLabel={t("noData")}
-            formatDay={formatDay}
-          />
+        <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {secondaryStats.map((stat) => (
+            <div key={stat.key} className="space-y-1">
+              <p className="text-muted-foreground text-sm">
+                {t(`secondary.${stat.key}`)}
+              </p>
+              <p className="text-xl font-semibold tabular-nums">{stat.value}</p>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("chartTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AnalyticsBarChart
+              data={daily}
+              pageviewsLabel={t("summary.pageviews")}
+              visitorsLabel={t("summary.visitors")}
+              emptyLabel={t("noData")}
+              formatDay={formatDay}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("peakHours")}</CardTitle>
+            <CardDescription>{t("peakHoursHint")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AnalyticsHourlyChart hours={hourly} emptyLabel={t("noData")} />
+          </CardContent>
+        </Card>
+      </div>
+
       <AnalyticsBreakdowns
         articles={topArticles}
-        referrers={topReferrers}
+        verdicts={verdicts}
+        topics={topics}
+        referrers={referrers}
+        directCount={directCount}
         pages={topPages}
         entryPages={entryPages}
+        exitPages={exitPages}
         devices={devices}
         locales={locales}
-        deviceLabel={(type) => t(`deviceTypes.${type}`)}
+        verdictLabel={(verdict) => tv(`${verdict}.label`)}
+        deviceLabel={(device) => t(`deviceTypes.${device}`)}
         formatNumber={formatNumber}
         labels={{
           topArticles: t("topArticles"),
+          byVerdict: t("byVerdict"),
+          byTopic: t("byTopic"),
           topReferrers: t("topReferrers"),
+          direct: t("direct"),
           topPages: t("topPages"),
           entryPages: t("entryPages"),
+          exitPages: t("exitPages"),
           devices: t("devices"),
           languages: t("languages"),
           noData: t("noData"),

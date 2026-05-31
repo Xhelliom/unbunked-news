@@ -132,20 +132,31 @@
       "rangeDays": "{days} j",
       "deltaLabel": "vs période préc.",
       "chartTitle": "Pages vues & visiteurs par jour",
-      "articleViews": "{count, plural, =0 {Aucune vue d'article} one {# vue d'article} other {# vues d'articles}} sur la période",
+      "peakHours": "Heures de pointe",
+      "peakHoursHint": "Pages vues par heure (UTC).",
       "topArticles": "Articles les plus vus",
+      "byVerdict": "Audience par verdict",
+      "byTopic": "Audience par thème",
       "topPages": "Pages les plus vues",
       "topReferrers": "Sources de trafic",
+      "direct": "Accès direct",
       "entryPages": "Pages d'entrée",
+      "exitPages": "Pages de sortie",
       "devices": "Appareils",
       "languages": "Langues",
       "noData": "Aucune donnée sur cette période.",
       "noReferrers": "Aucune source externe sur cette période.",
       "summary": {
-        "visitors": "Visiteurs",
+        "visitors": "Visites",
         "pageviews": "Pages vues",
         "viewsPerVisit": "Pages / visite",
         "bounceRate": "Taux de rebond"
+      },
+      "secondary": {
+        "articleViews": "Vues d'articles",
+        "readRate": "Taux de lecture",
+        "proposals": "Propositions reçues",
+        "conversion": "Taux de conversion"
       },
       "deviceTypes": {
         "desktop": "Ordinateur",

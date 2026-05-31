@@ -13,6 +13,7 @@ import { verdictDotClasses } from "@/lib/verdicts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArticleImage } from "@/components/article-image";
+import { ArticleReadTracker } from "@/components/article-read-tracker";
 import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
@@ -318,6 +319,8 @@ export default async function ArticlePage({
           )}
         </section>
       )}
+
+      <ArticleReadTracker />
     </article>
   );
 }

@@ -52,6 +52,9 @@ export const deviceTypeEnum = pgEnum("device_type", [
   "tablet",
 ]);
 
+// Kept in sync with EVENT_KINDS in src/lib/analytics/constants.ts.
+export const eventKindEnum = pgEnum("event_kind", ["pageview", "read"]);
+
 export const articles = pgTable(
   "articles",
   {
@@ -242,6 +245,7 @@ export const analyticsEvents = pgTable(
     locale: varchar({ length: 5 }).notNull(),
     referrerHost: text(),
     deviceType: deviceTypeEnum().notNull().default("desktop"),
+    kind: eventKindEnum().notNull().default("pageview"),
     visitorHash: text().notNull(),
     createdAt: timestamp({ withTimezone: true, mode: "date" })
       .notNull()

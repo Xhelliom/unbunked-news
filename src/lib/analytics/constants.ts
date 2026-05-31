@@ -24,6 +24,15 @@ export const DAY_MS = 24 * 60 * 60 * 1000;
 export const DEVICE_TYPES = ["desktop", "mobile", "tablet"] as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
 
+// "pageview" is a normal page hit; "read" is fired once when a reader reaches
+// the end of an article's analysis. Kept in sync with eventKindEnum in schema.
+export const EVENT_KINDS = ["pageview", "read"] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+export const EVENT_PAGEVIEW: EventKind = "pageview";
+export const EVENT_READ: EventKind = "read";
+
+export const HOURS_PER_DAY = 24;
+
 export function parseRange(raw: string | undefined): AnalyticsRange {
   const value = Number(raw);
   return (ANALYTICS_RANGES as readonly number[]).includes(value)
