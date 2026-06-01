@@ -255,6 +255,10 @@ export const articleTokenUsage = pgTable(
     // Web search requests issued during verification, priced per provider. Kept
     // raw (not as a cost) so a price change reprices history like the tokens do.
     webSearchRequests: integer().notNull().default(0),
+    // Plain text rather than a pgEnum on purpose: external providers are still
+    // experimental, so the set must grow without an ALTER TYPE migration. The
+    // canonical list lives in SEARCH_PROVIDERS; costForSearch prices unknown
+    // values via a fallback rather than rejecting them.
     searchProvider: text().notNull().default("anthropic"),
     createdAt: timestamp({ withTimezone: true, mode: "date" })
       .notNull()
