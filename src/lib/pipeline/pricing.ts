@@ -34,3 +34,21 @@ export function costForUsage(model: string, usage: TokenUsage): number {
     usage.cacheReadTokens * pricing.cacheReadPerMtok;
   return microcost / TOKENS_PER_MILLION;
 }
+
+const SEARCHES_PER_UNIT = 1_000;
+
+// USD per 1000 web search requests, billed separately from tokens. Native
+// Anthropic search is ~$10 / 1000; cheaper external providers extend this map
+// as they are wired in. Keyed by the stored search_provider string.
+const SEARCH_PRICE_PER_UNIT_USD: Record<string, number> = {
+  anthropic: 10.0,
+};
+
+// An unknown provider still gets a defensible estimate rather than a zero cost.
+const FALLBACK_SEARCH_PRICE_PER_UNIT_USD = SEARCH_PRICE_PER_UNIT_USD.anthropic;
+
+export function costForSearch(provider: string, requests: number): number {
+  const perUnit =
+    SEARCH_PRICE_PER_UNIT_USD[provider] ?? FALLBACK_SEARCH_PRICE_PER_UNIT_USD;
+  return (requests * perUnit) / SEARCHES_PER_UNIT;
+}

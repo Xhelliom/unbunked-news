@@ -176,11 +176,12 @@
       "title": "AI costs",
       "subtitle": "Tokens consumed and estimated production cost per article.",
       "totalCost": "Total cost",
+      "searchCost": "Search cost",
       "totalTokens": "Total tokens",
       "articles": "Articles analysed",
       "avgCost": "Average cost / article",
       "empty": "No consumption recorded yet.",
-      "note": "Costs estimated from Anthropic pricing, in US dollars (USD). Cache tokens (reads and writes) are billed at a reduced rate.",
+      "note": "Costs estimated from Anthropic pricing, in US dollars (USD). Cache tokens (reads and writes) are billed at a reduced rate. Web search is billed separately from tokens (~$10 per 1000 requests) and is included in the costs above.",
       "table": {
         "title": "Per-article breakdown",
         "truncated": "Showing the {count} most recent articles; the totals above cover all of them.",
@@ -189,6 +190,7 @@
         "output": "Output",
         "cache": "Cache",
         "total": "Total",
+        "search": "Searches",
         "cost": "Cost"
       }
     },
