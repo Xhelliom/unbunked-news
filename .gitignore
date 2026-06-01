@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# npm lockfile — this project uses pnpm (pnpm-lock.yaml is the source of truth)
+package-lock.json
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
@@ -46,3 +49,7 @@ next-env.d.ts
 
 # local design-handoff bundle (reference only)
 claude-design
+
+# local seed data — never commit real articles or personal test data
+src/db/seed-articles-data.local.ts
+src/db/seed-articles-rewrites.local.ts
