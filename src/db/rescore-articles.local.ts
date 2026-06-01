@@ -9,9 +9,9 @@ import { verifyClaims } from "@/lib/pipeline/verify";
 
 // Re-scores existing local articles with the v1.2 pipeline IN PLACE (no new
 // rows). Reuses the stored article body when present so it doesn't re-scrape;
-// falls back to scraping when the body is missing. Existing rewrites are left
-// untouched. The react-server condition makes `server-only` a no-op; --env-file
-// loads .env.local before any module reads process.env:
+// falls back to scraping when the body is missing. The react-server condition
+// makes `server-only` a no-op; --env-file loads .env.local before any module
+// reads process.env:
 //
 //   pnpm db:rescore-local
 //   # = node --conditions=react-server --env-file=.env.local --import tsx \

@@ -4,7 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
-  articleRewrites,
+  articleKeywords,
   articleTags,
   articles,
   claimSources,
@@ -13,11 +13,9 @@ import {
   tags as tagsTable,
   type NewJob,
 } from "@/db/schema";
-import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { extractClaims } from "./extract-claims";
-import { rewriteArticle } from "./rewrite";
 import { verifyClaims } from "./verify";
 
 // Upper bound on the stored article body to keep rows reasonable.
@@ -77,13 +75,8 @@ export async function runPipeline(jobId: string): Promise<void> {
     await updateJob(jobId, { step: "verifying", progress: 45 });
     const verification = await verifyClaims(article, claims);
 
-    await updateJob(jobId, { step: "aggregating", progress: 60 });
+    await updateJob(jobId, { step: "aggregating", progress: 70 });
     const analysis = await aggregate(article, claims, verification);
-
-    await updateJob(jobId, { step: "rewriting", progress: 75 });
-    const rewrites = await Promise.all(
-      routing.locales.map((locale) => rewriteArticle(article, analysis, locale)),
-    );
 
     await updateJob(jobId, { step: "saving", progress: 92 });
 
@@ -124,15 +117,16 @@ export async function runPipeline(jobId: string): Promise<void> {
         })
         .returning({ id: articles.id });
 
-      if (rewrites.length > 0) {
-        await tx.insert(articleRewrites).values(
-          rewrites.map((r) => ({
-            articleId: created.id,
-            locale: r.locale,
-            title: r.title,
-            body: r.body,
-          })),
-        );
+      if (analysis.keywords.length > 0) {
+        const keywordRows = [...new Set(analysis.keywords.map(slugify))]
+          .filter(Boolean)
+          .map((keyword) => ({ articleId: created.id, keyword }));
+        if (keywordRows.length > 0) {
+          await tx
+            .insert(articleKeywords)
+            .values(keywordRows)
+            .onConflictDoNothing();
+        }
       }
 
       for (const [index, claim] of analysis.claims.entries()) {

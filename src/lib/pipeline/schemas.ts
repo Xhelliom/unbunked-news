@@ -69,13 +69,8 @@ export type Analysis = {
   killswitch: Killswitch;
   evidence: AnalysisEvidence;
   tags: string[];
+  keywords: string[];
   claims: AnalysisClaim[];
-};
-
-export type Rewrite = {
-  locale: string;
-  title: string;
-  body: string;
 };
 
 export const recordClaimsTool: Anthropic.Tool = {
@@ -230,6 +225,15 @@ export const recordAnalysisTool: Anthropic.Tool = {
         description: "1-4 thematic topic labels (e.g. Tech, Politics, Health).",
         items: { type: "string" },
       },
+      keywords: {
+        type: "array",
+        description:
+          "5-10 specific keywords identifying the precise subject of the " +
+          "article: named entities, people, places, organisations, specific " +
+          "events. NOT broad categories — those are the tags. Same language " +
+          "as the article.",
+        items: { type: "string" },
+      },
       claims: {
         type: "array",
         items: {
@@ -273,31 +277,9 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "killswitch",
       "descriptors",
       "tags",
+      "keywords",
       "claims",
     ],
-    additionalProperties: false,
-  },
-};
-
-export const recordRewriteTool: Anthropic.Tool = {
-  name: "record_rewrite",
-  description:
-    "Record an Unbunked-fiable rewrite of the article in the requested language.",
-  input_schema: {
-    type: "object",
-    properties: {
-      title: {
-        type: "string",
-        description:
-          "Rewritten title in the requested language. Reformulate; do NOT copy the original headline.",
-      },
-      body: {
-        type: "string",
-        description:
-          "Full rewritten article in markdown, in the requested language. Preserve the tone and structure of the original but write entirely in your own words — never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
-      },
-    },
-    required: ["title", "body"],
     additionalProperties: false,
   },
 };

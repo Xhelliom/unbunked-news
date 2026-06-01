@@ -5,9 +5,8 @@ import { revalidateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articleRewrites, articles, proposals } from "@/db/schema";
+import { articles, proposals } from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
-import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob } from "@/lib/jobs";
 import { requireSession } from "@/lib/session";
@@ -88,35 +87,6 @@ export async function saveArticle(
 
   revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
   redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
-  return {};
-}
-
-export async function saveRewrite(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  await requireSession();
-  const articleId = String(formData.get("articleId") ?? "");
-  const localeRaw = String(formData.get("locale") ?? "");
-  if (!(routing.locales as readonly string[]).includes(localeRaw)) {
-    return { error: "invalidLocale" };
-  }
-  const title = String(formData.get("title") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
-  if (!title || !body) {
-    return { error: "empty" };
-  }
-
-  await db
-    .insert(articleRewrites)
-    .values({ articleId, locale: localeRaw, title, body })
-    .onConflictDoUpdate({
-      target: [articleRewrites.articleId, articleRewrites.locale],
-      set: { title, body },
-    });
-
-  revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
-  redirect({ href: `/admin/articles/${articleId}`, locale: await getLocale() });
   return {};
 }
 
