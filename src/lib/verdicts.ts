@@ -1,7 +1,7 @@
 export const VERDICTS = [
   "reliable",
   "nuanced",
-  "biased",
+  "fragile",
   "debunked",
   "unverifiable",
 ] as const;
@@ -14,7 +14,8 @@ export const verdictBadgeClasses: Record<Verdict, string> = {
     "bg-verdict-reliable-bg text-verdict-reliable-fg ring-verdict-reliable/30",
   nuanced:
     "bg-verdict-nuanced-bg text-verdict-nuanced-fg ring-verdict-nuanced/30",
-  biased: "bg-verdict-biased-bg text-verdict-biased-fg ring-verdict-biased/30",
+  fragile:
+    "bg-verdict-fragile-bg text-verdict-fragile-fg ring-verdict-fragile/30",
   debunked:
     "bg-verdict-debunked-bg text-verdict-debunked-fg ring-verdict-debunked/30",
   unverifiable:
@@ -25,7 +26,7 @@ export const verdictBadgeClasses: Record<Verdict, string> = {
 export const verdictDotClasses: Record<Verdict, string> = {
   reliable: "bg-verdict-reliable",
   nuanced: "bg-verdict-nuanced",
-  biased: "bg-verdict-biased",
+  fragile: "bg-verdict-fragile",
   debunked: "bg-verdict-debunked",
   unverifiable: "bg-verdict-unverifiable",
 };

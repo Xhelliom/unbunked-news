@@ -1,0 +1,42 @@
+name: Tests
+
+# Type-checks and runs the unit suite, including the deterministic scoring tests
+# and the gold-set metric gate (docs/SCORING.md §13). The gate is armed once
+# src/lib/pipeline/gold-set.fixtures.json is populated; until then it passes
+# vacuously while the metric maths is still exercised.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Type-check and unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+      - name: Unit tests
+        run: pnpm test

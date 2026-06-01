@@ -23,8 +23,8 @@ type ReviewFormProps = {
   verdict: Verdict | null;
   reliabilityScore: number | null;
   factualityScore: number | null;
+  corroborationScore: number | null;
   sourcingScore: number | null;
-  neutralityScore: number | null;
   completenessScore: number | null;
   transparencyScore: number | null;
   recencyScore: number | null;
@@ -129,6 +129,7 @@ export function ReviewForm(props: ReviewFormProps) {
               max={100}
               defaultValue={props.reliabilityScore ?? ""}
             />
+            <p className="text-muted-foreground text-xs">{t("scoreHint")}</p>
           </div>
         </div>
         <CriteriaFieldset initial={props} />

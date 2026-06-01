@@ -69,7 +69,7 @@ export async function rewriteArticle(
             text: [
               `TARGET LANGUAGE: ${language}`,
               "",
-              `OUR VERDICT: ${analysis.verdict} (reliability ${analysis.reliabilityScore}/100)`,
+              `OUR VERDICT: ${analysis.verdict} (reliability ${analysis.reliabilityScore ?? "—"}/100)`,
               `OUR SUMMARY: ${analysis.summary}`,
               "",
               `CHECKED CLAIMS:\n${claimsBrief(analysis.claims)}`,

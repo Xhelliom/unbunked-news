@@ -64,6 +64,20 @@
       "when": 1780239898427,
       "tag": "0008_woozy_justice",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780343519939,
+      "tag": "0009_right_pandemic",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780343765785,
+      "tag": "0010_fair_slayback",
+      "breakpoints": true
     }
   ]
 }

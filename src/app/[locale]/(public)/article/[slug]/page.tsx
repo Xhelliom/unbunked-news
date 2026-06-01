@@ -18,6 +18,7 @@ import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ScoreCriteria } from "@/components/score-criteria";
+import { ScoreDescriptors } from "@/components/score-descriptors";
 import { ArticleReader } from "@/components/article-reader";
 import { ArticleViewSwitcher } from "@/components/article-view-switcher";
 import { RewriteBody } from "@/components/rewrite-body";
@@ -44,6 +45,7 @@ export default async function ArticlePage({
 
   const t = await getTranslations("article");
   const tStatus = await getTranslations("claimStatus");
+  const tVerdict = await getTranslations("verdicts");
   const format = await getFormatter();
 
   const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
@@ -141,16 +143,24 @@ export default async function ArticlePage({
 
         <div className="mt-7">
           <div className="flex flex-wrap items-center gap-4">
-            {article.reliabilityScore !== null && (
-              <div className="flex items-baseline gap-2">
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                {t("score")}
+              </p>
+              <div className="mt-0.5 flex items-baseline gap-2">
                 <span className="text-[32px] font-bold tracking-tight">
-                  {article.reliabilityScore}
+                  {article.reliabilityScore ?? "—"}
                 </span>
-                <span className="text-muted-foreground text-sm">
-                  / 100 · {t("score")}
-                </span>
+                {article.reliabilityScore !== null && (
+                  <span className="text-muted-foreground text-sm">/ 100</span>
+                )}
+                {article.verdict && (
+                  <span className="text-sm font-medium">
+                    · {tVerdict(`${article.verdict}.label`)}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
             <Button asChild variant="outline" size="sm" className="ml-auto">
               <a
                 href={article.urlOrigine}
@@ -174,16 +184,26 @@ export default async function ArticlePage({
             </div>
           )}
           <ScoreCriteria scores={article} />
+          <ScoreDescriptors
+            framing={article.framing}
+            contentType={article.contentType}
+          />
         </div>
 
         {statusCounts.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-            {statusCounts.map(({ status, count }) => (
-              <span key={status} className="inline-flex items-center gap-1.5">
-                <ClaimStatusBadge status={status} />
-                <span className="text-muted-foreground text-sm">×{count}</span>
-              </span>
-            ))}
+          <div className="mt-6">
+            <p className="text-sm font-semibold">{t("claimsBreakdownTitle")}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              {t("claimsBreakdownHint")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              {statusCounts.map(({ status, count }) => (
+                <span key={status} className="inline-flex items-center gap-1.5">
+                  <ClaimStatusBadge status={status} />
+                  <span className="text-muted-foreground text-sm">×{count}</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

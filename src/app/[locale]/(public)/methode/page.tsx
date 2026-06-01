@@ -3,7 +3,7 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
-import { CORE_CRITERIA, OPTIONAL_CRITERIA } from "@/lib/score-criteria";
+import { CONDITIONAL_CRITERIA, CORE_CRITERIA } from "@/lib/score-criteria";
 import { VERDICTS } from "@/lib/verdicts";
 import { VerdictBadge } from "@/components/verdict-badge";
 
@@ -58,7 +58,7 @@ export default async function MethodologyPage({
         </h3>
         <p className="text-muted-foreground mt-2 text-sm">{t("optionalHint")}</p>
         <dl className="mt-4 space-y-4">
-          {OPTIONAL_CRITERIA.map((criterion) => (
+          {CONDITIONAL_CRITERIA.map((criterion) => (
             <div key={criterion}>
               <dt className="font-semibold">{tc(`${criterion}.label`)}</dt>
               <dd className="text-muted-foreground mt-0.5 leading-[1.55]">

@@ -47,9 +47,9 @@
       "label": "Nuanced",
       "description": "Largely true, but incomplete or context-dependent."
     },
-    "biased": {
-      "label": "Biased",
-      "description": "Partial framing or selective use of the facts."
+    "fragile": {
+      "label": "Fragile",
+      "description": "Fragile reliability: major reservations about the facts or sources."
     },
     "debunked": {
       "label": "Debunked",
@@ -62,36 +62,63 @@
   },
   "criteria": {
     "lowWarning": "Low {criterion}",
+    "unverifiable": "—",
+    "sectionTitle": "Score breakdown",
+    "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
       "label": "Factuality",
       "description": "Are the stated facts true and backed by the sources?"
+    },
+    "corroboration": {
+      "label": "Corroboration",
+      "description": "Are the central facts confirmed by independent external sources?"
     },
     "sourcing": {
       "label": "Sourcing",
       "description": "Are the cited sources solid, independent and verifiable?"
     },
-    "neutrality": {
-      "label": "Neutrality",
-      "description": "Is the tone and framing balanced, free of slanted omissions?"
-    },
     "completeness": {
       "label": "Completeness",
-      "description": "Are the important facts present rather than omitted?"
+      "description": "Are the important facts present rather than omitted by selection?"
     },
     "transparency": {
       "label": "Transparency",
-      "description": "Are the author, date, methodology and funding identifiable?"
+      "description": "Are the author, date, editorial owner and funding identifiable?"
     },
     "recency": {
       "label": "Recency",
       "description": "Is the information up to date rather than stale?"
     }
   },
+  "descriptors": {
+    "caption": "Descriptors — they describe the article but are not part of the score.",
+    "framingTitle": "Framing",
+    "contentTypeTitle": "Content type",
+    "confidenceLabel": "Confidence",
+    "confidence": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "framing": {
+      "neutre": "Neutral",
+      "orienté-modéré": "Moderately slanted",
+      "orienté-marqué": "Markedly slanted",
+      "militant": "Activist"
+    },
+    "contentType": {
+      "actualité": "News",
+      "analyse": "Analysis",
+      "opinion": "Opinion",
+      "sponsorisé": "Sponsored",
+      "généré-IA": "AI-generated"
+    }
+  },
   "methodology": {
     "title": "How Unbunked rates the news",
     "intro": "Every article goes through the same pipeline: we isolate the checkable claims, test them against sources via web search, then derive a verdict and scores. Here is what each one measures.",
     "scoreTitle": "The overall score and its criteria",
-    "scoreBody": "The reliability score (0-100) shown prominently is produced by our analysis so it stays coherent with the verdict. It breaks down into criteria each rated out of 100, which explain where the score comes from: an article can be factually accurate yet heavily biased, or well-meaning yet poorly sourced.",
+    "scoreBody": "The reliability score (0-100) shown prominently is computed by our code: it is the weighted average of the criteria, each rated out of 100, so it is reproducible and explainable. Reliability measures rigour, not orientation: an article can be engaged and reliable. When evidence is missing, the score becomes \"—\" (unverifiable) rather than an arbitrary number.",
     "coreTitle": "Always assessed",
     "optionalTitle": "Assessed when relevant",
     "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number."
@@ -218,6 +245,7 @@
       "showOriginalSummaryOnly": "Show our summary only",
       "verdict": "Verdict",
       "score": "Reliability score",
+      "scoreHint": "Default value, not computed — normally derived from the criteria.",
       "criteriaTitle": "Detailed scores",
       "criteriaHint": "Uncheck an optional criterion if it can't be assessed reliably.",
       "optional": "optional",
@@ -226,6 +254,8 @@
       "claims": "Analyzed claims",
       "noClaims": "No claims.",
       "sources": "Sources",
+      "evidenceTitle": "Per-criterion evidence",
+      "killswitchTitle": "Raised flags",
       "save": "Save",
       "saving": "Saving…",
       "publish": "Publish",
@@ -266,6 +296,8 @@
     "originalSource": "Original source",
     "readOriginal": "Read the original article",
     "score": "Reliability score",
+    "claimsBreakdownTitle": "Analyzed claims",
+    "claimsBreakdownHint": "Status of each checked claim in the article. Full detail below.",
     "claimsTitle": "Claim-by-claim review",
     "readingTitle": "The article, checked paragraph by paragraph",
     "readingIntroTitle": "The article, checked",

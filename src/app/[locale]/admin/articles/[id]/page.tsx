@@ -7,6 +7,7 @@ import { articles } from "@/db/schema";
 import { routing } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
 import { VerdictBadge } from "@/components/verdict-badge";
+import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
 import { RewriteForm } from "@/components/admin/rewrite-form";
 
@@ -63,13 +64,15 @@ export default async function AdminArticleReviewPage({
         verdict={article.verdict}
         reliabilityScore={article.reliabilityScore}
         factualityScore={article.factualityScore}
+        corroborationScore={article.corroborationScore}
         sourcingScore={article.sourcingScore}
-        neutralityScore={article.neutralityScore}
         completenessScore={article.completenessScore}
         transparencyScore={article.transparencyScore}
         recencyScore={article.recencyScore}
         published={article.published}
       />
+
+      <CriteriaEvidence evidence={article.evidence} />
 
       <div className="space-y-4">
         <h2 className="font-serif text-lg font-bold">

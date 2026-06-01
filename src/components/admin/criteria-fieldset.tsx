@@ -7,13 +7,11 @@ import { cn } from "@/lib/utils";
 import {
   CRITERION_COLUMN,
   NEUTRAL_SCORE,
-  OPTIONAL_CRITERIA,
   SCORE_CRITERIA,
   criterionValue,
-  isOptionalCriterion,
+  isConditionalCriterion,
   scoreBand,
   type CriterionScores,
-  type OptionalCriterion,
   type ScoreCriterion,
 } from "@/lib/score-criteria";
 import { verdictDotClasses } from "@/lib/verdicts";
@@ -37,25 +35,29 @@ export function CriteriaFieldset({ initial }: { initial: CriterionScores }) {
         ]),
       ) as Record<ScoreCriterion, number>,
   );
-  const [enabled, setEnabled] = useState<Record<OptionalCriterion, boolean>>(
+  // Core criteria are always scored; only the conditional ones (recency) carry
+  // a checkbox and can be toggled off (omitted → null).
+  const [enabled, setEnabled] = useState<Record<ScoreCriterion, boolean>>(
     () =>
       Object.fromEntries(
-        OPTIONAL_CRITERIA.map((criterion) => [
+        SCORE_CRITERIA.map((criterion) => [
           criterion,
-          criterionValue(initial, criterion) !== null,
+          isConditionalCriterion(criterion)
+            ? criterionValue(initial, criterion) !== null
+            : true,
         ]),
-      ) as Record<OptionalCriterion, boolean>,
+      ) as Record<ScoreCriterion, boolean>,
   );
 
   const isScored = (criterion: ScoreCriterion): boolean =>
-    !isOptionalCriterion(criterion) || enabled[criterion];
+    !isConditionalCriterion(criterion) || enabled[criterion];
 
   return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{t("criteriaTitle")}</legend>
       <p className="text-muted-foreground text-xs">{t("criteriaHint")}</p>
       {SCORE_CRITERIA.map((criterion) => {
-        const optional = isOptionalCriterion(criterion);
+        const optional = isConditionalCriterion(criterion);
         const on = isScored(criterion);
         const value = scores[criterion];
         const field = CRITERION_COLUMN[criterion];
