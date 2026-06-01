@@ -50,6 +50,12 @@ next-env.d.ts
 # local design-handoff bundle (reference only)
 claude-design
 
+# local skills installed via `npx skills add` — never commit
+.agents/
+.claude/skills/
+.claude/settings.local.json
+skills-lock.json
+
 # local seed data — never commit real articles or personal test data
 src/db/seed-articles-data.local.ts
 src/db/seed-articles-rewrites.local.ts
