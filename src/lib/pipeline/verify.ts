@@ -3,7 +3,16 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
 import type { ScrapedArticle } from "@/lib/scrape";
-import { collectText, formatArticle, getClaude, MODEL } from "./client";
+import {
+  addUsage,
+  collectText,
+  formatArticle,
+  getClaude,
+  MODEL,
+  usageOf,
+  ZERO_USAGE,
+  type TokenUsage,
+} from "./client";
 import type { AnalysisSource } from "./schemas";
 
 const SYSTEM =
@@ -19,6 +28,7 @@ const SEARCH_TOOLS: Anthropic.Messages.ToolUnion[] = [
 export type VerificationFindings = {
   findings: string;
   sources: AnalysisSource[];
+  usage: TokenUsage;
 };
 
 function collectSources(content: Anthropic.ContentBlock[]): AnalysisSource[] {
@@ -62,6 +72,7 @@ export async function verifyClaims(
 
   const allContent: Anthropic.ContentBlock[] = [];
   let guard = 0;
+  let usage = ZERO_USAGE;
   let message = await client.messages.create({
     model: MODEL,
     max_tokens: 8192,
@@ -70,6 +81,7 @@ export async function verifyClaims(
     messages,
   });
   allContent.push(...message.content);
+  usage = addUsage(usage, usageOf(message));
 
   while (message.stop_reason === "pause_turn" && guard < 5) {
     messages.push({ role: "assistant", content: message.content });
@@ -81,6 +93,7 @@ export async function verifyClaims(
       messages,
     });
     allContent.push(...message.content);
+    usage = addUsage(usage, usageOf(message));
     guard += 1;
   }
 
@@ -91,5 +104,6 @@ export async function verifyClaims(
   return {
     findings: collectText({ ...message, content: allContent }),
     sources: unique,
+    usage,
   };
 }

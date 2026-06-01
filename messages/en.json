@@ -123,7 +123,8 @@
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
       "proposals": "Proposals",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "costs": "Costs"
     },
     "analytics": {
       "title": "Analytics",
@@ -169,6 +170,25 @@
         "retention": "Data is kept for at most {days} days.",
         "oldest": "Oldest data point: {date}. Maximum retention: {days} days.",
         "purge": "Purge old data"
+      }
+    },
+    "costs": {
+      "title": "AI costs",
+      "subtitle": "Tokens consumed and estimated production cost per article.",
+      "totalCost": "Total cost",
+      "totalTokens": "Total tokens",
+      "articles": "Articles analysed",
+      "avgCost": "Average cost / article",
+      "empty": "No consumption recorded yet.",
+      "note": "Costs estimated from Anthropic pricing, in US dollars (USD). Cache tokens (reads and writes) are billed at a reduced rate.",
+      "table": {
+        "title": "Per-article breakdown",
+        "article": "Article",
+        "input": "Input",
+        "output": "Output",
+        "cache": "Cache",
+        "total": "Total",
+        "cost": "Cost"
       }
     },
     "dashboard": {

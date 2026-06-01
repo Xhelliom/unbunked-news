@@ -234,6 +234,25 @@ export const jobs = pgTable(
   (table) => [index("jobs_status_idx").on(table.status)],
 );
 
+// Token consumption recorded once per article when the pipeline finishes, so
+// the admin has a financial view of what each article cost to produce. One row
+// per article; the monetary cost is derived from these counts at read time
+// (see src/lib/pipeline/pricing.ts) so a later price change reprices history.
+export const articleTokenUsage = pgTable("article_token_usage", {
+  articleId: uuid()
+    .primaryKey()
+    .references(() => articles.id, { onDelete: "cascade" }),
+  // The Claude model used, so the correct price applies even if it changes.
+  model: text().notNull(),
+  inputTokens: integer().notNull().default(0),
+  outputTokens: integer().notNull().default(0),
+  cacheCreationTokens: integer().notNull().default(0),
+  cacheReadTokens: integer().notNull().default(0),
+  createdAt: timestamp({ withTimezone: true, mode: "date" })
+    .notNull()
+    .defaultNow(),
+});
+
 // Privacy-first, cookieless analytics. No personal data is stored: we keep the
 // pathname (query string stripped), the resolved article, the locale and the
 // external referrer host. `visitorHash` is a daily-rotating salted hash of
@@ -262,12 +281,23 @@ export const analyticsEvents = pgTable(
   ],
 );
 
-export const articlesRelations = relations(articles, ({ many }) => ({
+export const articlesRelations = relations(articles, ({ one, many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
   jobs: many(jobs),
+  tokenUsage: one(articleTokenUsage),
 }));
+
+export const articleTokenUsageRelations = relations(
+  articleTokenUsage,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleTokenUsage.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
 
 export const articleRewritesRelations = relations(
   articleRewrites,
@@ -332,3 +362,5 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 export type ArticleRewrite = typeof articleRewrites.$inferSelect;
 export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
+export type ArticleTokenUsage = typeof articleTokenUsage.$inferSelect;
+export type NewArticleTokenUsage = typeof articleTokenUsage.$inferInsert;

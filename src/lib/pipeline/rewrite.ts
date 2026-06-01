@@ -1,13 +1,25 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
-import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
+import {
+  firstToolInput,
+  formatArticle,
+  getClaude,
+  MODEL,
+  usageOf,
+  type TokenUsage,
+} from "./client";
 import {
   recordRewriteTool,
   type Analysis,
   type AnalysisClaim,
   type Rewrite,
 } from "./schemas";
+
+export type RewriteResult = {
+  rewrite: Rewrite;
+  usage: TokenUsage;
+};
 
 const LOCALE_NAMES: Record<string, string> = {
   fr: "French",
@@ -45,7 +57,7 @@ export async function rewriteArticle(
   article: ScrapedArticle,
   analysis: Analysis,
   locale: string,
-): Promise<Rewrite> {
+): Promise<RewriteResult> {
   const client = getClaude();
   const language = languageOf(locale);
 
@@ -88,8 +100,11 @@ export async function rewriteArticle(
   }
 
   return {
-    locale,
-    title: typeof input.title === "string" ? input.title : analysis.title,
-    body: typeof input.body === "string" ? input.body : "",
+    rewrite: {
+      locale,
+      title: typeof input.title === "string" ? input.title : analysis.title,
+      body: typeof input.body === "string" ? input.body : "",
+    },
+    usage: usageOf(message),
   };
 }
