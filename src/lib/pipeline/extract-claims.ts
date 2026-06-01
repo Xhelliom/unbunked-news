@@ -1,8 +1,20 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
-import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
+import {
+  firstToolInput,
+  formatArticle,
+  getClaude,
+  MODEL,
+  usageOf,
+  type TokenUsage,
+} from "./client";
 import { recordClaimsTool } from "./schemas";
+
+export type ExtractClaimsResult = {
+  claims: string[];
+  usage: TokenUsage;
+};
 
 const SYSTEM =
   "You are a rigorous fact-checking assistant. You isolate the concrete, " +
@@ -13,7 +25,7 @@ const SYSTEM =
 
 export async function extractClaims(
   article: ScrapedArticle,
-): Promise<string[]> {
+): Promise<ExtractClaimsResult> {
   const client = getClaude();
   const message = await client.messages.create({
     model: MODEL,
@@ -40,9 +52,10 @@ export async function extractClaims(
   });
 
   const input = firstToolInput(message, "record_claims");
-  const claims = Array.isArray(input?.claims) ? input.claims : [];
-  return claims.filter(
+  const rawClaims = Array.isArray(input?.claims) ? input.claims : [];
+  const claims = rawClaims.filter(
     (claim): claim is string =>
       typeof claim === "string" && claim.trim().length > 0,
   );
+  return { claims, usage: usageOf(message) };
 }

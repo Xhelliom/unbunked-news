@@ -123,7 +123,8 @@
       "dashboard": "Tableau de bord",
       "submit": "Soumettre une URL",
       "proposals": "Propositions",
-      "analytics": "Statistiques"
+      "analytics": "Statistiques",
+      "costs": "Coûts"
     },
     "analytics": {
       "title": "Statistiques",
@@ -169,6 +170,26 @@
         "retention": "Les données sont conservées au maximum {days} jours.",
         "oldest": "Donnée la plus ancienne : {date}. Conservation maximale : {days} jours.",
         "purge": "Purger les anciennes données"
+      }
+    },
+    "costs": {
+      "title": "Coûts IA",
+      "subtitle": "Tokens consommés et coût estimé de production par article.",
+      "totalCost": "Coût total",
+      "totalTokens": "Tokens totaux",
+      "articles": "Articles analysés",
+      "avgCost": "Coût moyen / article",
+      "empty": "Aucune consommation enregistrée pour l'instant.",
+      "note": "Coûts estimés à partir des tarifs Anthropic, en dollars américains (USD). Les tokens de cache (lecture et écriture) sont facturés à un tarif réduit.",
+      "table": {
+        "title": "Détail par article",
+        "truncated": "Affichage des {count} articles les plus récents ; les totaux ci-dessus portent sur l'ensemble.",
+        "article": "Article",
+        "input": "Entrée",
+        "output": "Sortie",
+        "cache": "Cache",
+        "total": "Total",
+        "cost": "Coût"
       }
     },
     "dashboard": {

@@ -51,6 +51,12 @@ export default async function AdminLayout({
             >
               {t("nav.analytics")}
             </Link>
+            <Link
+              href="/admin/costs"
+              className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1.5"
+            >
+              {t("nav.costs")}
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />

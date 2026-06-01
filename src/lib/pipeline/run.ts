@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import {
   articleRewrites,
   articleTags,
+  articleTokenUsage,
   articles,
   claimSources,
   claims as claimsTable,
@@ -16,6 +17,7 @@ import {
 import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
+import { addUsage, MODEL, ZERO_USAGE } from "./client";
 import { extractClaims } from "./extract-claims";
 import { rewriteArticle } from "./rewrite";
 import { verifyClaims } from "./verify";
@@ -72,18 +74,30 @@ export async function runPipeline(jobId: string): Promise<void> {
     const article = await scrapeArticle(job.url);
 
     await updateJob(jobId, { step: "extracting", progress: 25 });
-    const claims = await extractClaims(article);
+    const { claims, usage: extractUsage } = await extractClaims(article);
 
     await updateJob(jobId, { step: "verifying", progress: 45 });
     const verification = await verifyClaims(article, claims);
 
     await updateJob(jobId, { step: "aggregating", progress: 60 });
-    const analysis = await aggregate(article, claims, verification);
+    const { analysis, usage: aggregateUsage } = await aggregate(
+      article,
+      claims,
+      verification,
+    );
 
     await updateJob(jobId, { step: "rewriting", progress: 75 });
-    const rewrites = await Promise.all(
+    const rewriteResults = await Promise.all(
       routing.locales.map((locale) => rewriteArticle(article, analysis, locale)),
     );
+    const rewrites = rewriteResults.map((result) => result.rewrite);
+
+    const totalUsage = [
+      extractUsage,
+      verification.usage,
+      aggregateUsage,
+      ...rewriteResults.map((result) => result.usage),
+    ].reduce(addUsage, ZERO_USAGE);
 
     await updateJob(jobId, { step: "saving", progress: 92 });
 
@@ -112,6 +126,15 @@ export async function runPipeline(jobId: string): Promise<void> {
           published: false,
         })
         .returning({ id: articles.id });
+
+      await tx.insert(articleTokenUsage).values({
+        articleId: created.id,
+        model: MODEL,
+        inputTokens: totalUsage.inputTokens,
+        outputTokens: totalUsage.outputTokens,
+        cacheCreationTokens: totalUsage.cacheCreationTokens,
+        cacheReadTokens: totalUsage.cacheReadTokens,
+      });
 
       if (rewrites.length > 0) {
         await tx.insert(articleRewrites).values(
