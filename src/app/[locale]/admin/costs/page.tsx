@@ -5,6 +5,7 @@ import { loadTokenUsageSummary } from "@/lib/pipeline/usage-queries";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -60,6 +61,11 @@ export default async function AdminCosts() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t("table.title")}</CardTitle>
+          {summary.articleCount > summary.rows.length && (
+            <CardDescription>
+              {t("table.truncated", { count: summary.rows.length })}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           {summary.rows.length === 0 ? (

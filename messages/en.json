@@ -183,6 +183,7 @@
       "note": "Costs estimated from Anthropic pricing, in US dollars (USD). Cache tokens (reads and writes) are billed at a reduced rate.",
       "table": {
         "title": "Per-article breakdown",
+        "truncated": "Showing the {count} most recent articles; the totals above cover all of them.",
         "article": "Article",
         "input": "Input",
         "output": "Output",

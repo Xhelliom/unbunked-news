@@ -183,6 +183,7 @@
       "note": "Coûts estimés à partir des tarifs Anthropic, en dollars américains (USD). Les tokens de cache (lecture et écriture) sont facturés à un tarif réduit.",
       "table": {
         "title": "Détail par article",
+        "truncated": "Affichage des {count} articles les plus récents ; les totaux ci-dessus portent sur l'ensemble.",
         "article": "Article",
         "input": "Entrée",
         "output": "Sortie",

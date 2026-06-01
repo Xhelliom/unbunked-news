@@ -71,6 +71,13 @@
       "when": 1780333225568,
       "tag": "0009_exotic_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780340947096,
+      "tag": "0010_big_zodiak",
+      "breakpoints": true
     }
   ]
 }

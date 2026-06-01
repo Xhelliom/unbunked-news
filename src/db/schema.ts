@@ -238,20 +238,26 @@ export const jobs = pgTable(
 // the admin has a financial view of what each article cost to produce. One row
 // per article; the monetary cost is derived from these counts at read time
 // (see src/lib/pipeline/pricing.ts) so a later price change reprices history.
-export const articleTokenUsage = pgTable("article_token_usage", {
-  articleId: uuid()
-    .primaryKey()
-    .references(() => articles.id, { onDelete: "cascade" }),
-  // The Claude model used, so the correct price applies even if it changes.
-  model: text().notNull(),
-  inputTokens: integer().notNull().default(0),
-  outputTokens: integer().notNull().default(0),
-  cacheCreationTokens: integer().notNull().default(0),
-  cacheReadTokens: integer().notNull().default(0),
-  createdAt: timestamp({ withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
-});
+export const articleTokenUsage = pgTable(
+  "article_token_usage",
+  {
+    articleId: uuid()
+      .primaryKey()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    // The Claude model used, so the correct price applies even if it changes.
+    model: text().notNull(),
+    inputTokens: integer().notNull().default(0),
+    outputTokens: integer().notNull().default(0),
+    cacheCreationTokens: integer().notNull().default(0),
+    cacheReadTokens: integer().notNull().default(0),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("article_token_usage_created_at_idx").on(table.createdAt),
+  ],
+);
 
 // Privacy-first, cookieless analytics. No personal data is stored: we keep the
 // pathname (query string stripped), the resolved article, the locale and the
