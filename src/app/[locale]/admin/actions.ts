@@ -32,6 +32,9 @@ export type ActionState = { error?: string };
 
 const MEMBERS_ROUTE = "/admin/members";
 const MEMBER_ERROR_PARAM = "error";
+const ACCOUNT_ROUTE = "/admin/account";
+const ACCOUNT_ERROR_PARAM = "error";
+const ACCOUNT_SUCCESS_PARAM = "updated";
 
 const MEMBER_ERROR = {
   MISSING_ID: "missingMemberId",
@@ -50,6 +53,20 @@ type MemberErrorCode = (typeof MEMBER_ERROR)[keyof typeof MEMBER_ERROR];
 
 function memberErrorHref(code: MemberErrorCode): string {
   return `${MEMBERS_ROUTE}?${MEMBER_ERROR_PARAM}=${code}`;
+}
+
+const ACCOUNT_ERROR = {
+  MISSING_NAME: "missingName",
+  MISSING_EMAIL: "missingEmail",
+  WEAK_PASSWORD: "weakPassword",
+  EMAIL_EXISTS: "emailAlreadyExists",
+  USER_NOT_FOUND: "userNotFound",
+} as const;
+
+type AccountErrorCode = (typeof ACCOUNT_ERROR)[keyof typeof ACCOUNT_ERROR];
+
+function accountErrorHref(code: AccountErrorCode): string {
+  return `${ACCOUNT_ROUTE}?${ACCOUNT_ERROR_PARAM}=${code}`;
 }
 
 const CREDENTIAL_PROVIDER_ID = "credential";
@@ -401,6 +418,83 @@ export async function setMemberPassword(formData: FormData): Promise<void> {
   }
 
   redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
+export async function updateOwnProfile(formData: FormData): Promise<void> {
+  const { userId } = await requireAdminSession();
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!name) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.MISSING_NAME), locale: await getLocale() });
+  }
+  if (!email) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.MISSING_EMAIL), locale: await getLocale() });
+  }
+  if (password && password.length < MIN_PASSWORD_LENGTH) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.WEAK_PASSWORD), locale: await getLocale() });
+  }
+
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: { id: true, email: true },
+  });
+  if (!currentUser) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.USER_NOT_FOUND), locale: await getLocale() });
+  }
+
+  // On empêche de prendre l'email d'un autre membre.
+  if (email !== currentUser.email) {
+    const existingUser = await db.query.user.findFirst({
+      where: eq(user.email, email),
+      columns: { id: true },
+    });
+    if (existingUser) {
+      redirect({
+        href: accountErrorHref(ACCOUNT_ERROR.EMAIL_EXISTS),
+        locale: await getLocale(),
+      });
+    }
+  }
+
+  await db.update(user).set({ name, email }).where(eq(user.id, userId));
+
+  const credentialAccount = await db.query.account.findFirst({
+    where: eq(account.userId, userId),
+    columns: { id: true },
+  });
+
+  if (credentialAccount) {
+    // L'accountId doit rester aligné sur l'email de connexion, même si
+    // l'utilisateur ne change pas son mot de passe dans ce formulaire.
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      await db
+        .update(account)
+        .set({ password: hashedPassword, accountId: email })
+        .where(eq(account.id, credentialAccount.id));
+    } else {
+      await db
+        .update(account)
+        .set({ accountId: email })
+        .where(eq(account.id, credentialAccount.id));
+    }
+  } else if (password) {
+    const hashedPassword = await hashPassword(password);
+    await db.insert(account).values({
+      id: randomUUID(),
+      accountId: email,
+      providerId: CREDENTIAL_PROVIDER_ID,
+      userId,
+      password: hashedPassword,
+    });
+  }
+
+  redirect({
+    href: `${ACCOUNT_ROUTE}?${ACCOUNT_SUCCESS_PARAM}=1`,
+    locale: await getLocale(),
+  });
 }
 
 export async function deleteMember(formData: FormData): Promise<void> {

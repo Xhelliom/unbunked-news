@@ -14,13 +14,14 @@ spec:
       restartPolicy: Never
       containers:
         - name: seed-admin
-          # Uses latest tag for a simple on-demand admin bootstrap flow.
-          image: ghcr.io/xhelliom/unbunked-seeder:latest
+          # Reuses the app image (one image for app + migrate + seed); the
+          # bundled CJS entrypoint runs without pnpm/tsx.
+          image: ghcr.io/xhelliom/unbunked-news:latest
           envFrom:
             - secretRef:
                 name: unbunked-secrets
           # Default bootstrap admin email.
           command:
-            - pnpm
-            - db:seed-admin
+            - node
+            - dist/scripts/seed-admin.cjs
             - admin@unbunked.local
