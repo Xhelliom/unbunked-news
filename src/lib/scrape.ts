@@ -1,6 +1,10 @@
 import { extract, extractFromHtml } from "@extractus/article-extractor";
 
-import { stripBoilerplate } from "@/lib/boilerplate";
+import {
+  assessScrapeQuality,
+  stripBoilerplate,
+  type ScrapeQuality,
+} from "@/lib/boilerplate";
 
 export type ScrapedArticle = {
   url: string;
@@ -100,12 +104,33 @@ export async function scrapeArticle(url: string): Promise<ScrapedArticle> {
     result = null;
   }
 
-  if (!result) {
-    result = await scrapeWithPuppeteer(url);
+  let quality: ScrapeQuality = result
+    ? assessScrapeQuality(result.content)
+    : { ok: false, reason: "extractor returned no usable content" };
+
+  // Force the renderer when the cheap fetch returned nothing OR returned a
+  // paywall/nav artefact that normalize() accepted. Le Monde & co. answer the
+  // plain fetch with a subscription teaser; only the headless render gets the
+  // real body. Keep the rendered result whenever it is no worse than the fetch.
+  if (!result || !quality.ok) {
+    const rendered = await scrapeWithPuppeteer(url);
+    if (rendered) {
+      const renderedQuality = assessScrapeQuality(rendered.content);
+      if (!result || renderedQuality.ok) {
+        result = rendered;
+        quality = renderedQuality;
+      }
+    }
   }
 
   if (!result) {
     throw new Error(`Could not extract article content from ${url}`);
+  }
+  if (!quality.ok) {
+    throw new Error(
+      `Scraped content from ${url} failed the quality check: ${quality.reason}. ` +
+        `The page is likely paywalled or needs JavaScript the renderer could not run.`,
+    );
   }
   return result;
 }

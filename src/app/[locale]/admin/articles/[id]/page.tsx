@@ -10,6 +10,7 @@ import { VerdictBadge } from "@/components/verdict-badge";
 import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
 import { RewriteForm } from "@/components/admin/rewrite-form";
+import { ScrapedBody } from "@/components/admin/scraped-body";
 
 export default async function AdminArticleReviewPage({
   params,
@@ -73,6 +74,8 @@ export default async function AdminArticleReviewPage({
       />
 
       <CriteriaEvidence evidence={article.evidence} />
+
+      <ScrapedBody content={article.content} />
 
       <div className="space-y-4">
         <h2 className="font-serif text-lg font-bold">
