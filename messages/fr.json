@@ -126,7 +126,8 @@
       "proposals": "Propositions",
       "analytics": "Statistiques",
       "costs": "Coûts",
-      "members": "Membres"
+      "members": "Membres",
+      "account": "Mon compte"
     },
     "analytics": {
       "title": "Statistiques",
@@ -319,6 +320,25 @@
         "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle admin.",
         "cannotDeleteSelf": "Vous ne pouvez pas supprimer votre propre compte.",
         "cannotDemoteLastAdmin": "Impossible de retirer le dernier administrateur."
+      }
+    },
+    "account": {
+      "title": "Mon compte",
+      "subtitle": "Mettez à jour vos informations personnelles et votre mot de passe.",
+      "save": "Enregistrer",
+      "updated": "Votre profil a bien été mis à jour.",
+      "fields": {
+        "name": "Nom",
+        "email": "Email",
+        "password": "Nouveau mot de passe",
+        "passwordPlaceholder": "Laisser vide pour ne pas changer"
+      },
+      "errors": {
+        "missingName": "Le nom est requis.",
+        "missingEmail": "L'email est requis.",
+        "weakPassword": "Le mot de passe doit contenir au moins 8 caractères.",
+        "emailAlreadyExists": "Cet email est déjà utilisé par un autre compte.",
+        "userNotFound": "Compte introuvable."
       }
     }
   },

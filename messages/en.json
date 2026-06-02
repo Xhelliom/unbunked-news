@@ -126,7 +126,8 @@
       "proposals": "Proposals",
       "analytics": "Analytics",
       "costs": "Costs",
-      "members": "Members"
+      "members": "Members",
+      "account": "My account"
     },
     "analytics": {
       "title": "Analytics",
@@ -319,6 +320,25 @@
         "cannotDemoteSelf": "You cannot revoke your own admin role.",
         "cannotDeleteSelf": "You cannot delete your own account.",
         "cannotDemoteLastAdmin": "Cannot remove the last admin."
+      }
+    },
+    "account": {
+      "title": "My account",
+      "subtitle": "Update your personal information and password.",
+      "save": "Save",
+      "updated": "Your profile has been updated.",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "password": "New password",
+        "passwordPlaceholder": "Leave blank to keep current password"
+      },
+      "errors": {
+        "missingName": "Name is required.",
+        "missingEmail": "Email is required.",
+        "weakPassword": "Password must be at least 8 characters long.",
+        "emailAlreadyExists": "This email is already used by another account.",
+        "userNotFound": "Account not found."
       }
     }
   },
