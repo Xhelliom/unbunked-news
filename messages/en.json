@@ -110,6 +110,7 @@
   },
   "auth": {
     "loginTitle": "Admin sign in",
+    "loginSubtitle": "Access the administration panel to manage content, members, and day-to-day operations.",
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
@@ -124,7 +125,8 @@
       "submit": "Submit a URL",
       "proposals": "Proposals",
       "analytics": "Analytics",
-      "costs": "Costs"
+      "costs": "Costs",
+      "members": "Members"
     },
     "analytics": {
       "title": "Analytics",
@@ -270,6 +272,20 @@
         "pending": "Pending",
         "accepted": "Accepted",
         "rejected": "Rejected"
+      }
+    },
+    "members": {
+      "title": "Member management",
+      "subtitle": "Manage admin access for your team.",
+      "empty": "No members yet.",
+      "admin": "Admin",
+      "member": "Member",
+      "promote": "Promote to admin",
+      "demote": "Remove admin",
+      "errors": {
+        "missingMemberId": "Unable to update this member (missing identifier).",
+        "cannotDemoteSelf": "You cannot revoke your own admin role.",
+        "cannotDemoteLastAdmin": "Cannot remove the last admin."
       }
     }
   },

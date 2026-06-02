@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Link, redirect } from "@/i18n/navigation";
-import { getSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/admin/sign-out-button";
@@ -12,8 +12,9 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  const session = await getSession();
-  if (!session) {
+  try {
+    await requireAdminSession();
+  } catch {
     redirect({ href: "/login", locale: await getLocale() });
   }
 
@@ -56,6 +57,12 @@ export default async function AdminLayout({
               className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1.5"
             >
               {t("nav.costs")}
+            </Link>
+            <Link
+              href="/admin/members"
+              className="text-muted-foreground hover:text-foreground rounded-md px-2 py-1.5"
+            >
+              {t("nav.members")}
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-1">

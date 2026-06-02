@@ -3,7 +3,13 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LoginForm } from "@/components/admin/login-form";
 
 export default async function LoginPage({
@@ -19,12 +25,17 @@ export default async function LoginPage({
   const t = await getTranslations("auth");
 
   return (
-    <div className="mx-auto flex min-h-full max-w-sm items-center px-4 py-16">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-xl">{t("loginTitle")}</CardTitle>
+    <div className="mx-auto flex min-h-full w-full max-w-3xl items-center px-4 py-16 sm:px-6">
+      <Card className="w-full border-border/70 shadow-lg shadow-black/5">
+        <CardHeader className="space-y-2 border-b">
+          <CardTitle className="font-serif text-2xl tracking-tight">
+            {t("loginTitle")}
+          </CardTitle>
+          <CardDescription className="max-w-xl text-sm">
+            {t("loginSubtitle")}
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6 sm:pt-8">
           <LoginForm />
         </CardContent>
       </Card>

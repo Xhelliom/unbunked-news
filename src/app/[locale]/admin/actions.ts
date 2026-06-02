@@ -1,16 +1,16 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articleRewrites, articles, proposals } from "@/db/schema";
+import { articleRewrites, articles, proposals, user } from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob } from "@/lib/jobs";
-import { requireSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
@@ -20,6 +20,21 @@ import {
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
+
+const MEMBERS_ROUTE = "/admin/members";
+const MEMBER_ERROR_PARAM = "error";
+
+const MEMBER_ERROR = {
+  MISSING_ID: "missingMemberId",
+  SELF_DEMOTE: "cannotDemoteSelf",
+  LAST_ADMIN: "cannotDemoteLastAdmin",
+} as const;
+
+type MemberErrorCode = (typeof MEMBER_ERROR)[keyof typeof MEMBER_ERROR];
+
+function memberErrorHref(code: MemberErrorCode): string {
+  return `${MEMBERS_ROUTE}?${MEMBER_ERROR_PARAM}=${code}`;
+}
 
 // Next 16's revalidateTag takes a cache profile as its second argument; "max"
 // fully invalidates every entry carrying the tag.
@@ -46,7 +61,7 @@ export async function submitUrl(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const url = parseUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
@@ -60,7 +75,7 @@ export async function saveArticle(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const verdictValue = String(formData.get("verdict") ?? "");
   const verdict = (VERDICTS as readonly string[]).includes(verdictValue)
@@ -95,7 +110,7 @@ export async function saveRewrite(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const articleId = String(formData.get("articleId") ?? "");
   const localeRaw = String(formData.get("locale") ?? "");
   if (!(routing.locales as readonly string[]).includes(localeRaw)) {
@@ -121,7 +136,7 @@ export async function saveRewrite(
 }
 
 export async function setPublished(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const published = formData.get("published") === "true";
   await db
@@ -133,7 +148,7 @@ export async function setPublished(formData: FormData): Promise<void> {
 }
 
 export async function acceptProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const proposal = await db.query.proposals.findFirst({
     where: eq(proposals.id, id),
@@ -148,11 +163,44 @@ export async function acceptProposal(formData: FormData): Promise<void> {
 }
 
 export async function rejectProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   await db
     .update(proposals)
     .set({ status: "rejected" })
     .where(eq(proposals.id, id));
   redirect({ href: `/admin/proposals`, locale: await getLocale() });
+}
+
+export async function setMemberAdminStatus(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const shouldBeAdmin = formData.get("isAdmin") === "true";
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+
+  if (!shouldBeAdmin && targetUserId === actingUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DEMOTE), locale: await getLocale() });
+  }
+
+  // Keep at least one admin at all times to avoid locking the team out.
+  if (!shouldBeAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
+    }
+  }
+
+  await db
+    .update(user)
+    .set({ isAdmin: shouldBeAdmin })
+    .where(eq(user.id, targetUserId));
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
 }
