@@ -242,7 +242,12 @@
       "empty": "Aucun article pour l'instant.",
       "draft": "Brouillon",
       "published": "Publié",
-      "review": "Réviser"
+      "review": "Réviser",
+      "deleted": "Supprimé",
+      "trash": "Corbeille",
+      "trashTitle": "Corbeille",
+      "backToActive": "Articles actifs",
+      "trashEmpty": "La corbeille est vide."
     },
     "submit": {
       "title": "Analyser un article",
@@ -317,6 +322,10 @@
       "saving": "Enregistrement…",
       "publish": "Publier",
       "unpublish": "Dépublier",
+      "delete": "Supprimer",
+      "restore": "Restaurer",
+      "relaunch": "Relancer l'analyse",
+      "deletedBanner": "Cet article est supprimé : invisible côté public. Restaurez-le ou relancez une analyse.",
       "rewrites": {
         "title": "Version Unbunked (réécriture)",
         "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction au claim N.",

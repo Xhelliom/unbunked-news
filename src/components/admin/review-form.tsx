@@ -4,7 +4,10 @@ import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
 import {
+  relaunchArticle,
+  restoreArticle,
   saveArticle,
+  setDeleted,
   setPublished,
   type ActionState,
 } from "@/app/[locale]/admin/actions";
@@ -29,6 +32,7 @@ type ReviewFormProps = {
   transparencyScore: number | null;
   recencyScore: number | null;
   published: boolean;
+  isDeleted: boolean;
 };
 
 const selectClass =
@@ -44,6 +48,11 @@ export function ReviewForm(props: ReviewFormProps) {
 
   return (
     <div className="space-y-6">
+      {props.isDeleted && (
+        <p className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+          {t("deletedBanner")}
+        </p>
+      )}
       <form action={action} className="space-y-4">
         <input type="hidden" name="id" value={props.id} />
         <div className="space-y-1.5">
@@ -138,20 +147,45 @@ export function ReviewForm(props: ReviewFormProps) {
         </Button>
       </form>
 
-      <form action={setPublished}>
-        <input type="hidden" name="id" value={props.id} />
-        <input
-          type="hidden"
-          name="published"
-          value={(!props.published).toString()}
-        />
-        <Button
-          type="submit"
-          variant={props.published ? "outline" : "default"}
-        >
-          {props.published ? t("unpublish") : t("publish")}
-        </Button>
-      </form>
+      <div className="flex flex-wrap items-center gap-3">
+        {props.isDeleted ? (
+          <>
+            <form action={restoreArticle}>
+              <input type="hidden" name="id" value={props.id} />
+              <Button type="submit" variant="secondary">
+                {t("restore")}
+              </Button>
+            </form>
+            <form action={relaunchArticle}>
+              <input type="hidden" name="id" value={props.id} />
+              <Button type="submit">{t("relaunch")}</Button>
+            </form>
+          </>
+        ) : (
+          <>
+            <form action={setPublished}>
+              <input type="hidden" name="id" value={props.id} />
+              <input
+                type="hidden"
+                name="published"
+                value={(!props.published).toString()}
+              />
+              <Button
+                type="submit"
+                variant={props.published ? "outline" : "default"}
+              >
+                {props.published ? t("unpublish") : t("publish")}
+              </Button>
+            </form>
+            <form action={setDeleted}>
+              <input type="hidden" name="id" value={props.id} />
+              <Button type="submit" variant="destructive">
+                {t("delete")}
+              </Button>
+            </form>
+          </>
+        )}
+      </div>
     </div>
   );
 }
