@@ -57,7 +57,3 @@ claude-design
 .claude/skills/
 .claude/settings.local.json
 skills-lock.json
-
-# local seed data — never commit real articles or personal test data
-src/db/seed-articles-data.local.ts
-src/db/seed-articles-rewrites.local.ts
