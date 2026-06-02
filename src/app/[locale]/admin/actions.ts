@@ -21,6 +21,21 @@ import { VERDICTS, type Verdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
 
+const MEMBERS_ROUTE = "/admin/members";
+const MEMBER_ERROR_PARAM = "error";
+
+const MEMBER_ERROR = {
+  MISSING_ID: "missingMemberId",
+  SELF_DEMOTE: "cannotDemoteSelf",
+  LAST_ADMIN: "cannotDemoteLastAdmin",
+} as const;
+
+type MemberErrorCode = (typeof MEMBER_ERROR)[keyof typeof MEMBER_ERROR];
+
+function memberErrorHref(code: MemberErrorCode): string {
+  return `${MEMBERS_ROUTE}?${MEMBER_ERROR_PARAM}=${code}`;
+}
+
 // Next 16's revalidateTag takes a cache profile as its second argument; "max"
 // fully invalidates every entry carrying the tag.
 const REVALIDATE_PROFILE = "max";
@@ -163,11 +178,11 @@ export async function setMemberAdminStatus(formData: FormData): Promise<void> {
   const shouldBeAdmin = formData.get("isAdmin") === "true";
 
   if (!targetUserId) {
-    throw new Error("Missing member id");
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
   }
 
   if (!shouldBeAdmin && targetUserId === actingUserId) {
-    throw new Error("You cannot revoke your own admin role");
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DEMOTE), locale: await getLocale() });
   }
 
   // Keep at least one admin at all times to avoid locking the team out.
@@ -178,7 +193,7 @@ export async function setMemberAdminStatus(formData: FormData): Promise<void> {
       .where(eq(user.isAdmin, true));
     const adminCount = adminCountResult[0]?.value ?? 0;
     if (adminCount <= 1) {
-      throw new Error("Cannot remove the last admin");
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
     }
   }
 
@@ -187,5 +202,5 @@ export async function setMemberAdminStatus(formData: FormData): Promise<void> {
     .set({ isAdmin: shouldBeAdmin })
     .where(eq(user.id, targetUserId));
 
-  redirect({ href: "/admin/members", locale: await getLocale() });
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
 }

@@ -110,6 +110,7 @@
   },
   "auth": {
     "loginTitle": "Connexion admin",
+    "loginSubtitle": "Accédez au panneau d'administration pour gérer les contenus, les membres et le suivi opérationnel.",
     "email": "Email",
     "password": "Mot de passe",
     "signIn": "Se connecter",
@@ -280,7 +281,12 @@
       "admin": "Admin",
       "member": "Membre",
       "promote": "Promouvoir admin",
-      "demote": "Retirer admin"
+      "demote": "Retirer admin",
+      "errors": {
+        "missingMemberId": "Impossible de modifier ce membre (identifiant manquant).",
+        "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle admin.",
+        "cannotDemoteLastAdmin": "Impossible de retirer le dernier administrateur."
+      }
     }
   },
   "feed": {

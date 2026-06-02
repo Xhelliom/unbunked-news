@@ -1,5 +1,5 @@
 import { getJob } from "@/lib/jobs";
-import { requireAdminSession } from "@/lib/session";
+import { isUnauthorizedError, requireAdminSession } from "@/lib/session";
 
 export async function GET(
   _request: Request,
@@ -7,7 +7,10 @@ export async function GET(
 ) {
   try {
     await requireAdminSession();
-  } catch {
+  } catch (error) {
+    if (!isUnauthorizedError(error)) {
+      return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    }
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -7,6 +7,17 @@ import { db } from "@/db/client";
 import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Unauthorized");
+    this.name = "UnauthorizedError";
+  }
+}
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof UnauthorizedError;
+}
+
 // Authoritative session lookup for server components, route handlers and
 // server actions. Per Next.js guidance, auth must be verified here rather than
 // relied upon in proxy alone.
@@ -17,7 +28,7 @@ export async function getSession() {
 export async function requireSession() {
   const session = await getSession();
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
   return session;
 }
@@ -38,7 +49,7 @@ export async function requireAdminSession() {
   const session = await requireSession();
   const userId = toSessionUserId(session);
   if (!userId) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
 
   // We re-check the admin flag in the DB on every admin boundary.
@@ -47,7 +58,7 @@ export async function requireAdminSession() {
     columns: { isAdmin: true },
   });
   if (!sessionUser?.isAdmin) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError();
   }
 
   return { session, userId };

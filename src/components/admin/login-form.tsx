@@ -33,14 +33,21 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-1.5">
+    <form onSubmit={onSubmit} className="mx-auto w-full max-w-lg space-y-5">
+      <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-medium">
           {t("email")}
         </label>
-        <Input id="email" name="email" type="email" required autoComplete="email" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className="h-11"
+        />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <label htmlFor="password" className="text-sm font-medium">
           {t("password")}
         </label>
@@ -50,10 +57,11 @@ export function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
+          className="h-11"
         />
       </div>
       {error && <p className="text-destructive text-sm">{t("error")}</p>}
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="mt-2 h-11 w-full" disabled={pending}>
         {pending ? t("signingIn") : t("signIn")}
       </Button>
     </form>

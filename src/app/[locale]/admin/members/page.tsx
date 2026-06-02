@@ -5,8 +5,26 @@ import { setMemberAdminStatus } from "@/app/[locale]/admin/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export default async function AdminMembersPage() {
+type AdminMembersPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const MEMBER_ERROR_KEYS = {
+  missingMemberId: "errors.missingMemberId",
+  cannotDemoteSelf: "errors.cannotDemoteSelf",
+  cannotDemoteLastAdmin: "errors.cannotDemoteLastAdmin",
+} as const;
+
+export default async function AdminMembersPage({
+  searchParams,
+}: AdminMembersPageProps) {
   const t = await getTranslations("admin.members");
+  const resolvedSearchParams = await searchParams;
+  const rawError = resolvedSearchParams.error;
+  const errorMessage =
+    typeof rawError === "string" && rawError in MEMBER_ERROR_KEYS
+      ? t(MEMBER_ERROR_KEYS[rawError as keyof typeof MEMBER_ERROR_KEYS])
+      : null;
   const members = await db.query.user.findMany({
     columns: {
       id: true,
@@ -27,6 +45,11 @@ export default async function AdminMembersPage() {
         </h1>
         <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
       </div>
+      {errorMessage ? (
+        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          {errorMessage}
+        </p>
+      ) : null}
 
       {members.length === 0 ? (
         <p className="text-muted-foreground">{t("empty")}</p>

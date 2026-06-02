@@ -110,6 +110,7 @@
   },
   "auth": {
     "loginTitle": "Admin sign in",
+    "loginSubtitle": "Access the administration panel to manage content, members, and day-to-day operations.",
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
@@ -280,7 +281,12 @@
       "admin": "Admin",
       "member": "Member",
       "promote": "Promote to admin",
-      "demote": "Remove admin"
+      "demote": "Remove admin",
+      "errors": {
+        "missingMemberId": "Unable to update this member (missing identifier).",
+        "cannotDemoteSelf": "You cannot revoke your own admin role.",
+        "cannotDemoteLastAdmin": "Cannot remove the last admin."
+      }
     }
   },
   "feed": {

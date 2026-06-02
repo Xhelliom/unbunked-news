@@ -50,7 +50,13 @@ docker compose up -d db
 pnpm db:migrate
 
 # 4. Créer le premier compte admin
-ADMIN_PASSWORD='un-mot-de-passe-fort' pnpm db:seed-admin "toi@exemple.com"
+pnpm db:seed-admin "toi@exemple.com" "un-mot-de-passe-fort"
+# ou sans mot de passe: génération automatique (affichée en sortie)
+pnpm db:seed-admin "toi@exemple.com"
+# note: avec email CLI, la génération auto est prioritaire même si ADMIN_PASSWORD
+# est présent dans .env (fallback legacy uniquement sans arguments CLI)
+# reset password d'un compte existant (+ promotion admin)
+pnpm db:seed-admin "toi@exemple.com" --reset-password
 
 # 5. Démarrer l'app
 pnpm dev
@@ -92,7 +98,10 @@ Seed admin dans le conteneur :
 
 ```bash
 docker compose exec app sh -c \
-  'ADMIN_PASSWORD="..." pnpm db:seed-admin "toi@exemple.com"'
+  'pnpm db:seed-admin "toi@exemple.com" "mot-de-passe-fort"'
+# ou reset sur un compte existant:
+docker compose exec app sh -c \
+  'pnpm db:seed-admin "toi@exemple.com" --reset-password'
 ```
 
 Adminer (inspecteur DB) :
@@ -114,7 +123,7 @@ docker compose --profile tools up adminer
 | `pnpm lint` | ESLint |
 | `pnpm db:generate` | Génère une migration depuis le schéma Drizzle |
 | `pnpm db:migrate` | Applique les migrations en attente |
-| `pnpm db:seed-admin "email"` | Crée/promeut le compte admin (`ADMIN_PASSWORD` requis) |
+| `pnpm db:seed-admin "email" ["password"] [--reset-password]` | Crée/promeut le compte admin; auto-génère le mot de passe si absent; `--reset-password` force une mise à jour du mot de passe pour un compte existant |
 | `pnpm db:studio` | Ouvre Drizzle Studio |
 
 ---
