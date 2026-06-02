@@ -202,7 +202,7 @@ async function loadEdgePages(
         rank: sql<number>`row_number() over (
           partition by ${analyticsEvents.visitorHash}
           order by ${analyticsEvents.createdAt} ${orderDirection}
-        )`,
+        )`.as("rank"),
       })
       .from(analyticsEvents)
       .where(

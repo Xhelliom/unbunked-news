@@ -241,8 +241,10 @@ Au-delà, plafonne `DATABASE_POOL_MAX` ou place PgBouncer devant Postgres.
 # 1. Construire et pousser les images
 docker build --target runner   -t ton-registry/unbunked:latest .
 docker build --target migrator -t ton-registry/unbunked-migrate:latest .
+docker build --target seeder   -t ton-registry/unbunked-seeder:latest .
 docker push ton-registry/unbunked:latest
 docker push ton-registry/unbunked-migrate:latest
+docker push ton-registry/unbunked-seeder:latest
 
 # 2. Créer les secrets
 cp k8s/secret.example.yaml k8s/secret.yaml
@@ -274,6 +276,40 @@ déploiement qui change le schéma :
 kubectl delete job migrate -n unbunked --ignore-not-found
 kubectl apply -f k8s/migrate-job.yaml
 ```
+
+Le **seed admin** se lance aussi via un `Job` ponctuel (même secrets que l'app) :
+
+```bash
+# 1) Remplacer l'image dans k8s/seed-admin-job.yaml par un tag SHA immuable
+#    et ajuster l'email dans la commande si nécessaire.
+kubectl delete job seed-admin -n unbunked --ignore-not-found
+kubectl apply -f k8s/seed-admin-job.yaml
+kubectl logs -f job/seed-admin -n unbunked
+```
+
+Pour forcer un reset du mot de passe d'un compte existant, ajoute
+`--reset-password` dans la `command` du job.
+
+### Seed admin en Docker simple (hors Kubernetes)
+
+```bash
+# 1) Construire l'image seeder locale
+docker build --target seeder -t unbunked-seeder:local .
+
+# 2) Lancer le seed admin en one-shot (même env que l'app)
+docker run --rm --env-file .env.production \
+  unbunked-seeder:local \
+  pnpm db:seed-admin "toi@exemple.com"
+
+# Variante: forcer un reset de mot de passe
+docker run --rm --env-file .env.production \
+  unbunked-seeder:local \
+  pnpm db:seed-admin "toi@exemple.com" --reset-password
+```
+
+Variables minimales attendues dans l'environnement du conteneur :
+`DATABASE_URL`, `BETTER_AUTH_SECRET` (et optionnellement `BETTER_AUTH_URL`,
+`ADMIN_NAME`).
 
 > Avant de monter `web` (HPA) ou `worker` en nombre de replicas, vérifie le
 > calcul des connexions DB ci-dessus.

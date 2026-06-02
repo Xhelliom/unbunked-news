@@ -30,6 +30,16 @@ COPY drizzle ./drizzle
 COPY src/db ./src/db
 CMD ["pnpm", "db:migrate"]
 
+# Admin seeder runner: one-off job used to grant admin rights in production.
+# Keep dev dependencies because db:seed-admin executes a TypeScript entrypoint.
+FROM base AS seeder
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json pnpm-lock.yaml ./
+COPY src/db ./src/db
+# Email argument is provided by the Kubernetes Job command override.
+CMD ["pnpm", "db:seed-admin"]
+
 # Minimal production image for the app.
 FROM base AS runner
 ENV NODE_ENV=production

@@ -14,3 +14,5 @@ resources:
 
 # The migration Job is applied on demand per release, not part of the base apply:
 #   kubectl apply -f k8s/migrate-job.yaml
+# The admin seed Job is also on-demand only:
+#   kubectl apply -f k8s/seed-admin-job.yaml

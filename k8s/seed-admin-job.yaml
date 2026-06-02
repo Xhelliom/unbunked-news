@@ -1,0 +1,26 @@
+# One-off admin seeding job (run on demand, not part of base kustomize apply):
+#   kubectl delete job seed-admin -n unbunked --ignore-not-found
+#   kubectl apply -f k8s/seed-admin-job.yaml
+#   kubectl logs -f job/seed-admin -n unbunked
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-admin
+  namespace: unbunked
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed-admin
+          # Use an immutable SHA tag in production.
+          image: ghcr.io/xhelliom/unbunked-seeder:REPLACE_WITH_SHA
+          envFrom:
+            - secretRef:
+                name: unbunked-secrets
+          # Replace email with the operator target account.
+          command:
+            - pnpm
+            - db:seed-admin
+            - stephane.wetterwald@gmail.com
