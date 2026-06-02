@@ -4,6 +4,7 @@ import { inArray } from "drizzle-orm";
 
 import { db } from "./client";
 import {
+  articleRewrites,
   articleTags,
   articles,
   claimSources,
@@ -11,6 +12,7 @@ import {
   tags,
 } from "./schema";
 import { LOCAL_ARTICLES, LOCAL_TAGS } from "./seed-articles-data.local";
+import { LOCAL_REWRITES } from "./seed-articles-rewrites.local";
 
 // Seeds your personal local articles (gitignored).
 // Populate seed-articles-data.local.ts, then run:
@@ -65,6 +67,14 @@ async function main() {
       .returning({ id: articles.id });
 
     await db.insert(articleTags).values({ articleId: row.id, tagId });
+
+    const rewrites = LOCAL_REWRITES[article.slug];
+    if (rewrites) {
+      await db.insert(articleRewrites).values([
+        { articleId: row.id, locale: "fr", title: rewrites.fr.title, body: rewrites.fr.body },
+        { articleId: row.id, locale: "en", title: rewrites.en.title, body: rewrites.en.body },
+      ]);
+    }
 
     let position = 0;
     for (const paragraph of article.body) {

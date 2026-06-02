@@ -4,6 +4,7 @@ import { inArray } from "drizzle-orm";
 
 import { db } from "./client";
 import {
+  articleRewrites,
   articleTags,
   articles,
   claimSources,
@@ -11,9 +12,10 @@ import {
   tags,
 } from "./schema";
 import { ARTICLES, TAGS } from "./seed-articles-data";
+import { REWRITES } from "./seed-articles-rewrites";
 
-// Inserts the demo articles, their claims, sources and tags. Re-runnable: it
-// wipes and re-inserts the seeded slugs only.
+// Inserts the demo articles, their claims, sources, tags and Unbunked
+// rewrites. Re-runnable: it wipes and re-inserts the seeded slugs only.
 //
 //   pnpm db:seed-articles
 
@@ -21,7 +23,7 @@ async function main() {
   const slugs = ARTICLES.map((a) => a.slug);
 
   // Idempotent: remove our demo rows first. Cascades drop claims, sources,
-  // keywords and article/tag links automatically.
+  // rewrites and article/tag links automatically.
   await db.delete(articles).where(inArray(articles.slug, slugs));
 
   // Upsert tags by slug and index their ids.
@@ -65,6 +67,24 @@ async function main() {
       .returning({ id: articles.id });
 
     await db.insert(articleTags).values({ articleId: row.id, tagId });
+
+    const rewrites = REWRITES[article.slug];
+    if (rewrites) {
+      await db.insert(articleRewrites).values([
+        {
+          articleId: row.id,
+          locale: "fr",
+          title: rewrites.fr.title,
+          body: rewrites.fr.body,
+        },
+        {
+          articleId: row.id,
+          locale: "en",
+          title: rewrites.en.title,
+          body: rewrites.en.body,
+        },
+      ]);
+    }
 
     let position = 0;
     for (const paragraph of article.body) {

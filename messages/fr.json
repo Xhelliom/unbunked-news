@@ -259,7 +259,14 @@
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "publish": "Publier",
-      "unpublish": "Dépublier"
+      "unpublish": "Dépublier",
+      "rewrites": {
+        "title": "Version Unbunked (réécriture)",
+        "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction au claim N.",
+        "rewriteTitle": "Titre de la version Unbunked",
+        "rewriteBody": "Corps de la version Unbunked",
+        "missing": "Aucune réécriture pour cette langue."
+      }
     },
     "proposals": {
       "title": "Propositions reçues",
@@ -308,11 +315,17 @@
     "publishedOn": "Publié le",
     "notFound": "Article introuvable.",
     "originalSummaryTitle": "Ce que dit l'article original",
-    "suggestions": {
-      "title": "Sur le même sujet, mieux noté",
-      "fallbackTitle": "On travaille sur ce sujet",
-      "fallbackBody": "Nous n'avons pas encore d'article fiable sur ce thème. Vous avez une source qui mérite d'être vérifiée ? Proposez-la, on s'occupe du reste.",
-      "cta": "Proposer un article"
+    "views": {
+      "aria": "Choisir la vue de l'article",
+      "analysis": "Analyse",
+      "unbunked": "Version Unbunked",
+      "switchHint": "Choisissez votre vue : l'article original annoté ou la version réécrite par Unbunked."
+    },
+    "unbunkedRewrite": {
+      "sectionTitle": "Version Unbunked",
+      "intro": "Une réécriture de l'article par Unbunked, dans votre langue, qui corrige inline les passages problématiques. Les ① renvoient à la vérification correspondante.",
+      "fallbackNotice": "Réécriture indisponible dans votre langue, affichée dans la langue par défaut.",
+      "claimsTitle": "Vérifications utilisées dans la réécriture"
     }
   },
   "propose": {

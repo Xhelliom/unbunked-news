@@ -4,10 +4,12 @@ import { getTranslations } from "next-intl/server";
 
 import { db } from "@/db/client";
 import { articles } from "@/db/schema";
+import { routing } from "@/i18n/routing";
 import { Badge } from "@/components/ui/badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
+import { RewriteForm } from "@/components/admin/rewrite-form";
 
 export default async function AdminArticleReviewPage({
   params,
@@ -23,6 +25,7 @@ export default async function AdminArticleReviewPage({
         with: { sources: true },
       },
       articleTags: { with: { tag: true } },
+      rewrites: true,
     },
   });
   if (!article) {
@@ -70,6 +73,30 @@ export default async function AdminArticleReviewPage({
       />
 
       <CriteriaEvidence evidence={article.evidence} />
+
+      <div className="space-y-4">
+        <h2 className="font-serif text-lg font-bold">
+          {t("rewrites.title")}
+        </h2>
+        <div className="space-y-6">
+          {routing.locales.map((loc) => {
+            const r = article.rewrites.find((row) => row.locale === loc);
+            return (
+              <div key={loc} className="rounded-lg border p-4">
+                <p className="text-muted-foreground mb-3 text-xs font-semibold tracking-wide uppercase">
+                  {loc}
+                </p>
+                <RewriteForm
+                  articleId={article.id}
+                  locale={loc}
+                  title={r?.title ?? article.title}
+                  body={r?.body ?? ""}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {article.articleTags.length > 0 && (
         <div className="space-y-2">

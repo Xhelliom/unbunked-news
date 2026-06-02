@@ -259,7 +259,14 @@
       "save": "Save",
       "saving": "Saving…",
       "publish": "Publish",
-      "unpublish": "Unpublish"
+      "unpublish": "Unpublish",
+      "rewrites": {
+        "title": "Unbunked version (rewrite)",
+        "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",
+        "rewriteTitle": "Unbunked version title",
+        "rewriteBody": "Unbunked version body",
+        "missing": "No rewrite for this language."
+      }
     },
     "proposals": {
       "title": "Received proposals",
@@ -308,11 +315,17 @@
     "publishedOn": "Published on",
     "notFound": "Article not found.",
     "originalSummaryTitle": "What the original article says",
-    "suggestions": {
-      "title": "On the same topic, better rated",
-      "fallbackTitle": "We're working on this topic",
-      "fallbackBody": "We don't have a reliable article on this subject yet. Got a source worth checking? Submit it and we'll take care of the rest.",
-      "cta": "Submit an article"
+    "views": {
+      "aria": "Choose the article view",
+      "analysis": "Analysis",
+      "unbunked": "Unbunked version",
+      "switchHint": "Pick your view: the annotated original article, or Unbunked's rewrite."
+    },
+    "unbunkedRewrite": {
+      "sectionTitle": "Unbunked rewrite",
+      "intro": "An Unbunked rewrite of the article in your language, with problematic passages corrected inline. The ① marks link to the matching fact-check.",
+      "fallbackNotice": "Rewrite not available in your language; showing the default.",
+      "claimsTitle": "Fact-checks referenced in the rewrite"
     }
   },
   "propose": {

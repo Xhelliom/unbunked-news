@@ -181,21 +181,26 @@ export const claimSources = pgTable(
   (table) => [index("claim_sources_claim_id_idx").on(table.claimId)],
 );
 
-// AI-generated keywords identifying the precise subject of an article,
-// normalized (slugified) so casing/accents don't block cross-article matching.
-// Used to suggest reliable articles on the same topic.
-export const articleKeywords = pgTable(
-  "article_keywords",
+// Unbunked-fiable rewrite of the source article, one row per locale.
+// Markdown body; uses [[claim:N]] markers to link to claims by position.
+export const articleRewrites = pgTable(
+  "article_rewrites",
   {
     articleId: uuid()
       .notNull()
       .references(() => articles.id, { onDelete: "cascade" }),
-    keyword: text().notNull(),
+    locale: varchar({ length: 5 }).notNull(),
+    title: text().notNull(),
+    body: text().notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
-  (table) => [
-    primaryKey({ columns: [table.articleId, table.keyword] }),
-    index("article_keywords_keyword_idx").on(table.keyword),
-  ],
+  (table) => [primaryKey({ columns: [table.articleId, table.locale] })],
 );
 
 export const tags = pgTable("tags", {
@@ -294,15 +299,15 @@ export const analyticsEvents = pgTable(
 export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
-  keywords: many(articleKeywords),
+  rewrites: many(articleRewrites),
   jobs: many(jobs),
 }));
 
-export const articleKeywordsRelations = relations(
-  articleKeywords,
+export const articleRewritesRelations = relations(
+  articleRewrites,
   ({ one }) => ({
     article: one(articles, {
-      fields: [articleKeywords.articleId],
+      fields: [articleRewrites.articleId],
       references: [articles.id],
     }),
   }),
@@ -359,5 +364,5 @@ export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
-export type ArticleKeyword = typeof articleKeywords.$inferSelect;
-export type NewArticleKeyword = typeof articleKeywords.$inferInsert;
+export type ArticleRewrite = typeof articleRewrites.$inferSelect;
+export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
