@@ -163,6 +163,7 @@
     "nav": {
       "dashboard": "Tableau de bord",
       "submit": "Soumettre une URL",
+      "jobs": "Analyses",
       "proposals": "Propositions",
       "analytics": "Statistiques",
       "costs": "Coûts",
@@ -283,6 +284,21 @@
         "rewriting": "Réécriture multilingue",
         "saving": "Enregistrement",
         "done": "Terminé"
+      }
+    },
+    "jobs": {
+      "title": "Analyses",
+      "subtitle": "Toutes les analyses, les plus récentes d'abord. Relancez un échec ou une analyse terminée.",
+      "empty": "Aucune analyse pour l'instant.",
+      "view": "Voir",
+      "relaunch": "Relancer",
+      "table": {
+        "url": "URL",
+        "status": "Statut",
+        "step": "Étape",
+        "progress": "Progression",
+        "created": "Créée",
+        "actions": "Actions"
       }
     },
     "review": {
