@@ -5,6 +5,7 @@ import { articles, claimSources, claims as claimsTable } from "./schema";
 import { scrapeArticle, type ScrapedArticle } from "@/lib/scrape";
 import { aggregate } from "@/lib/pipeline/aggregate";
 import { extractClaims } from "@/lib/pipeline/extract-claims";
+import { HAIKU_MODEL, SONNET_MODEL } from "@/lib/pipeline/models";
 import { recoverArticleBody } from "@/lib/pipeline/recover-body";
 import { verifyClaims } from "@/lib/pipeline/verify";
 
@@ -43,7 +44,8 @@ async function scrapedFor(article: {
   }
   const { article: scraped } = await scrapeArticle(
     article.urlOrigine,
-    async (blocks, meta) => (await recoverArticleBody(blocks, meta)).content,
+    async (blocks, meta) =>
+      (await recoverArticleBody(blocks, meta, HAIKU_MODEL)).content,
   );
   return scraped;
 }
@@ -60,9 +62,14 @@ async function rescore(): Promise<void> {
     console.log(`\n• ${article.title}\n  ${article.urlOrigine}`);
     try {
       const scraped = await scrapedFor(article);
-      const { claims } = await extractClaims(scraped);
-      const verification = await verifyClaims(scraped, claims);
-      const { analysis } = await aggregate(scraped, claims, verification);
+      const { claims } = await extractClaims(scraped, HAIKU_MODEL);
+      const verification = await verifyClaims(scraped, claims, SONNET_MODEL);
+      const { analysis } = await aggregate(
+        scraped,
+        claims,
+        verification,
+        SONNET_MODEL,
+      );
 
       await db.transaction(async (tx) => {
         await tx

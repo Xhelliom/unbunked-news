@@ -19,7 +19,7 @@ import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
-import { HAIKU_MODEL } from "./models";
+import { HAIKU_MODEL, SONNET_MODEL } from "./models";
 import { extractClaims } from "./extract-claims";
 import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
@@ -87,40 +87,51 @@ export async function runPipeline(jobId: string): Promise<void> {
       error: null,
     });
 
+    // Mechanical phases (body recovery, claim extraction) run on Haiku; the
+    // reasoning phases (verification, scoring, rewrite) run on reasoningModel.
+    // Web search happens only during verification, so its requests bill against
+    // the reasoning model's row.
+    const reasoningModel = SONNET_MODEL;
+
     let recoverUsage = ZERO_USAGE;
     const { article, provenance } = await scrapeArticle(
       job.url,
       async (blocks, meta) => {
-        const { content, usage } = await recoverArticleBody(blocks, meta);
+        const { content, usage } = await recoverArticleBody(
+          blocks,
+          meta,
+          HAIKU_MODEL,
+        );
         recoverUsage = addUsage(recoverUsage, usage);
         return content;
       },
     );
 
     await updateJob(jobId, { step: "extracting", progress: 25 });
-    const { claims, usage: extractUsage } = await extractClaims(article);
+    const { claims, usage: extractUsage } = await extractClaims(
+      article,
+      HAIKU_MODEL,
+    );
 
     await updateJob(jobId, { step: "verifying", progress: 45 });
-    const verification = await verifyClaims(article, claims);
+    const verification = await verifyClaims(article, claims, reasoningModel);
 
     await updateJob(jobId, { step: "aggregating", progress: 60 });
     const { analysis, usage: aggregateUsage } = await aggregate(
       article,
       claims,
       verification,
+      reasoningModel,
     );
 
     await updateJob(jobId, { step: "rewriting", progress: 75 });
     const rewriteResults = await Promise.all(
-      routing.locales.map((locale) => rewriteArticle(article, analysis, locale)),
+      routing.locales.map((locale) =>
+        rewriteArticle(article, analysis, locale, reasoningModel),
+      ),
     );
     const rewrites = rewriteResults.map((result) => result.rewrite);
 
-    // Mechanical phases (body recovery, claim extraction) run on Haiku; the
-    // reasoning phases (verification, scoring, rewrite) run on reasoningModel.
-    // Web search happens only during verification, so its requests bill against
-    // the reasoning model's row.
-    const reasoningModel = HAIKU_MODEL;
     const usageByModel = mergeUsageByModel([
       { model: HAIKU_MODEL, usage: recoverUsage },
       { model: HAIKU_MODEL, usage: extractUsage },

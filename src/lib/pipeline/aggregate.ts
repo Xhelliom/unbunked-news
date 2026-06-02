@@ -19,7 +19,6 @@ import {
   firstToolInput,
   formatArticle,
   getClaude,
-  MODEL,
   usageOf,
   type TokenUsage,
 } from "./client";
@@ -144,6 +143,7 @@ export async function aggregate(
   article: ScrapedArticle,
   claims: string[],
   verification: VerificationFindings,
+  model: string,
 ): Promise<AggregateResult> {
   const client = getClaude();
   const sourceList = verification.sources
@@ -152,7 +152,7 @@ export async function aggregate(
   const external = await gatherExternalEvidence(article.url, claims);
 
   const message = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 4096,
     system: SYSTEM,
     tools: [recordAnalysisTool],
@@ -216,7 +216,7 @@ export async function aggregate(
     reliabilityScore: scoring.reliabilityScore,
     globalConfidence: scoring.globalConfidence,
     criteriaVersion: CRITERIA_VERSION,
-    modelVersion: MODEL,
+    modelVersion: model,
     scores: toColumnScores(criteria),
     framing: toFraming(descriptors.framing),
     contentType: toContentType(descriptors.contentType),
