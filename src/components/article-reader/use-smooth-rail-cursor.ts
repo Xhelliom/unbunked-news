@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Taille de base du curseur (cercle au repos).
-export const RAIL_CURSOR_BASE_PX = 10;
-// Ressort : plus la valeur est haute, plus le curseur suit vite la cible.
-const RAIL_CURSOR_SPRING = 0.22;
-// Étirement vertical proportionnel à la vitesse du curseur.
-const RAIL_CURSOR_STRETCH_GAIN = 34;
-const RAIL_CURSOR_MAX_STRETCH = 3.6;
+// Hauteur de base : capsule longue et discrète (repère de zone, pas un point précis).
+export const RAIL_CURSOR_BASE_PX = 26;
+// Ressort lent pour limiter les à-coups au scroll.
+const RAIL_CURSOR_SPRING = 0.1;
+// Étirement léger en mouvement — le curseur reste surtout une barre fade.
+const RAIL_CURSOR_STRETCH_GAIN = 14;
+const RAIL_CURSOR_MAX_STRETCH = 1.85;
 
 export type RailCursorVisual = { ratio: number; stretch: number };
 
@@ -48,7 +48,7 @@ export function useSmoothRailCursor(targetRatio: number): RailCursorVisual {
       const previous = positionRef.current;
       const delta = target - previous;
       const next =
-        Math.abs(delta) < 0.0004 ? target : previous + delta * RAIL_CURSOR_SPRING;
+        Math.abs(delta) < 0.00025 ? target : previous + delta * RAIL_CURSOR_SPRING;
       positionRef.current = next;
 
       const speed = Math.abs(next - previous);

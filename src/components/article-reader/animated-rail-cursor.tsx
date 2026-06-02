@@ -11,7 +11,7 @@ type Props = {
   railHeight: number;
 };
 
-// Curseur animé : capsule qui s'allonge en scroll / survol, traînée légère en mouvement.
+// Curseur : longue capsule très fade — repère de zone lisible sans viser un claim précis.
 export function AnimatedRailCursor({ targetRatio, railHeight }: Props) {
   const { ratio, stretch } = useSmoothRailCursor(targetRatio);
 
@@ -19,26 +19,34 @@ export function AnimatedRailCursor({ targetRatio, railHeight }: Props) {
 
   const topPx = ratio * railHeight;
   const heightPx = RAIL_CURSOR_BASE_PX * stretch;
-  const isMoving = stretch > 1.12;
+  const haloHeightPx = heightPx * 1.55;
+  const isMoving = stretch > 1.08;
 
   return (
     <>
+      {/* Halo large et très transparent : zone approximative autour de la position */}
+      <span
+        className="bg-foreground/6 pointer-events-none absolute left-1/2 z-[8] w-2.5 -translate-x-1/2 rounded-full blur-[1px]"
+        style={{
+          top: topPx,
+          height: haloHeightPx,
+          marginTop: -haloHeightPx / 2,
+        }}
+      />
       {isMoving && (
         <span
-          className="bg-foreground/20 pointer-events-none absolute left-1/2 z-[9] w-1 -translate-x-1/2 rounded-full blur-[0.5px]"
+          className="bg-foreground/10 pointer-events-none absolute left-1/2 z-[9] w-1.5 -translate-x-1/2 rounded-full blur-[0.5px]"
           style={{
             top: topPx,
-            height: heightPx * 1.15,
-            marginTop: -(heightPx * 1.15) / 2,
+            height: heightPx * 1.2,
+            marginTop: -(heightPx * 1.2) / 2,
           }}
         />
       )}
       <span
         className={cn(
-          "border-background bg-foreground pointer-events-none absolute left-1/2 z-10 w-2 -translate-x-1/2 rounded-full border-2 will-change-[height,margin,top,box-shadow]",
-          isMoving
-            ? "shadow-[0_0_10px_color-mix(in_oklab,var(--foreground)_35%,transparent)]"
-            : "shadow-md",
+          "border-foreground/15 bg-foreground/22 pointer-events-none absolute left-1/2 z-10 w-1 -translate-x-1/2 rounded-full border will-change-[height,margin,top]",
+          isMoving && "bg-foreground/28",
         )}
         style={{
           top: topPx,
