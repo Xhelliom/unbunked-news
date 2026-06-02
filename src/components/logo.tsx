@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const SPECTRUM = [
   "bg-verdict-reliable",
   "bg-verdict-nuanced",
-  "bg-verdict-biased",
+  "bg-verdict-fragile",
   "bg-verdict-debunked",
   "bg-verdict-unverifiable",
 ] as const;

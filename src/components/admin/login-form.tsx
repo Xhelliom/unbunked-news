@@ -22,7 +22,7 @@ function BrandLogotype({ onIndigo = false }: { onIndigo?: boolean }) {
       <span className="flex h-[0.095em] gap-[0.08em]" aria-hidden>
         <i className="h-full flex-1 rounded-full bg-[var(--verdict-reliable)]" />
         <i className="h-full flex-1 rounded-full bg-[var(--verdict-nuanced)]" />
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-biased)]" />
+        <i className="h-full flex-1 rounded-full bg-[var(--verdict-fragile)]" />
         <i className="h-full flex-1 rounded-full bg-[var(--verdict-debunked)]" />
         <i className="h-full flex-1 rounded-full bg-[var(--verdict-unverifiable)]" />
       </span>
@@ -117,7 +117,7 @@ export function LoginForm({ weeklyVerifiedCount }: LoginFormProps) {
               <div className="flex gap-[7px]">
                 <i className="h-[6px] flex-1 rounded bg-[var(--verdict-reliable)]" />
                 <i className="h-[6px] flex-1 rounded bg-[var(--verdict-nuanced)]" />
-                <i className="h-[6px] flex-1 rounded bg-[var(--verdict-biased)]" />
+                <i className="h-[6px] flex-1 rounded bg-[var(--verdict-fragile)]" />
                 <i className="h-[6px] flex-1 rounded bg-[var(--verdict-debunked)]" />
                 <i className="h-[6px] flex-1 rounded bg-[var(--verdict-unverifiable)]" />
               </div>
@@ -136,7 +136,7 @@ export function LoginForm({ weeklyVerifiedCount }: LoginFormProps) {
                   <span className="flex h-[0.095em] gap-[0.08em]" aria-hidden>
                     <i className="h-full flex-1 rounded-full bg-[var(--verdict-reliable)]" />
                     <i className="h-full flex-1 rounded-full bg-[var(--verdict-nuanced)]" />
-                    <i className="h-full flex-1 rounded-full bg-[var(--verdict-biased)]" />
+                    <i className="h-full flex-1 rounded-full bg-[var(--verdict-fragile)]" />
                     <i className="h-full flex-1 rounded-full bg-[var(--verdict-debunked)]" />
                     <i className="h-full flex-1 rounded-full bg-[var(--verdict-unverifiable)]" />
                   </span>
