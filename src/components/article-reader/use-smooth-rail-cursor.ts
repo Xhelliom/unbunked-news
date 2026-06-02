@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Hauteur de base : capsule longue et discrète (repère de zone, pas un point précis).
+// Hauteur de base : capsule longue (repère de zone lisible sur le rail).
 export const RAIL_CURSOR_BASE_PX = 26;
 // Ressort lent pour limiter les à-coups au scroll.
 const RAIL_CURSOR_SPRING = 0.1;
-// Étirement léger en mouvement — le curseur reste surtout une barre fade.
-const RAIL_CURSOR_STRETCH_GAIN = 14;
-const RAIL_CURSOR_MAX_STRETCH = 1.85;
+// Étirement en mouvement (×5 par rapport au réglage d'origine : gain 34, max 3.6).
+const RAIL_CURSOR_STRETCH_GAIN = 170;
+const RAIL_CURSOR_MAX_STRETCH = 18;
 
 export type RailCursorVisual = { ratio: number; stretch: number };
 
