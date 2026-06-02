@@ -13,8 +13,10 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          # Utiliser un tag immuable en production pour éviter toute dérive.
-          image: ghcr.io/xhelliom/unbunked-migrator:REPLACE_WITH_SHA
+          # Même image que l'app (app + migrate + seed). En prod, épingler par
+          # digest pour éviter toute dérive.
+          image: ghcr.io/xhelliom/unbunked-news:latest
+          command: ["node", "dist/scripts/migrate.cjs"]
           envFrom:
             - secretRef:
                 name: unbunked-secrets
