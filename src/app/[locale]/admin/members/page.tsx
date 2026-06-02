@@ -4,8 +4,8 @@ import { db } from "@/db/client";
 import {
   createMember,
   deleteMember,
-  setMemberAdminStatus,
   setMemberPassword,
+  updateMember,
 } from "@/app/[locale]/admin/actions";
 import { MemberManagementClient } from "@/components/admin/member-management-client";
 
@@ -64,7 +64,7 @@ export default async function AdminMembersPage({
       <MemberManagementClient
         members={members}
         createMemberAction={createMember}
-        setMemberAdminStatusAction={setMemberAdminStatus}
+        updateMemberAction={updateMember}
         setMemberPasswordAction={setMemberPassword}
         deleteMemberAction={deleteMember}
       />
