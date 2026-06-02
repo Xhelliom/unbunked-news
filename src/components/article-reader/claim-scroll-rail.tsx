@@ -33,6 +33,7 @@ export function ClaimScrollRail({
       : anchors.find((anchor) => anchor.index === hoveredIndex);
 
   const cursorRatio = hoveredAnchor?.ratio ?? indicatorRatio;
+  const activeStatus = claims[displayedIndex]?.status ?? claims[0]?.status;
 
   useEffect(() => {
     const rail = railRef.current;
@@ -66,7 +67,13 @@ export function ClaimScrollRail({
         />
       ))}
 
-      <AnimatedRailCursor targetRatio={cursorRatio} railHeight={railHeight} />
+      {activeStatus && (
+        <AnimatedRailCursor
+          targetRatio={cursorRatio}
+          railHeight={railHeight}
+          status={activeStatus}
+        />
+      )}
     </div>
   );
 }
