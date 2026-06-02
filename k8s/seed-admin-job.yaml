@@ -14,13 +14,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: seed-admin
-          # Use an immutable SHA tag in production.
-          image: ghcr.io/xhelliom/unbunked-seeder:REPLACE_WITH_SHA
+          # Uses latest tag for a simple on-demand admin bootstrap flow.
+          image: ghcr.io/xhelliom/unbunked-seeder:latest
           envFrom:
             - secretRef:
                 name: unbunked-secrets
-          # Replace email with the operator target account.
+          # Default bootstrap admin email.
           command:
             - pnpm
             - db:seed-admin
-            - stephane.wetterwald@gmail.com
+            - admin@unbunked.local

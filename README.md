@@ -280,8 +280,8 @@ kubectl apply -f k8s/migrate-job.yaml
 Le **seed admin** se lance aussi via un `Job` ponctuel (même secrets que l'app) :
 
 ```bash
-# 1) Remplacer l'image dans k8s/seed-admin-job.yaml par un tag SHA immuable
-#    et ajuster l'email dans la commande si nécessaire.
+# 1) Le job utilise par défaut l'image latest et admin@unbunked.local
+#    (ajuster l'email dans la commande si nécessaire).
 kubectl delete job seed-admin -n unbunked --ignore-not-found
 kubectl apply -f k8s/seed-admin-job.yaml
 kubectl logs -f job/seed-admin -n unbunked
