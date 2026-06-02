@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 
 import { db } from "./client";
 import { articles } from "./schema";
@@ -64,8 +64,17 @@ const cleanKillswitch: Killswitch = {
 };
 
 async function backfill(): Promise<void> {
-  const rows = await db.query.articles.findMany();
-  console.log(`Backfilling ${rows.length} article(s) to v1.2…`);
+  // Only touch rows never scored under v1.2 (criteriaVersion still null). This
+  // keeps the script idempotent and, critically, never clobbers an article that
+  // already carries a real v1.2 judgement (pipeline) or an earlier backfill.
+  const rows = await db.query.articles.findMany({
+    where: isNull(articles.criteriaVersion),
+  });
+  if (rows.length === 0) {
+    console.log("No pre-v1.2 articles to backfill — nothing to do.");
+    return;
+  }
+  console.log(`Backfilling ${rows.length} pre-v1.2 article(s)…`);
 
   for (const article of rows) {
     const criteria: CriterionAssessments = {
