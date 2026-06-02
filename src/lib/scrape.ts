@@ -2,6 +2,7 @@ import { extractFromHtml } from "@extractus/article-extractor";
 
 import {
   assessScrapeQuality,
+  cleanArticleContent,
   stripBoilerplate,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
@@ -46,6 +47,9 @@ const SCRAPE_USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 const FETCH_TIMEOUT_MS = 20_000;
 const RENDER_TIMEOUT_MS = 30_000;
+// Enough of the <head> to find a declared charset, read as latin1 so the ASCII
+// meta tag is legible whatever the real encoding.
+const CHARSET_SNIFF_BYTES = 2_048;
 
 // Candidate-block filters for the AI body-recovery fallback: keep prose-shaped
 // blocks, drop nav items, bare numbers, and embedded JSON/markup noise.
@@ -143,6 +147,30 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
   };
 }
 
+// response.text() honours only the HTTP Content-Type charset (defaulting to
+// UTF-8), so a legacy page that declares ISO-8859-1/Windows-1252 only in a
+// <meta> tag would come out as mojibake — corrupting the body the pipeline
+// matches claim quotes against. Mirror the extractor's own decode: prefer the
+// <meta> charset, then the header, then UTF-8, decoding the raw bytes.
+function decodeHtml(buffer: ArrayBuffer, contentType: string | null): string {
+  const bytes = Buffer.from(buffer);
+  const head = bytes.toString(
+    "latin1",
+    0,
+    Math.min(bytes.length, CHARSET_SNIFF_BYTES),
+  );
+  const charset = (
+    head.match(/<meta[^>]+charset=["']?\s*([\w-]+)/i)?.[1] ??
+    contentType?.match(/charset=\s*([\w-]+)/i)?.[1] ??
+    "utf-8"
+  ).toLowerCase();
+  try {
+    return new TextDecoder(charset).decode(bytes);
+  } catch {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+}
+
 async function fetchHtml(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
@@ -150,7 +178,10 @@ async function fetchHtml(url: string): Promise<string | null> {
       headers: { "user-agent": SCRAPE_USER_AGENT },
     });
     if (!response.ok) return null;
-    return await response.text();
+    return decodeHtml(
+      await response.arrayBuffer(),
+      response.headers.get("content-type"),
+    );
   } catch {
     return null;
   }
@@ -180,17 +211,6 @@ async function renderHtml(url: string): Promise<string | null> {
   } finally {
     await browser.close();
   }
-}
-
-// Re-runs the article body through the same paragraph cleaning normalize()
-// applies, so a recovered body and an extracted one are shaped identically.
-function cleanBody(body: string): string {
-  return stripBoilerplate(
-    body
-      .split(/\n{2,}/)
-      .map((paragraph) => paragraph.trim())
-      .filter((paragraph) => paragraph.length > 0),
-  ).join("\n\n");
 }
 
 type Attempt = {
@@ -226,7 +246,9 @@ async function attemptFromHtml(
     return { result, quality, usedAi: false, candidateBlocks: 0, aiTriggerReason: triggerReason };
   }
 
-  const recovered = cleanBody(await recoverBody(blocks, { title: result.title }));
+  const recovered = cleanArticleContent(
+    await recoverBody(blocks, { title: result.title }),
+  );
   const recoveredQuality = assessScrapeQuality(recovered);
   return recoveredQuality.ok
     ? {
