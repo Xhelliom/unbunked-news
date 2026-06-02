@@ -1,4 +1,5 @@
-import "dotenv/config";
+// Doit être importé avant ./client pour mapper database-url → DATABASE_URL.
+import "./normalize-k8s-env";
 
 import { randomBytes, randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
