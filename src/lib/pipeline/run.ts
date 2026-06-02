@@ -19,7 +19,11 @@ import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
-import { HAIKU_MODEL, SONNET_MODEL } from "./models";
+import {
+  DEFAULT_REASONING_MODEL,
+  HAIKU_MODEL,
+  isReasoningModel,
+} from "./models";
 import { extractClaims } from "./extract-claims";
 import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
@@ -88,10 +92,13 @@ export async function runPipeline(jobId: string): Promise<void> {
     });
 
     // Mechanical phases (body recovery, claim extraction) run on Haiku; the
-    // reasoning phases (verification, scoring, rewrite) run on reasoningModel.
-    // Web search happens only during verification, so its requests bill against
-    // the reasoning model's row.
-    const reasoningModel = SONNET_MODEL;
+    // reasoning phases (verification, scoring, rewrite) run on reasoningModel,
+    // which the submitter may override (else the default Sonnet tier). Web
+    // search happens only during verification, so its requests bill against the
+    // reasoning model's row.
+    const reasoningModel = isReasoningModel(job.model)
+      ? job.model
+      : DEFAULT_REASONING_MODEL;
 
     let recoverUsage = ZERO_USAGE;
     const { article, provenance } = await scrapeArticle(

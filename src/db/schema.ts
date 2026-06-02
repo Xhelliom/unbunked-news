@@ -268,6 +268,10 @@ export const jobs = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     articleId: uuid().references(() => articles.id, { onDelete: "set null" }),
     url: text().notNull(),
+    // Reasoning-tier model chosen at submission (see SELECTABLE_REASONING_MODELS).
+    // Null means "use the default tier" — kept for jobs created before the picker
+    // existed and for jobs created without an explicit choice (e.g. proposals).
+    model: text(),
     status: jobStatusEnum().notNull().default("pending"),
     // Human-readable current step for the admin progress UI.
     step: text(),

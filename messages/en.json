@@ -250,7 +250,13 @@
       "urlPlaceholder": "https://…",
       "start": "Start analysis",
       "starting": "Starting…",
-      "invalidUrl": "Invalid URL."
+      "invalidUrl": "Invalid URL.",
+      "modelLabel": "Analysis model",
+      "modelHint": "Model used for verification, judgement and rewriting. Extraction stays on Haiku.",
+      "models": {
+        "sonnet": "Sonnet 4.6 (default, recommended)",
+        "haiku": "Haiku 4.5 (faster and cheaper)"
+      }
     },
     "job": {
       "title": "Analysis in progress",

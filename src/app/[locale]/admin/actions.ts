@@ -19,6 +19,7 @@ import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob } from "@/lib/jobs";
+import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
 import { requireAdminSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
@@ -102,7 +103,13 @@ export async function submitUrl(
   if (!url) {
     return { error: "invalidUrl" };
   }
-  const jobId = await createAnalysisJob(url);
+  // The select posts a model id, but the wire is untyped: fall back to the
+  // default tier on anything unrecognised rather than trusting the value.
+  const modelRaw = formData.get("model");
+  const reasoningModel = isReasoningModel(modelRaw)
+    ? modelRaw
+    : DEFAULT_REASONING_MODEL;
+  const jobId = await createAnalysisJob(url, reasoningModel);
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
   return {};
 }

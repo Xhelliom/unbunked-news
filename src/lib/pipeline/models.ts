@@ -8,3 +8,26 @@
 // model — see run.ts for the tiering.
 export const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 export const SONNET_MODEL = "claude-sonnet-4-6";
+
+// The reasoning-tier model an admin may pick when submitting a URL — the single
+// source of truth reused by the submit form, the server action that validates
+// the choice, and run.ts. The default keeps judgement on Sonnet (the standard
+// tiering); picking Haiku runs the whole job on the cheaper model.
+export const SELECTABLE_REASONING_MODELS = [SONNET_MODEL, HAIKU_MODEL] as const;
+export type ReasoningModel = (typeof SELECTABLE_REASONING_MODELS)[number];
+export const DEFAULT_REASONING_MODEL: ReasoningModel = SONNET_MODEL;
+
+// Stable short key per selectable model, used to look up its i18n label without
+// putting model ids (which contain dots and dashes) into translation keys. The
+// literal values keep next-intl's key typing happy (`models.sonnet`/`.haiku`).
+export const REASONING_MODEL_LABEL_KEY = {
+  [SONNET_MODEL]: "sonnet",
+  [HAIKU_MODEL]: "haiku",
+} as const satisfies Record<ReasoningModel, string>;
+
+export function isReasoningModel(value: unknown): value is ReasoningModel {
+  return (
+    typeof value === "string" &&
+    (SELECTABLE_REASONING_MODELS as readonly string[]).includes(value)
+  );
+}
