@@ -27,7 +27,8 @@ services:
   migrate:
     build:
       context: .
-      target: migrator
+      target: runner
+    command: ["node", "dist/scripts/migrate.cjs"]
     environment:
       DATABASE_URL: postgresql://unbunked:unbunked@db:5432/unbunked
     depends_on:
