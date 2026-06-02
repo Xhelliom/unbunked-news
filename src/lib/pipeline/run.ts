@@ -134,6 +134,8 @@ export async function runPipeline(jobId: string): Promise<void> {
         outputTokens: totalUsage.outputTokens,
         cacheCreationTokens: totalUsage.cacheCreationTokens,
         cacheReadTokens: totalUsage.cacheReadTokens,
+        webSearchRequests: verification.searchRequests,
+        searchProvider: verification.searchProvider,
       });
 
       if (rewrites.length > 0) {
