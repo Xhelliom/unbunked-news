@@ -18,13 +18,16 @@ export type RailCursorVisual = { ratio: number; stretch: number };
  */
 export function useSmoothRailCursor(targetRatio: number): RailCursorVisual {
   const targetRef = useRef(targetRatio);
-  targetRef.current = targetRatio;
-
   const positionRef = useRef(targetRatio);
   const [visual, setVisual] = useState<RailCursorVisual>({
     ratio: targetRatio,
     stretch: 1,
   });
+
+  // Met à jour la cible dans un effet (interdit d'écrire une ref pendant le render).
+  useEffect(() => {
+    targetRef.current = targetRatio;
+  }, [targetRatio]);
 
   useEffect(() => {
     let frameId = 0;

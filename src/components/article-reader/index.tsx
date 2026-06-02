@@ -3,7 +3,7 @@
 import { useRef, useState, type MouseEvent } from "react";
 
 import { type ClaimStatus } from "@/lib/claim-status";
-import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import type { ClaimCardData } from "@/components/claim-card";
 import type { ReadingParagraph } from "@/lib/reading";
 import { ReadingParagraphBlock } from "@/components/article-reader/reading-paragraph";
 import { useClaimScrollSync } from "@/components/article-reader/use-claim-scroll-sync";

@@ -66,7 +66,7 @@ export function useClaimScrollSync(
       window.removeEventListener("resize", scheduleUpdate);
       resizeObserver.disconnect();
     };
-  }, [paragraphs, claimCount]);
+  }, [paragraphs, claimCount, containerRef]);
 
   return { scrollActiveIndex, claimAnchors, indicatorRatio };
 }
