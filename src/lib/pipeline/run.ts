@@ -4,6 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
+  articleKeywords,
   articleRewrites,
   articleTags,
   articleTokenUsage,
@@ -116,12 +117,23 @@ export async function runPipeline(jobId: string): Promise<void> {
           imageUrl: article.imageUrl,
           verdict: analysis.verdict,
           reliabilityScore: analysis.reliabilityScore,
-          factualityScore: analysis.factualityScore,
-          sourcingScore: analysis.sourcingScore,
-          neutralityScore: analysis.neutralityScore,
-          completenessScore: analysis.completenessScore,
-          transparencyScore: analysis.transparencyScore,
-          recencyScore: analysis.recencyScore,
+          factualityScore: analysis.scores.factualityScore,
+          corroborationScore: analysis.scores.corroborationScore,
+          sourcingScore: analysis.scores.sourcingScore,
+          completenessScore: analysis.scores.completenessScore,
+          transparencyScore: analysis.scores.transparencyScore,
+          recencyScore: analysis.scores.recencyScore,
+          framing: analysis.framing,
+          contentType: analysis.contentType,
+          fabricationDetected: analysis.killswitch.fabricationDetected.value,
+          domainImpersonation: analysis.killswitch.domainImpersonation.value,
+          centralClaimDebunked: analysis.killswitch.centralClaimDebunked.value,
+          undisclosedAIWithErrors:
+            analysis.killswitch.undisclosedAIWithErrors.value,
+          globalConfidence: analysis.globalConfidence,
+          criteriaVersion: analysis.criteriaVersion,
+          modelVersion: analysis.modelVersion,
+          evidence: analysis.evidence,
           locale: analysis.language,
           published: false,
         })
@@ -147,6 +159,18 @@ export async function runPipeline(jobId: string): Promise<void> {
             body: r.body,
           })),
         );
+      }
+
+      if (analysis.keywords.length > 0) {
+        const keywordRows = [...new Set(analysis.keywords.map(slugify))]
+          .filter(Boolean)
+          .map((keyword) => ({ articleId: created.id, keyword }));
+        if (keywordRows.length > 0) {
+          await tx
+            .insert(articleKeywords)
+            .values(keywordRows)
+            .onConflictDoNothing();
+        }
       }
 
       for (const [index, claim] of analysis.claims.entries()) {

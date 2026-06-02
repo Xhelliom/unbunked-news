@@ -5,6 +5,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 
 import { routing } from "@/i18n/routing";
 import { getArticleBySlug } from "@/lib/articles";
+import { getSuggestedArticles } from "@/lib/suggestions";
 import { buildReadingModel } from "@/lib/reading";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
@@ -18,8 +19,10 @@ import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ScoreCriteria } from "@/components/score-criteria";
+import { ScoreDescriptors } from "@/components/score-descriptors";
 import { ArticleReader } from "@/components/article-reader";
 import { ArticleViewSwitcher } from "@/components/article-view-switcher";
+import { ArticleSuggestions } from "@/components/article-suggestions";
 import { RewriteBody } from "@/components/rewrite-body";
 
 type View = "analysis" | "unbunked";
@@ -44,6 +47,7 @@ export default async function ArticlePage({
 
   const t = await getTranslations("article");
   const tStatus = await getTranslations("claimStatus");
+  const tVerdict = await getTranslations("verdicts");
   const format = await getFormatter();
 
   const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
@@ -64,6 +68,8 @@ export default async function ArticlePage({
   const { view: viewParam } = await searchParams;
   const view: View =
     viewParam === "unbunked" && rewrite ? "unbunked" : "analysis";
+
+  const suggestions = await getSuggestedArticles(article.id);
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
     status,
@@ -141,16 +147,24 @@ export default async function ArticlePage({
 
         <div className="mt-7">
           <div className="flex flex-wrap items-center gap-4">
-            {article.reliabilityScore !== null && (
-              <div className="flex items-baseline gap-2">
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                {t("score")}
+              </p>
+              <div className="mt-0.5 flex items-baseline gap-2">
                 <span className="text-[32px] font-bold tracking-tight">
-                  {article.reliabilityScore}
+                  {article.reliabilityScore ?? "—"}
                 </span>
-                <span className="text-muted-foreground text-sm">
-                  / 100 · {t("score")}
-                </span>
+                {article.reliabilityScore !== null && (
+                  <span className="text-muted-foreground text-sm">/ 100</span>
+                )}
+                {article.verdict && (
+                  <span className="text-sm font-medium">
+                    · {tVerdict(`${article.verdict}.label`)}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
             <Button asChild variant="outline" size="sm" className="ml-auto">
               <a
                 href={article.urlOrigine}
@@ -174,16 +188,26 @@ export default async function ArticlePage({
             </div>
           )}
           <ScoreCriteria scores={article} />
+          <ScoreDescriptors
+            framing={article.framing}
+            contentType={article.contentType}
+          />
         </div>
 
         {statusCounts.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-            {statusCounts.map(({ status, count }) => (
-              <span key={status} className="inline-flex items-center gap-1.5">
-                <ClaimStatusBadge status={status} />
-                <span className="text-muted-foreground text-sm">×{count}</span>
-              </span>
-            ))}
+          <div className="mt-6">
+            <p className="text-sm font-semibold">{t("claimsBreakdownTitle")}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              {t("claimsBreakdownHint")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              {statusCounts.map(({ status, count }) => (
+                <span key={status} className="inline-flex items-center gap-1.5">
+                  <ClaimStatusBadge status={status} />
+                  <span className="text-muted-foreground text-sm">×{count}</span>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -319,6 +343,8 @@ export default async function ArticlePage({
           )}
         </section>
       )}
+
+      <ArticleSuggestions articles={suggestions} />
 
       <ArticleReadTracker />
     </article>

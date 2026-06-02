@@ -1,6 +1,25 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
-import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import {
+  CONFIDENCE_LEVELS,
+  CONTENT_TYPE_VALUES,
+  CORE_CRITERIA,
+  CRITERION_RUBRIC,
+  CRITERION_WEIGHT,
+  FRAMING_VALUES,
+  KILLSWITCH_FLAGS,
+  LEVELS,
+  LEVEL_BANDS,
+  SCORE_CRITERIA,
+  type Confidence,
+  type ContentType,
+  type CriterionAssessment,
+  type CriterionScores,
+  type Framing,
+  type Killswitch,
+  type ScoreCriterion,
+} from "@/lib/score-criteria";
+import type { Verdict } from "@/lib/verdicts";
 
 // Matches the claim_status enum in the database schema.
 export const CLAIM_STATUSES = [
@@ -30,20 +49,35 @@ export type AnalysisClaim = {
   sourceQuote: string;
   sources: AnalysisSource[];
 };
+
+// Frozen audit snapshot persisted as JSON next to the article: the per-criterion
+// reasoning + evidence (no dedicated column) and the killswitch signals. Lets a
+// third party replay the verdict (see docs/SCORING.md §12).
+export type AnalysisEvidence = {
+  criteria: Partial<Record<ScoreCriterion, CriterionAssessment | null>>;
+  killswitch: Killswitch;
+};
+
+// Final, post-aggregation analysis. The reliability score, verdict and global
+// confidence here are DERIVED by the code (deriveScoring), never taken from the
+// model. `scores` are the per-criterion numbers clamped into their bands.
 export type Analysis = {
   title: string;
   summary: string;
   originalSummary: string;
   language: string;
   verdict: Verdict;
-  reliabilityScore: number;
-  factualityScore: number;
-  sourcingScore: number;
-  neutralityScore: number;
-  completenessScore: number | null;
-  transparencyScore: number | null;
-  recencyScore: number | null;
+  reliabilityScore: number | null;
+  globalConfidence: Confidence;
+  criteriaVersion: string;
+  modelVersion: string;
+  scores: CriterionScores;
+  framing: Framing;
+  contentType: ContentType;
+  killswitch: Killswitch;
+  evidence: AnalysisEvidence;
   tags: string[];
+  keywords: string[];
   claims: AnalysisClaim[];
 };
 
@@ -71,10 +105,86 @@ export const recordClaimsTool: Anthropic.Tool = {
   },
 };
 
+// Criteria whose evidence (rationale AND sources) is mandatory: you may not
+// score them "from memory". The others still require a rationale.
+const EVIDENCE_STRICT: readonly ScoreCriterion[] = [
+  "factuality",
+  "corroboration",
+  "sourcing",
+];
+
+function criterionDescription(criterion: ScoreCriterion): string {
+  const rubric = CRITERION_RUBRIC[criterion];
+  const levels = LEVELS.map((level) => {
+    const [min, max] = LEVEL_BANDS[level];
+    return `L${level} (${min}-${max}): ${rubric.levels[level]}`;
+  }).join(" ");
+  return [
+    rubric.definition,
+    `Weight ${CRITERION_WEIGHT[criterion]}.`,
+    `Checklist: ${rubric.checklist.join(" ")}`,
+    `Levels: ${levels}`,
+  ].join(" ");
+}
+
+function criterionProperty(criterion: ScoreCriterion): Record<string, unknown> {
+  const required = ["level", "score", "confidence", "rationale"];
+  if (EVIDENCE_STRICT.includes(criterion)) required.push("sources");
+  return {
+    type: "object",
+    description: criterionDescription(criterion),
+    properties: {
+      level: {
+        type: "integer",
+        enum: [...LEVELS],
+        description: "Anchored level L0-L3; fixes the band before refining.",
+      },
+      score: {
+        type: "integer",
+        description:
+          "Refined 0-100 score INSIDE the band of the chosen level (the code clamps it to the band).",
+      },
+      confidence: { type: "string", enum: [...CONFIDENCE_LEVELS] },
+      rationale: {
+        type: "string",
+        description: "1-2 sentences justifying the level from the checklist.",
+      },
+      sources: {
+        type: "array",
+        items: { type: "string" },
+        description: "URLs you actually consulted. No invented sources.",
+      },
+    },
+    required,
+    additionalProperties: false,
+  };
+}
+
+function killswitchSignalProperty(): Record<string, unknown> {
+  return {
+    type: "object",
+    properties: {
+      value: { type: "boolean" },
+      rationale: { type: "string" },
+      sources: { type: "array", items: { type: "string" } },
+    },
+    required: ["value", "rationale", "sources"],
+    additionalProperties: false,
+  };
+}
+
+const criteriaProperties = Object.fromEntries(
+  SCORE_CRITERIA.map((criterion) => [criterion, criterionProperty(criterion)]),
+);
+const killswitchProperties = Object.fromEntries(
+  KILLSWITCH_FLAGS.map((flag) => [flag, killswitchSignalProperty()]),
+);
+
 export const recordAnalysisTool: Anthropic.Tool = {
   name: "record_analysis",
   description:
-    "Record the final fact-check: a verdict, reliability score, and per-claim assessment.",
+    "Record the per-criterion assessment, killswitch flags and descriptors. " +
+    "Do NOT provide an overall reliability score, verdict or global confidence — the code derives those.",
   input_schema: {
     type: "object",
     properties: {
@@ -97,49 +207,45 @@ export const recordAnalysisTool: Anthropic.Tool = {
         description:
           "The language of the article and of your output, as a short code (e.g. 'fr', 'en').",
       },
-      verdict: {
-        type: "string",
-        enum: [...VERDICTS],
-        description: "The overall verdict for the article.",
-      },
-      reliabilityScore: {
-        type: "integer",
+      criteria: {
+        type: "object",
         description:
-          "Overall reliability from 0 (false) to 100 (fully reliable). Must stay coherent with the verdict and the three sub-scores below.",
+          "Per-criterion assessment. Always score the five core criteria; OMIT recency entirely for timeless content.",
+        properties: criteriaProperties,
+        required: [...CORE_CRITERIA],
+        additionalProperties: false,
       },
-      factualityScore: {
-        type: "integer",
+      killswitch: {
+        type: "object",
         description:
-          "Factuality, 0-100: are the claims true and verified against the sources?",
+          "Deterministic kill flags. Set value:true ONLY with evidence; the code applies the cap.",
+        properties: killswitchProperties,
+        required: [...KILLSWITCH_FLAGS],
+        additionalProperties: false,
       },
-      sourcingScore: {
-        type: "integer",
+      descriptors: {
+        type: "object",
         description:
-          "Sourcing, 0-100: are the references cited solid, independent, primary and verifiable?",
-      },
-      neutralityScore: {
-        type: "integer",
-        description:
-          "Neutrality, 0-100: is the framing balanced, free of slanted tone or strategic omissions?",
-      },
-      completenessScore: {
-        type: "integer",
-        description:
-          "OPTIONAL completeness, 0-100: are the important facts present rather than strategically omitted? Omit this field entirely if you cannot judge it reliably.",
-      },
-      transparencyScore: {
-        type: "integer",
-        description:
-          "OPTIONAL transparency, 0-100: are the author, date, methodology and funding identifiable? Omit this field entirely if the article gives nothing to judge.",
-      },
-      recencyScore: {
-        type: "integer",
-        description:
-          "OPTIONAL recency, 0-100: is the information up to date rather than stale or superseded? Omit this field entirely if recency is not relevant or cannot be judged.",
+          "Unscored descriptors, shown separately. They never affect reliability.",
+        properties: {
+          framing: { type: "string", enum: [...FRAMING_VALUES] },
+          contentType: { type: "string", enum: [...CONTENT_TYPE_VALUES] },
+        },
+        required: ["framing", "contentType"],
+        additionalProperties: false,
       },
       tags: {
         type: "array",
         description: "1-4 thematic topic labels (e.g. Tech, Politics, Health).",
+        items: { type: "string" },
+      },
+      keywords: {
+        type: "array",
+        description:
+          "5-10 specific keywords identifying the precise subject of the " +
+          "article: named entities, people, places, organisations, specific " +
+          "events. NOT broad categories — those are the tags. Same language " +
+          "as the article.",
         items: { type: "string" },
       },
       claims: {
@@ -181,12 +287,11 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "summary",
       "originalSummary",
       "language",
-      "verdict",
-      "reliabilityScore",
-      "factualityScore",
-      "sourcingScore",
-      "neutralityScore",
+      "criteria",
+      "killswitch",
+      "descriptors",
       "tags",
+      "keywords",
       "claims",
     ],
     additionalProperties: false,

@@ -274,7 +274,7 @@ export const ARTICLES: SeedArticle[] = [
     sourceName: "Doctissimo",
     sourceUrl: "https://doctissimo.fr/sommeil/magnesium",
     tagSlug: "health",
-    verdict: "biased",
+    verdict: "fragile",
     reliabilityScore: 41,
     factualityScore: 68,
     sourcingScore: 50,

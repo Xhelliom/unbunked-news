@@ -9,13 +9,16 @@
     "build:scripts": "esbuild src/db/migrate.ts src/db/seed-admin.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist/scripts --out-extension:.js=.cjs",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed-admin": "tsx src/db/seed-admin.ts",
     "db:seed-articles": "tsx src/db/seed-articles.ts",
-    "db:clean-articles": "tsx src/db/clean-articles.ts"
+    "db:clean-articles": "tsx src/db/clean-articles.ts",
+    "db:rescore-local": "node --conditions=react-server --env-file=.env.local --import tsx src/db/rescore-articles.local.ts",
+    "db:backfill-scoring-local": "node --env-file=.env.local --import tsx src/db/backfill-scoring.local.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

@@ -26,7 +26,10 @@ export function ScoreCriteria({ scores }: { scores: CriterionScores }) {
   if (rows.length === 0) return null;
 
   return (
-    <dl className="mt-5 space-y-2.5">
+    <div className="mt-6">
+      <p className="text-sm font-semibold">{t("sectionTitle")}</p>
+      <p className="text-muted-foreground mt-0.5 text-xs">{t("sectionHint")}</p>
+      <dl className="mt-3 space-y-2.5">
       {rows.map(({ criterion, value }) => (
         <div
           key={criterion}
@@ -57,6 +60,7 @@ export function ScoreCriteria({ scores }: { scores: CriterionScores }) {
           <dd className="text-right font-mono text-sm tabular-nums">{value}</dd>
         </div>
       ))}
-    </dl>
+      </dl>
+    </div>
   );
 }

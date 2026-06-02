@@ -36,9 +36,9 @@
   --verdict-nuanced: #f59e0b;
   --verdict-nuanced-bg: #fffbeb;
   --verdict-nuanced-fg: #b45309;
-  --verdict-biased: #ea580c;
-  --verdict-biased-bg: #fff7ed;
-  --verdict-biased-fg: #c2410c;
+  --verdict-fragile: #ea580c;
+  --verdict-fragile-bg: #fff7ed;
+  --verdict-fragile-fg: #c2410c;
   --verdict-debunked: #dc2626;
   --verdict-debunked-bg: #fef2f2;
   --verdict-debunked-fg: #b91c1c;
@@ -76,9 +76,9 @@
   --verdict-nuanced: #fbbf24;
   --verdict-nuanced-bg: #2e2510;
   --verdict-nuanced-fg: #fcd34d;
-  --verdict-biased: #fb923c;
-  --verdict-biased-bg: #2e1d12;
-  --verdict-biased-fg: #fdba74;
+  --verdict-fragile: #fb923c;
+  --verdict-fragile-bg: #2e1d12;
+  --verdict-fragile-fg: #fdba74;
   --verdict-debunked: #f87171;
   --verdict-debunked-bg: #2e1414;
   --verdict-debunked-fg: #fca5a5;
@@ -114,9 +114,9 @@
   --color-verdict-nuanced: var(--verdict-nuanced);
   --color-verdict-nuanced-bg: var(--verdict-nuanced-bg);
   --color-verdict-nuanced-fg: var(--verdict-nuanced-fg);
-  --color-verdict-biased: var(--verdict-biased);
-  --color-verdict-biased-bg: var(--verdict-biased-bg);
-  --color-verdict-biased-fg: var(--verdict-biased-fg);
+  --color-verdict-fragile: var(--verdict-fragile);
+  --color-verdict-fragile-bg: var(--verdict-fragile-bg);
+  --color-verdict-fragile-fg: var(--verdict-fragile-fg);
   --color-verdict-debunked: var(--verdict-debunked);
   --color-verdict-debunked-bg: var(--verdict-debunked-bg);
   --color-verdict-debunked-fg: var(--verdict-debunked-fg);

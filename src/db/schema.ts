@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -12,6 +13,13 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import {
+  CONFIDENCE_LEVELS,
+  CONTENT_TYPE_VALUES,
+  FRAMING_VALUES,
+} from "@/lib/score-criteria";
+import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
+
 // BetterAuth tables (user, session, account, verification).
 export * from "./auth-schema";
 
@@ -19,10 +27,16 @@ export * from "./auth-schema";
 export const verdictEnum = pgEnum("verdict", [
   "reliable",
   "nuanced",
-  "biased",
+  "fragile",
   "debunked",
   "unverifiable",
 ]);
+
+// v1.2 scoring descriptors and global confidence. Values kept in sync with
+// src/lib/score-criteria.ts (the scoring source of truth).
+export const framingEnum = pgEnum("framing", [...FRAMING_VALUES]);
+export const contentTypeEnum = pgEnum("content_type", [...CONTENT_TYPE_VALUES]);
+export const confidenceEnum = pgEnum("confidence", [...CONFIDENCE_LEVELS]);
 
 export const claimStatusEnum = pgEnum("claim_status", [
   "supported",
@@ -80,17 +94,37 @@ export const articles = pgTable(
     imageUrl: text(),
     imageAttribution: text(),
     verdict: verdictEnum(),
-    // Overall reliability (0-100), produced by the AI to stay coherent with the
-    // verdict. The sub-scores below decompose it for a finer reading: the three
-    // core ones are always scored, the three optional ones are null when the AI
-    // can't judge them reliably (e.g. no funding disclosure to rate).
+    // Overall reliability (0-100), DERIVED by the code from the weighted
+    // sub-scores (v1.2; docs/SCORING.md §7). Null when the verdict is
+    // `unverifiable` — the UI then shows "—" instead of a misleading bar.
     reliabilityScore: integer(),
+    // Per-criterion scores, each clamped into its level's band. The five core
+    // criteria are always scored; recency is null for timeless content.
     factualityScore: integer(),
+    corroborationScore: integer(),
     sourcingScore: integer(),
-    neutralityScore: integer(),
     completenessScore: integer(),
     transparencyScore: integer(),
     recencyScore: integer(),
+    // Legacy v1.0 criterion, replaced by the `framing` descriptor +
+    // `completeness`. Kept nullable for historical rows; no longer written.
+    neutralityScore: integer(),
+    // Unscored descriptors (chips), never folded into the score.
+    framing: framingEnum(),
+    contentType: contentTypeEnum(),
+    // Deterministic killswitch flags raised by the AI, capped by the code.
+    fabricationDetected: boolean().notNull().default(false),
+    domainImpersonation: boolean().notNull().default(false),
+    centralClaimDebunked: boolean().notNull().default(false),
+    undisclosedAIWithErrors: boolean().notNull().default(false),
+    // Code-derived confidence in the overall score.
+    globalConfidence: confidenceEnum(),
+    // Provenance for replicability (docs/SCORING.md §12).
+    criteriaVersion: text(),
+    modelVersion: text(),
+    // Frozen audit snapshot: per-criterion level/score/confidence/rationale/
+    // sources + killswitch signals. Lets a third party replay the verdict.
+    evidence: jsonb().$type<AnalysisEvidence>(),
     locale: varchar({ length: 5 }).notNull().default("fr"),
     published: boolean().notNull().default(false),
     publishedAt: timestamp({ withTimezone: true, mode: "date" }),
@@ -167,6 +201,23 @@ export const articleRewrites = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [primaryKey({ columns: [table.articleId, table.locale] })],
+);
+
+// AI-generated keywords identifying the precise subject of an article,
+// normalized (slugified) so casing/accents don't block cross-article matching.
+// Used to suggest reliable articles on the same topic.
+export const articleKeywords = pgTable(
+  "article_keywords",
+  {
+    articleId: uuid()
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    keyword: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.articleId, table.keyword] }),
+    index("article_keywords_keyword_idx").on(table.keyword),
+  ],
 );
 
 export const tags = pgTable("tags", {
@@ -301,9 +352,20 @@ export const articlesRelations = relations(articles, ({ one, many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
+  keywords: many(articleKeywords),
   jobs: many(jobs),
   tokenUsage: one(articleTokenUsage),
 }));
+
+export const articleKeywordsRelations = relations(
+  articleKeywords,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleKeywords.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
 
 export const articleTokenUsageRelations = relations(
   articleTokenUsage,
@@ -378,5 +440,7 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 export type ArticleRewrite = typeof articleRewrites.$inferSelect;
 export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
+export type ArticleKeyword = typeof articleKeywords.$inferSelect;
+export type NewArticleKeyword = typeof articleKeywords.$inferInsert;
 export type ArticleTokenUsage = typeof articleTokenUsage.$inferSelect;
 export type NewArticleTokenUsage = typeof articleTokenUsage.$inferInsert;
