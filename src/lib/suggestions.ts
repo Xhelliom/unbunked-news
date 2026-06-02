@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 import { db } from "@/db/client";
@@ -51,6 +51,7 @@ async function loadSuggestedArticles(articleId: string) {
         overlaps.map((row) => row.articleId),
       ),
       eq(articles.published, true),
+      isNull(articles.deletedAt),
       inArray(articles.verdict, [...TRUSTWORTHY_VERDICTS]),
     ),
     with: {

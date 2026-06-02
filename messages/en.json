@@ -242,7 +242,12 @@
       "empty": "No articles yet.",
       "draft": "Draft",
       "published": "Published",
-      "review": "Review"
+      "review": "Review",
+      "deleted": "Deleted",
+      "trash": "Trash",
+      "trashTitle": "Trash",
+      "backToActive": "Active articles",
+      "trashEmpty": "The trash is empty."
     },
     "submit": {
       "title": "Analyze an article",
@@ -317,6 +322,10 @@
       "saving": "Saving…",
       "publish": "Publish",
       "unpublish": "Unpublish",
+      "delete": "Delete",
+      "restore": "Restore",
+      "relaunch": "Relaunch analysis",
+      "deletedBanner": "This article is deleted: hidden from the public. Restore it or relaunch an analysis.",
       "rewrites": {
         "title": "Unbunked version (rewrite)",
         "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",

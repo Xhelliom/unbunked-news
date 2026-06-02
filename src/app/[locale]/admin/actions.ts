@@ -190,6 +190,49 @@ export async function setPublished(formData: FormData): Promise<void> {
   redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
 }
 
+// Soft delete: hide the article from every public read and the dashboard's
+// default list, and unpublish it so it can't resurface, while keeping the row
+// so it can be restored or relaunched.
+export async function setDeleted(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  await db
+    .update(articles)
+    .set({ deletedAt: new Date(), published: false, publishedAt: null })
+    .where(eq(articles.id, id));
+  revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
+  redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
+}
+
+// Brings a soft-deleted article back as a draft (it does not auto-republish).
+export async function restoreArticle(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  await db
+    .update(articles)
+    .set({ deletedAt: null })
+    .where(eq(articles.id, id));
+  revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
+  redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
+}
+
+// Re-runs the pipeline on the original URL, producing a fresh analysis. The
+// soft-deleted article is left as-is; the new run creates its own article.
+export async function relaunchArticle(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  const article = await db.query.articles.findFirst({
+    where: eq(articles.id, id),
+    columns: { urlOrigine: true },
+  });
+  if (!article) {
+    redirect({ href: "/admin", locale: await getLocale() });
+    return;
+  }
+  const jobId = await createAnalysisJob(article.urlOrigine);
+  redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
+}
+
 export async function acceptProposal(formData: FormData): Promise<void> {
   await requireAdminSession();
   const id = String(formData.get("id") ?? "");
