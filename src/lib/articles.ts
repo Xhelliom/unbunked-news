@@ -67,7 +67,15 @@ const loadPublishedArticlesCached = unstable_cache(
 export async function getPublishedArticles(
   filter: FeedFilter = {},
 ): Promise<Awaited<ReturnType<typeof loadPublishedArticles>>> {
-  return loadPublishedArticlesCached(filter);
+  // unstable_cache serializes its value to JSON, which turns Date columns into
+  // ISO strings. Revive them so the Date-typed contract holds at runtime.
+  const rows = await loadPublishedArticlesCached(filter);
+  return rows.map((row) => ({
+    ...row,
+    publishedAt: row.publishedAt === null ? null : new Date(row.publishedAt),
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  }));
 }
 
 async function loadArticleBySlug(slug: string) {
@@ -93,7 +101,16 @@ const loadArticleBySlugCached = unstable_cache(
 export async function getArticleBySlug(
   slug: string,
 ): Promise<Awaited<ReturnType<typeof loadArticleBySlug>>> {
-  return loadArticleBySlugCached(slug);
+  // See getPublishedArticles: revive Date columns flattened to strings by the
+  // unstable_cache JSON round-trip.
+  const article = await loadArticleBySlugCached(slug);
+  if (!article) return article;
+  return {
+    ...article,
+    publishedAt: article.publishedAt === null ? null : new Date(article.publishedAt),
+    createdAt: new Date(article.createdAt),
+    updatedAt: new Date(article.updatedAt),
+  };
 }
 
 async function loadAllTags() {
