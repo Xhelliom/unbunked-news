@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
+import { Logo } from "@/components/logo";
 
 const SECTIONS = ["tech", "politics", "environment", "health"] as const;
 
@@ -14,13 +15,8 @@ export function SiteFooter() {
     <footer className="border-t">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[2fr_1fr_1fr]">
         <div className="space-y-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-sm font-bold">
-              U
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              {tCommon("brand")}
-            </span>
+          <Link href="/" aria-label="Unbunked" className="inline-flex w-fit">
+            <Logo className="text-[22px]" />
           </Link>
           <p className="text-muted-foreground max-w-xs text-sm">
             {tFooter("tagline")}
