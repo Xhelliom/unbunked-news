@@ -109,14 +109,27 @@
     "unverifiable": "Non vérifiable"
   },
   "auth": {
-    "loginTitle": "Connexion admin",
-    "loginSubtitle": "Accédez au panneau d'administration pour gérer les contenus, les membres et le suivi opérationnel.",
+    "loginTitle": "Login",
+    "loginSubtitle": "La rédaction vous a gardé une place. On reprend le fact-checking ?",
     "email": "Email",
+    "emailPlaceholder": "vous@unbunked.fr",
     "password": "Mot de passe",
-    "signIn": "Se connecter",
+    "signIn": "On y retourne",
     "signingIn": "Connexion…",
     "error": "Email ou mot de passe incorrect.",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "toggleTheme": "Changer de thème",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "forgot": "Oublié ?",
+    "rememberMe": "Se souvenir de moi sur ce poste",
+    "or": "ou",
+    "continueWithGoogle": "Continuer avec Google",
+    "editorialConsole": "Console de rédaction",
+    "heroTitle": "Le fact-checking, claim par claim.",
+    "heroSubtitle": "Soumettez un lien, l'analyse extrait chaque affirmation, la confronte aux sources, et publie le verdict. Vous gardez la main sur chaque nuance.",
+    "weeklyChecks": "articles vérifiés cette semaine",
+    "fiveVerdicts": "Cinq verdicts, jamais binaires"
   },
   "admin": {
     "title": "Administration",

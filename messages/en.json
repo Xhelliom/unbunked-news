@@ -109,14 +109,27 @@
     "unverifiable": "Unverifiable"
   },
   "auth": {
-    "loginTitle": "Admin sign in",
-    "loginSubtitle": "Access the administration panel to manage content, members, and day-to-day operations.",
+    "loginTitle": "Login",
+    "loginSubtitle": "The newsroom saved your seat. Ready to resume fact-checking?",
     "email": "Email",
+    "emailPlaceholder": "you@unbunked.fr",
     "password": "Password",
-    "signIn": "Sign in",
+    "signIn": "Let's go back in",
     "signingIn": "Signing in…",
     "error": "Incorrect email or password.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "toggleTheme": "Toggle theme",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "forgot": "Forgot?",
+    "rememberMe": "Remember me on this device",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "editorialConsole": "Editorial console",
+    "heroTitle": "Fact-checking, claim by claim.",
+    "heroSubtitle": "Submit a link, the pipeline extracts each claim, cross-checks it against sources, and publishes a verdict. You stay in control of every nuance.",
+    "weeklyChecks": "articles checked this week",
+    "fiveVerdicts": "Five verdicts, never binary"
   },
   "admin": {
     "title": "Administration",
