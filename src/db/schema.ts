@@ -132,6 +132,10 @@ export const articles = pgTable(
     locale: varchar({ length: 5 }).notNull().default("fr"),
     published: boolean().notNull().default(false),
     publishedAt: timestamp({ withTimezone: true, mode: "date" }),
+    // Soft delete: set when an admin trashes the article. Non-null rows are
+    // hidden from every public read and from the dashboard's default list, but
+    // kept so they can be restored or relaunched (re-analysed from urlOrigine).
+    deletedAt: timestamp({ withTimezone: true, mode: "date" }),
     createdAt: timestamp({ withTimezone: true, mode: "date" })
       .notNull()
       .defaultNow(),
@@ -143,6 +147,7 @@ export const articles = pgTable(
   (table) => [
     index("articles_verdict_idx").on(table.verdict),
     index("articles_published_idx").on(table.published, table.publishedAt),
+    index("articles_deleted_at_idx").on(table.deletedAt),
   ],
 );
 

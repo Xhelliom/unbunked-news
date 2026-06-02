@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, count, eq, gte, inArray, isNotNull } from "drizzle-orm";
+import { and, count, eq, gte, inArray, isNotNull, isNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 import { db } from "@/db/client";
@@ -24,7 +24,10 @@ const MAX_FEED_ARTICLES = 60;
 const LOGIN_WEEKLY_PUBLISHED_WINDOW_MS = 7 * DAY_MS;
 
 async function loadPublishedArticles(filter: FeedFilter) {
-  const conditions = [eq(articles.published, true)];
+  const conditions = [
+    eq(articles.published, true),
+    isNull(articles.deletedAt),
+  ];
 
   if (filter.verdict) {
     conditions.push(eq(articles.verdict, filter.verdict));
@@ -84,7 +87,11 @@ export async function getPublishedArticles(
 
 async function loadArticleBySlug(slug: string) {
   return db.query.articles.findFirst({
-    where: and(eq(articles.slug, slug), eq(articles.published, true)),
+    where: and(
+      eq(articles.slug, slug),
+      eq(articles.published, true),
+      isNull(articles.deletedAt),
+    ),
     with: {
       claims: {
         orderBy: (claim, { asc }) => [asc(claim.position)],
@@ -136,7 +143,7 @@ export async function getAllTags(): Promise<
 
 async function loadArticleIdBySlug(slug: string): Promise<string | null> {
   const article = await db.query.articles.findFirst({
-    where: eq(articles.slug, slug),
+    where: and(eq(articles.slug, slug), isNull(articles.deletedAt)),
     columns: { id: true },
   });
   return article?.id ?? null;
@@ -164,6 +171,7 @@ async function loadPublishedArticlesCountLastSevenDays(): Promise<number> {
     .where(
       and(
         eq(articles.published, true),
+        isNull(articles.deletedAt),
         isNotNull(articles.publishedAt),
         gte(articles.publishedAt, since),
       ),
