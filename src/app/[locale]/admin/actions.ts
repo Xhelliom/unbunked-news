@@ -371,6 +371,7 @@ export async function updateOwnProfile(formData: FormData): Promise<void> {
   });
   if (!currentUser) {
     redirect({ href: accountErrorHref(ACCOUNT_ERROR.USER_NOT_FOUND), locale: await getLocale() });
+    return;
   }
 
   // On empêche de prendre l'email d'un autre membre.
