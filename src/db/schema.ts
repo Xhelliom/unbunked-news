@@ -289,17 +289,19 @@ export const jobs = pgTable(
   (table) => [index("jobs_status_idx").on(table.status)],
 );
 
-// Token consumption recorded once per article when the pipeline finishes, so
-// the admin has a financial view of what each article cost to produce. One row
-// per article; the monetary cost is derived from these counts at read time
-// (see src/lib/pipeline/pricing.ts) so a later price change reprices history.
-// Web search is billed separately from tokens, so its request count and the
-// provider that ran it are tracked alongside (see SEARCH_PROVIDERS).
+// Token consumption recorded when the pipeline finishes, so the admin has a
+// financial view of what each article cost to produce. One row per (article,
+// model): a tiered run spends on several models (e.g. Haiku for extraction,
+// Sonnet for judgement), each priced differently, so the model belongs in the
+// key. The monetary cost is derived from these counts at read time (see
+// src/lib/pipeline/pricing.ts) so a later price change reprices history. Web
+// search is billed separately from tokens, so its request count and the provider
+// that ran it are tracked alongside (see SEARCH_PROVIDERS).
 export const articleTokenUsage = pgTable(
   "article_token_usage",
   {
     articleId: uuid()
-      .primaryKey()
+      .notNull()
       .references(() => articles.id, { onDelete: "cascade" }),
     // The Claude model used, so the correct price applies even if it changes.
     model: text().notNull(),
@@ -320,6 +322,7 @@ export const articleTokenUsage = pgTable(
       .defaultNow(),
   },
   (table) => [
+    primaryKey({ columns: [table.articleId, table.model] }),
     index("article_token_usage_created_at_idx").on(table.createdAt),
   ],
 );
@@ -352,13 +355,13 @@ export const analyticsEvents = pgTable(
   ],
 );
 
-export const articlesRelations = relations(articles, ({ one, many }) => ({
+export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
   keywords: many(articleKeywords),
   jobs: many(jobs),
-  tokenUsage: one(articleTokenUsage),
+  tokenUsage: many(articleTokenUsage),
 }));
 
 export const articleKeywordsRelations = relations(

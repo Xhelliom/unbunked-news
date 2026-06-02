@@ -1,6 +1,6 @@
 import "server-only";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { articleTokenUsage, articles } from "@/db/schema";
@@ -11,18 +11,19 @@ import { costForSearch, costForUsage } from "./pricing";
 // the headline totals come from a separate SQL aggregate over every row.
 const ROW_LIMIT = 100;
 
+// One line per article, summed across every model the run used (a tiered run
+// records one row per model in article_token_usage).
 export type ArticleUsageRow = {
   articleId: string;
   title: string;
   sourceName: string;
   createdAt: Date;
-  model: string;
   inputTokens: number;
   outputTokens: number;
   cacheTokens: number;
   totalTokens: number;
   searchRequests: number;
-  // Combined token + web search cost for the article.
+  // Combined token + web search cost for the article, across all of its models.
   costUsd: number;
 };
 
@@ -50,7 +51,6 @@ async function loadTotals(): Promise<TokenUsageTotals> {
     .select({
       model: articleTokenUsage.model,
       searchProvider: articleTokenUsage.searchProvider,
-      articleCount: sql<number>`count(*)::int`,
       inputTokens: sql<string>`coalesce(sum(${articleTokenUsage.inputTokens}), 0)::bigint`,
       outputTokens: sql<string>`coalesce(sum(${articleTokenUsage.outputTokens}), 0)::bigint`,
       cacheCreationTokens: sql<string>`coalesce(sum(${articleTokenUsage.cacheCreationTokens}), 0)::bigint`,
@@ -60,7 +60,15 @@ async function loadTotals(): Promise<TokenUsageTotals> {
     .from(articleTokenUsage)
     .groupBy(articleTokenUsage.model, articleTokenUsage.searchProvider);
 
-  let articleCount = 0;
+  // One article spans several model rows under tiering, so the article count is
+  // the distinct article id count — not the number of usage rows.
+  const [distinct] = await db
+    .select({
+      articleCount: sql<number>`count(distinct ${articleTokenUsage.articleId})::int`,
+    })
+    .from(articleTokenUsage);
+  const articleCount = distinct?.articleCount ?? 0;
+
   let totalTokens = 0;
   let totalSearchRequests = 0;
   let searchCostUsd = 0;
@@ -77,7 +85,6 @@ async function loadTotals(): Promise<TokenUsageTotals> {
       webSearchRequests,
     );
 
-    articleCount += group.articleCount;
     totalTokens +=
       inputTokens + outputTokens + cacheCreationTokens + cacheReadTokens;
     totalSearchRequests += webSearchRequests;
@@ -102,6 +109,17 @@ async function loadTotals(): Promise<TokenUsageTotals> {
 }
 
 async function loadRecentRows(): Promise<ArticleUsageRow[]> {
+  // Pick the most recent ROW_LIMIT articles by their latest usage row, so the
+  // bound is on articles rather than on rows (an article has one row per model).
+  const recent = await db
+    .select({ articleId: articleTokenUsage.articleId })
+    .from(articleTokenUsage)
+    .groupBy(articleTokenUsage.articleId)
+    .orderBy(desc(sql`max(${articleTokenUsage.createdAt})`))
+    .limit(ROW_LIMIT);
+  if (recent.length === 0) return [];
+  const articleIds = recent.map((row) => row.articleId);
+
   const records = await db
     .select({
       articleId: articleTokenUsage.articleId,
@@ -118,35 +136,52 @@ async function loadRecentRows(): Promise<ArticleUsageRow[]> {
     })
     .from(articleTokenUsage)
     .innerJoin(articles, eq(articleTokenUsage.articleId, articles.id))
-    .orderBy(desc(articleTokenUsage.createdAt))
-    .limit(ROW_LIMIT);
+    .where(inArray(articleTokenUsage.articleId, articleIds));
 
-  return records.map((record) => {
+  // Fold each article's per-model rows into a single priced line. Cost is summed
+  // per model (each priced at its own rate) before the rows are combined.
+  const byArticle = new Map<string, ArticleUsageRow>();
+  for (const record of records) {
     const cacheTokens = record.cacheCreationTokens + record.cacheReadTokens;
-    const tokenCost = costForUsage(record.model, {
-      inputTokens: record.inputTokens,
-      outputTokens: record.outputTokens,
-      cacheCreationTokens: record.cacheCreationTokens,
-      cacheReadTokens: record.cacheReadTokens,
-    });
-    const searchCost = costForSearch(
-      record.searchProvider,
-      record.webSearchRequests,
-    );
-    return {
-      articleId: record.articleId,
-      title: record.title,
-      sourceName: record.sourceName,
-      createdAt: record.createdAt,
-      model: record.model,
-      inputTokens: record.inputTokens,
-      outputTokens: record.outputTokens,
-      cacheTokens,
-      totalTokens: record.inputTokens + record.outputTokens + cacheTokens,
-      searchRequests: record.webSearchRequests,
-      costUsd: tokenCost + searchCost,
-    };
-  });
+    const cost =
+      costForUsage(record.model, {
+        inputTokens: record.inputTokens,
+        outputTokens: record.outputTokens,
+        cacheCreationTokens: record.cacheCreationTokens,
+        cacheReadTokens: record.cacheReadTokens,
+      }) + costForSearch(record.searchProvider, record.webSearchRequests);
+
+    const existing = byArticle.get(record.articleId);
+    if (existing) {
+      existing.inputTokens += record.inputTokens;
+      existing.outputTokens += record.outputTokens;
+      existing.cacheTokens += cacheTokens;
+      existing.totalTokens += record.inputTokens + record.outputTokens + cacheTokens;
+      existing.searchRequests += record.webSearchRequests;
+      existing.costUsd += cost;
+      if (record.createdAt > existing.createdAt) {
+        existing.createdAt = record.createdAt;
+      }
+    } else {
+      byArticle.set(record.articleId, {
+        articleId: record.articleId,
+        title: record.title,
+        sourceName: record.sourceName,
+        createdAt: record.createdAt,
+        inputTokens: record.inputTokens,
+        outputTokens: record.outputTokens,
+        cacheTokens,
+        totalTokens: record.inputTokens + record.outputTokens + cacheTokens,
+        searchRequests: record.webSearchRequests,
+        costUsd: cost,
+      });
+    }
+  }
+
+  // Keep the recency order established by the first query.
+  return articleIds
+    .map((id) => byArticle.get(id))
+    .filter((row): row is ArticleUsageRow => row !== undefined);
 }
 
 export async function loadTokenUsageSummary(): Promise<TokenUsageSummary> {
