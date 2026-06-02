@@ -18,7 +18,7 @@ import {
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
-import { createAnalysisJob } from "@/lib/jobs";
+import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
 import { requireAdminSession } from "@/lib/session";
 import {
@@ -231,6 +231,20 @@ export async function relaunchArticle(formData: FormData): Promise<void> {
   }
   const jobId = await createAnalysisJob(article.urlOrigine);
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
+}
+
+// Re-queues a job's URL as a fresh analysis. Used from the runs table to retry
+// a failed run or re-analyse a finished one; the original job row is untouched.
+export async function relaunchJob(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  const job = await getJob(id);
+  if (!job) {
+    redirect({ href: "/admin/jobs", locale: await getLocale() });
+    return;
+  }
+  const newJobId = await createAnalysisJob(job.url);
+  redirect({ href: `/admin/jobs/${newJobId}`, locale: await getLocale() });
 }
 
 export async function acceptProposal(formData: FormData): Promise<void> {

@@ -163,6 +163,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
+      "jobs": "Runs",
       "proposals": "Proposals",
       "analytics": "Analytics",
       "costs": "Costs",
@@ -283,6 +284,21 @@
         "rewriting": "Multilingual rewrite",
         "saving": "Saving",
         "done": "Done"
+      }
+    },
+    "jobs": {
+      "title": "Runs",
+      "subtitle": "Every analysis run, newest first. Relaunch a failed or finished run.",
+      "empty": "No runs yet.",
+      "view": "View",
+      "relaunch": "Relaunch",
+      "table": {
+        "url": "URL",
+        "status": "Status",
+        "step": "Step",
+        "progress": "Progress",
+        "created": "Created",
+        "actions": "Actions"
       }
     },
     "review": {

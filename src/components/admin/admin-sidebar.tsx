@@ -5,6 +5,7 @@ import {
   Coins,
   FileText,
   LayoutDashboard,
+  ListChecks,
   Send,
   ShieldCheck,
   UserCircle2,
@@ -28,6 +29,7 @@ type AdminSidebarProps = {
   labels: {
     dashboard: string;
     submit: string;
+    jobs: string;
     proposals: string;
     analytics: string;
     costs: string;
@@ -41,7 +43,7 @@ type AdminSidebarProps = {
 };
 
 type NavItem = {
-  href: "/admin" | "/admin/submit" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/members" | "/admin/account";
+  href: "/admin" | "/admin/submit" | "/admin/jobs" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/members" | "/admin/account";
   label: string;
   icon: ComponentType<{ className?: string }>;
 };
@@ -61,6 +63,7 @@ export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
   const items: NavItem[] = [
     { href: "/admin", label: labels.dashboard, icon: LayoutDashboard },
     { href: "/admin/submit", label: labels.submit, icon: Send },
+    { href: "/admin/jobs", label: labels.jobs, icon: ListChecks },
     { href: "/admin/proposals", label: labels.proposals, icon: FileText },
     { href: "/admin/analytics", label: labels.analytics, icon: BarChart3 },
     { href: "/admin/costs", label: labels.costs, icon: Coins },

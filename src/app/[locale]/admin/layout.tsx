@@ -45,6 +45,7 @@ export default async function AdminLayout({
           labels={{
             dashboard: t("nav.dashboard"),
             submit: t("nav.submit"),
+            jobs: t("nav.jobs"),
             proposals: t("nav.proposals"),
             analytics: t("nav.analytics"),
             costs: t("nav.costs"),
