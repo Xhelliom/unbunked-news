@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -71,7 +72,9 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
         <ThemeProvider defaultTheme="system" disableTransitionOnChange>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </ThemeProvider>
