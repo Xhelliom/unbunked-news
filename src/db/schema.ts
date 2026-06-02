@@ -19,6 +19,7 @@ import {
   FRAMING_VALUES,
 } from "@/lib/score-criteria";
 import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
+import type { ScrapeProvenance } from "@/lib/scrape";
 
 // BetterAuth tables (user, session, account, verification).
 export * from "./auth-schema";
@@ -87,6 +88,9 @@ export const articles = pgTable(
     // Original article body, paragraphs separated by blank lines, for the
     // annotated reading view. Null for articles processed before this existed.
     content: text(),
+    // How the body was scraped (extractor / AI recovery / headless render), for
+    // admin diagnosis of a bad scrape. Null for rows processed before this.
+    scrapeDebug: jsonb().$type<ScrapeProvenance>(),
     // Editorial toggle: when false, the public page hides the full original
     // body and shows originalSummary instead. Defaults to true.
     showOriginal: boolean().notNull().default(true),

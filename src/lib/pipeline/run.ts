@@ -20,6 +20,7 @@ import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { addUsage, MODEL, ZERO_USAGE } from "./client";
 import { extractClaims } from "./extract-claims";
+import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
 import { verifyClaims } from "./verify";
 
@@ -72,7 +73,15 @@ export async function runPipeline(jobId: string): Promise<void> {
       error: null,
     });
 
-    const article = await scrapeArticle(job.url);
+    let recoverUsage = ZERO_USAGE;
+    const { article, provenance } = await scrapeArticle(
+      job.url,
+      async (blocks, meta) => {
+        const { content, usage } = await recoverArticleBody(blocks, meta);
+        recoverUsage = addUsage(recoverUsage, usage);
+        return content;
+      },
+    );
 
     await updateJob(jobId, { step: "extracting", progress: 25 });
     const { claims, usage: extractUsage } = await extractClaims(article);
@@ -94,6 +103,7 @@ export async function runPipeline(jobId: string): Promise<void> {
     const rewrites = rewriteResults.map((result) => result.rewrite);
 
     const totalUsage = [
+      recoverUsage,
       extractUsage,
       verification.usage,
       aggregateUsage,
@@ -114,6 +124,7 @@ export async function runPipeline(jobId: string): Promise<void> {
           summary: analysis.summary,
           originalSummary: analysis.originalSummary,
           content: article.content.slice(0, MAX_STORED_CONTENT_CHARS),
+          scrapeDebug: provenance,
           imageUrl: article.imageUrl,
           verdict: analysis.verdict,
           reliabilityScore: analysis.reliabilityScore,

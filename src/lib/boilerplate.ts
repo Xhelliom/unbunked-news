@@ -50,3 +50,72 @@ export function cleanArticleContent(content: string): string {
       .filter((paragraph) => paragraph.length > 0),
   ).join("\n\n");
 }
+
+// Markers of a paywall / consent wall captured in place of the article body:
+// the extractor returns non-null content (a subscription teaser, cookie banner
+// or bare navigation menu) that normalize() happily accepts, so the cheap fetch
+// never falls back to the renderer and every claim quote ends up unlocatable
+// downstream (the right "Vérification" column renders empty).
+const PAYWALL_MARKERS: RegExp[] = [
+  /cet article vous est (offert|r[ée]serv[ée])/i,
+  /r[ée]serv[ée]e? aux abonn[ée]s/i,
+  /connectez[\s-]?vous/i,
+  /inscrivez[\s-]?vous/i,
+  /d[ée]j[àa] abonn[ée]/i,
+  /pour lire la suite/i,
+  /pour continuer (la lecture|à lire)/i,
+  /il vous reste \d+\s?%/i,
+  /acc[ée]dez à (l['’]int[ée]gralit[ée]|tous les articles)/i,
+];
+
+// Below this, a "body" is a teaser, not an article.
+const MIN_ARTICLE_CONTENT_CHARS = 600;
+// A paywall/consent wall always sits at the very top of the captured body, so we
+// only scan the opening for its markers. Scanning the whole text would reject a
+// legitimately recovered article that merely mentions "inscrivez-vous à la
+// newsletter" or "connectez-vous" somewhere in its prose.
+const PAYWALL_SCAN_CHARS = 500;
+// Above this share of tokens that merely repeat their immediate predecessor,
+// the text is a navigation menu ("Politique Politique PSG PSG"), not prose.
+const REPEATED_TOKEN_RATIO_LIMIT = 0.15;
+const MIN_TOKENS_FOR_REPETITION_CHECK = 20;
+
+function hasNavMenuRepetition(text: string): boolean {
+  const tokens = text.toLowerCase().match(/\p{L}{3,}/gu) ?? [];
+  if (tokens.length < MIN_TOKENS_FOR_REPETITION_CHECK) return false;
+  let repeats = 0;
+  for (let i = 1; i < tokens.length; i += 1) {
+    if (tokens[i] === tokens[i - 1]) repeats += 1;
+  }
+  return repeats / tokens.length > REPEATED_TOKEN_RATIO_LIMIT;
+}
+
+export type ScrapeQuality = { ok: true } | { ok: false; reason: string };
+
+// Verdict on whether a scraped body is real article prose or a paywall/nav
+// artefact. Used by scrapeArticle() to trigger the AI body-recovery fallback
+// and, if the recovered body is still bad, to fail the job with an operator-
+// readable reason.
+export function assessScrapeQuality(content: string): ScrapeQuality {
+  const text = content.trim();
+  if (text.length < MIN_ARTICLE_CONTENT_CHARS) {
+    return {
+      ok: false,
+      reason: `scraped body is too short (${text.length} chars, expected at least ${MIN_ARTICLE_CONTENT_CHARS})`,
+    };
+  }
+  const opening = text.slice(0, PAYWALL_SCAN_CHARS);
+  if (PAYWALL_MARKERS.some((pattern) => pattern.test(opening))) {
+    return {
+      ok: false,
+      reason: "scraped body looks like a paywall or consent wall, not the article",
+    };
+  }
+  if (hasNavMenuRepetition(text)) {
+    return {
+      ok: false,
+      reason: "scraped body looks like a navigation menu, not article prose",
+    };
+  }
+  return { ok: true };
+}
