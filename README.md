@@ -238,13 +238,9 @@ Au-delà, plafonne `DATABASE_POOL_MAX` ou place PgBouncer devant Postgres.
 ## Déploiement Kubernetes
 
 ```bash
-# 1. Construire et pousser les images
-docker build --target runner   -t ton-registry/unbunked:latest .
-docker build --target migrator -t ton-registry/unbunked-migrate:latest .
-docker build --target seeder   -t ton-registry/unbunked-seeder:latest .
+# 1. Construire et pousser l'image (une seule image : app + migrate + seed)
+docker build --target runner -t ton-registry/unbunked:latest .
 docker push ton-registry/unbunked:latest
-docker push ton-registry/unbunked-migrate:latest
-docker push ton-registry/unbunked-seeder:latest
 
 # 2. Créer les secrets
 cp k8s/secret.example.yaml k8s/secret.yaml
@@ -254,8 +250,11 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 kubectl apply -f k8s/
 ```
 
-Pour une procédure production centrée GHCR + initContainer (tags `latest` et
-`<sha>`), voir `docs/migrator-image.md`.
+La même image sert l'app (`node server.js`), applique les migrations
+(`node dist/scripts/migrate.cjs`, en initContainer) et seed l'admin
+(`node dist/scripts/seed-admin.cjs <email>`). Les entrypoints migrate/seed sont
+bundlés au build (esbuild, cf. `build:scripts`) et migrent via le migrator
+runtime de drizzle-orm — pas besoin de drizzle-kit en production.
 
 Le manifest déploie deux groupes de pods à partir de la **même image** :
 
@@ -295,18 +294,18 @@ Pour forcer un reset du mot de passe d'un compte existant, ajoute
 ### Seed admin en Docker simple (hors Kubernetes)
 
 ```bash
-# 1) Construire l'image seeder locale
-docker build --target seeder -t unbunked-seeder:local .
+# 1) Construire l'image (une seule image app + migrate + seed)
+docker build --target runner -t unbunked:local .
 
 # 2) Lancer le seed admin en one-shot (même env que l'app)
 docker run --rm --env-file .env.production \
-  unbunked-seeder:local \
-  pnpm db:seed-admin "toi@exemple.com"
+  unbunked:local \
+  node dist/scripts/seed-admin.cjs "toi@exemple.com"
 
 # Variante: forcer un reset de mot de passe
 docker run --rm --env-file .env.production \
-  unbunked-seeder:local \
-  pnpm db:seed-admin "toi@exemple.com" --reset-password
+  unbunked:local \
+  node dist/scripts/seed-admin.cjs "toi@exemple.com" --reset-password
 ```
 
 Variables minimales attendues dans l'environnement du conteneur :
