@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { revalidateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
@@ -294,6 +294,77 @@ export async function createMember(formData: FormData): Promise<void> {
   redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
 }
 
+export async function updateMember(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const shouldBeAdmin = formData.get("isAdmin") === "true";
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+  if (!name) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_NAME), locale: await getLocale() });
+  }
+  if (!email) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_EMAIL), locale: await getLocale() });
+  }
+
+  const targetUser = await db.query.user.findFirst({
+    where: eq(user.id, targetUserId),
+    columns: { id: true, email: true, isAdmin: true },
+  });
+  if (!targetUser) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MEMBER_NOT_FOUND),
+      locale: await getLocale(),
+    });
+    return;
+  }
+
+  if (!shouldBeAdmin && targetUserId === actingUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DEMOTE), locale: await getLocale() });
+  }
+
+  // On évite tout doublon d'email au moment de l'édition.
+  const existingUserWithEmail = await db.query.user.findFirst({
+    where: and(eq(user.email, email), ne(user.id, targetUserId)),
+    columns: { id: true },
+  });
+  if (existingUserWithEmail) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.EMAIL_EXISTS), locale: await getLocale() });
+  }
+
+  // Même règle que pour la suppression/rétrogradation: garder au moins 1 admin.
+  if (targetUser.isAdmin && !shouldBeAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
+    }
+  }
+
+  await db
+    .update(user)
+    .set({ name, email, isAdmin: shouldBeAdmin })
+    .where(eq(user.id, targetUserId));
+
+  // BetterAuth credential utilise accountId (ici l'email) pour le login.
+  // On le synchronise si l'email utilisateur a changé.
+  if (targetUser.email !== email) {
+    await db
+      .update(account)
+      .set({ accountId: email })
+      .where(and(eq(account.userId, targetUserId), eq(account.providerId, CREDENTIAL_PROVIDER_ID)));
+  }
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
 export async function setMemberPassword(formData: FormData): Promise<void> {
   await requireAdminSession();
   const targetUserId = String(formData.get("id") ?? "");
@@ -371,6 +442,7 @@ export async function updateOwnProfile(formData: FormData): Promise<void> {
   });
   if (!currentUser) {
     redirect({ href: accountErrorHref(ACCOUNT_ERROR.USER_NOT_FOUND), locale: await getLocale() });
+    return;
   }
 
   // On empêche de prendre l'email d'un autre membre.

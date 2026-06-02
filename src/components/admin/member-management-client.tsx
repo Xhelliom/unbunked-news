@@ -28,7 +28,7 @@ type MemberItem = {
 type MemberManagementClientProps = {
   members: MemberItem[];
   createMemberAction: (formData: FormData) => Promise<void>;
-  setMemberAdminStatusAction: (formData: FormData) => Promise<void>;
+  updateMemberAction: (formData: FormData) => Promise<void>;
   setMemberPasswordAction: (formData: FormData) => Promise<void>;
   deleteMemberAction: (formData: FormData) => Promise<void>;
 };
@@ -145,7 +145,7 @@ function PasswordFieldWithTools({
 export function MemberManagementClient({
   members,
   createMemberAction,
-  setMemberAdminStatusAction,
+  updateMemberAction,
   setMemberPasswordAction,
   deleteMemberAction,
 }: MemberManagementClientProps) {
@@ -196,8 +196,6 @@ export function MemberManagementClient({
       ) : (
         <ul className="divide-border divide-y rounded-lg border">
           {orderedMembers.map((member) => {
-            const nextAdminValue = member.isAdmin ? "false" : "true";
-            const actionLabel = member.isAdmin ? t("demote") : t("promote");
             return (
               <li key={member.id} className="space-y-3 px-4 py-3">
                 <div className="flex items-center gap-4">
@@ -213,11 +211,25 @@ export function MemberManagementClient({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <form action={setMemberAdminStatusAction}>
+                  <form
+                    action={updateMemberAction}
+                    className="grid w-full gap-2 sm:grid-cols-[1fr_1fr_auto_auto]"
+                  >
                     <input type="hidden" name="id" value={member.id} />
-                    <input type="hidden" name="isAdmin" value={nextAdminValue} />
-                    <Button type="submit" size="sm" variant="outline">
-                      {actionLabel}
+                    <Input name="name" defaultValue={member.name} required type="text" />
+                    <Input name="email" defaultValue={member.email} required type="email" />
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="isAdmin"
+                        value="true"
+                        defaultChecked={member.isAdmin}
+                        className="size-4"
+                      />
+                      <span>{t("fields.isAdmin")}</span>
+                    </label>
+                    <Button type="submit" size="sm" variant="outline" className="w-fit">
+                      {t("saveMember")}
                     </Button>
                   </form>
 
