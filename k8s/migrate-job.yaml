@@ -13,8 +13,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          # Build & push the "migrator" target, then set your registry/tag here.
-          image: ghcr.io/xhelliom/unbunked-migrator:latest
+          # Utiliser un tag immuable en production pour éviter toute dérive.
+          image: ghcr.io/xhelliom/unbunked-migrator:REPLACE_WITH_SHA
           envFrom:
             - secretRef:
                 name: unbunked-secrets

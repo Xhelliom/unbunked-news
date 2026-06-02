@@ -243,6 +243,9 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 kubectl apply -f k8s/
 ```
 
+Pour une procédure production centrée GHCR + initContainer (tags `latest` et
+`<sha>`), voir `docs/migrator-image.md`.
+
 Le manifest déploie deux groupes de pods à partir de la **même image** :
 
 - **`web`** (`k8s/app.yaml`, `APP_ROLE=web`) — derrière le `Service` / `Ingress`,
