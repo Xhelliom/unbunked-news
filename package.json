@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev -p ${APP_PORT:-3030}",
     "build": "next build",
+    "build:scripts": "esbuild src/db/migrate.ts src/db/seed-admin.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist/scripts --out-extension:.js=.cjs",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
@@ -43,6 +44,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
