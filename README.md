@@ -50,7 +50,7 @@ docker compose up -d db
 pnpm db:migrate
 
 # 4. Créer le premier compte admin
-ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD='un-mot-de-passe-fort' pnpm db:seed-admin
+ADMIN_PASSWORD='un-mot-de-passe-fort' pnpm db:seed-admin "toi@exemple.com"
 
 # 5. Démarrer l'app
 pnpm dev
@@ -92,7 +92,7 @@ Seed admin dans le conteneur :
 
 ```bash
 docker compose exec app sh -c \
-  'ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD="..." pnpm db:seed-admin'
+  'ADMIN_PASSWORD="..." pnpm db:seed-admin "toi@exemple.com"'
 ```
 
 Adminer (inspecteur DB) :
@@ -114,7 +114,7 @@ docker compose --profile tools up adminer
 | `pnpm lint` | ESLint |
 | `pnpm db:generate` | Génère une migration depuis le schéma Drizzle |
 | `pnpm db:migrate` | Applique les migrations en attente |
-| `pnpm db:seed-admin` | Crée le compte admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) |
+| `pnpm db:seed-admin "email"` | Crée/promeut le compte admin (`ADMIN_PASSWORD` requis) |
 | `pnpm db:studio` | Ouvre Drizzle Studio |
 
 ---

@@ -124,7 +124,8 @@
       "submit": "Soumettre une URL",
       "proposals": "Propositions",
       "analytics": "Statistiques",
-      "costs": "Coûts"
+      "costs": "Coûts",
+      "members": "Membres"
     },
     "analytics": {
       "title": "Statistiques",
@@ -271,6 +272,15 @@
         "accepted": "Acceptée",
         "rejected": "Rejetée"
       }
+    },
+    "members": {
+      "title": "Gestion des membres",
+      "subtitle": "Gérez les accès administrateur de l'équipe.",
+      "empty": "Aucun membre pour l'instant.",
+      "admin": "Admin",
+      "member": "Membre",
+      "promote": "Promouvoir admin",
+      "demote": "Retirer admin"
     }
   },
   "feed": {

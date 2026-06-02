@@ -1,16 +1,16 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articleRewrites, articles, proposals } from "@/db/schema";
+import { articleRewrites, articles, proposals, user } from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob } from "@/lib/jobs";
-import { requireSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
@@ -46,7 +46,7 @@ export async function submitUrl(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const url = parseUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
@@ -60,7 +60,7 @@ export async function saveArticle(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const verdictValue = String(formData.get("verdict") ?? "");
   const verdict = (VERDICTS as readonly string[]).includes(verdictValue)
@@ -95,7 +95,7 @@ export async function saveRewrite(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const articleId = String(formData.get("articleId") ?? "");
   const localeRaw = String(formData.get("locale") ?? "");
   if (!(routing.locales as readonly string[]).includes(localeRaw)) {
@@ -121,7 +121,7 @@ export async function saveRewrite(
 }
 
 export async function setPublished(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const published = formData.get("published") === "true";
   await db
@@ -133,7 +133,7 @@ export async function setPublished(formData: FormData): Promise<void> {
 }
 
 export async function acceptProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const proposal = await db.query.proposals.findFirst({
     where: eq(proposals.id, id),
@@ -148,11 +148,44 @@ export async function acceptProposal(formData: FormData): Promise<void> {
 }
 
 export async function rejectProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   await db
     .update(proposals)
     .set({ status: "rejected" })
     .where(eq(proposals.id, id));
   redirect({ href: `/admin/proposals`, locale: await getLocale() });
+}
+
+export async function setMemberAdminStatus(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const shouldBeAdmin = formData.get("isAdmin") === "true";
+
+  if (!targetUserId) {
+    throw new Error("Missing member id");
+  }
+
+  if (!shouldBeAdmin && targetUserId === actingUserId) {
+    throw new Error("You cannot revoke your own admin role");
+  }
+
+  // Keep at least one admin at all times to avoid locking the team out.
+  if (!shouldBeAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      throw new Error("Cannot remove the last admin");
+    }
+  }
+
+  await db
+    .update(user)
+    .set({ isAdmin: shouldBeAdmin })
+    .where(eq(user.id, targetUserId));
+
+  redirect({ href: "/admin/members", locale: await getLocale() });
 }

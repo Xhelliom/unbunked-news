@@ -1,12 +1,13 @@
 import { getJob } from "@/lib/jobs";
-import { getSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getSession();
-  if (!session) {
+  try {
+    await requireAdminSession();
+  } catch {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

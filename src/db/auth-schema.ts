@@ -7,6 +7,8 @@ export const user = pgTable("user", {
   id: text().primaryKey(),
   name: text().notNull(),
   email: text().notNull().unique(),
+  // Admin flag used to gate access to /admin and admin APIs.
+  isAdmin: boolean().notNull().default(false),
   emailVerified: boolean().notNull().default(false),
   image: text(),
   createdAt: timestamp({ withTimezone: true, mode: "date" })
