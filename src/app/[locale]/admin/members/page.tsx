@@ -1,9 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { setMemberAdminStatus } from "@/app/[locale]/admin/actions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  createMember,
+  deleteMember,
+  setMemberAdminStatus,
+  setMemberPassword,
+} from "@/app/[locale]/admin/actions";
+import { MemberManagementClient } from "@/components/admin/member-management-client";
 
 type AdminMembersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -11,7 +15,14 @@ type AdminMembersPageProps = {
 
 const MEMBER_ERROR_KEYS = {
   missingMemberId: "errors.missingMemberId",
+  missingMemberName: "errors.missingMemberName",
+  missingMemberEmail: "errors.missingMemberEmail",
+  missingMemberPassword: "errors.missingMemberPassword",
+  weakPassword: "errors.weakPassword",
+  memberEmailAlreadyExists: "errors.memberEmailAlreadyExists",
+  memberNotFound: "errors.memberNotFound",
   cannotDemoteSelf: "errors.cannotDemoteSelf",
+  cannotDeleteSelf: "errors.cannotDeleteSelf",
   cannotDemoteLastAdmin: "errors.cannotDemoteLastAdmin",
 } as const;
 
@@ -50,38 +61,13 @@ export default async function AdminMembersPage({
           {errorMessage}
         </p>
       ) : null}
-
-      {members.length === 0 ? (
-        <p className="text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <ul className="divide-border divide-y rounded-lg border">
-          {members.map((member) => {
-            const nextAdminValue = member.isAdmin ? "false" : "true";
-            const actionLabel = member.isAdmin ? t("demote") : t("promote");
-            return (
-              <li key={member.id} className="flex items-center gap-4 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{member.name}</p>
-                  <p className="text-muted-foreground truncate text-sm">
-                    {member.email}
-                  </p>
-                </div>
-                <Badge variant={member.isAdmin ? "default" : "secondary"}>
-                  {member.isAdmin ? t("admin") : t("member")}
-                </Badge>
-                <form action={setMemberAdminStatus}>
-                  <input type="hidden" name="id" value={member.id} />
-                  <input type="hidden" name="isAdmin" value={nextAdminValue} />
-                  {/* Action simple: toggle du statut admin du membre ciblé. */}
-                  <Button type="submit" size="sm" variant="outline">
-                    {actionLabel}
-                  </Button>
-                </form>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <MemberManagementClient
+        members={members}
+        createMemberAction={createMember}
+        setMemberAdminStatusAction={setMemberAdminStatus}
+        setMemberPasswordAction={setMemberPassword}
+        deleteMemberAction={deleteMember}
+      />
     </div>
   );
 }

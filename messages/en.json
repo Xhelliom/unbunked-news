@@ -276,15 +276,48 @@
     },
     "members": {
       "title": "Member management",
-      "subtitle": "Manage admin access for your team.",
+      "subtitle": "Manage admin access and passwords for your team.",
       "empty": "No members yet.",
+      "addMemberTitle": "Add member",
+      "addMember": "Add",
       "admin": "Admin",
       "member": "Member",
       "promote": "Promote to admin",
       "demote": "Remove admin",
+      "setPassword": "Set password",
+      "delete": "Delete",
+      "generatePassword": "Generate",
+      "copyPassword": "Copy",
+      "copiedPassword": "Copied",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "password": "Password",
+        "isAdmin": "Create as admin"
+      },
+      "confirm": {
+        "cancel": "Cancel",
+        "password": {
+          "title": "Confirm password change",
+          "description": "The password for {name} will be replaced immediately.",
+          "confirm": "Change password"
+        },
+        "delete": {
+          "title": "Confirm member deletion",
+          "description": "The account for {name} will be permanently deleted.",
+          "confirm": "Delete member"
+        }
+      },
       "errors": {
         "missingMemberId": "Unable to update this member (missing identifier).",
+        "missingMemberName": "Member name is required.",
+        "missingMemberEmail": "Member email is required.",
+        "missingMemberPassword": "Password is required.",
+        "weakPassword": "Password must be at least 8 characters long.",
+        "memberEmailAlreadyExists": "A member already exists with this email.",
+        "memberNotFound": "Member not found.",
         "cannotDemoteSelf": "You cannot revoke your own admin role.",
+        "cannotDeleteSelf": "You cannot delete your own account.",
         "cannotDemoteLastAdmin": "Cannot remove the last admin."
       }
     }

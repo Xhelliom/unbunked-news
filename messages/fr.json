@@ -276,15 +276,48 @@
     },
     "members": {
       "title": "Gestion des membres",
-      "subtitle": "Gérez les accès administrateur de l'équipe.",
+      "subtitle": "Gérez les accès administrateur de l'équipe et les mots de passe.",
       "empty": "Aucun membre pour l'instant.",
+      "addMemberTitle": "Ajouter un membre",
+      "addMember": "Ajouter",
       "admin": "Admin",
       "member": "Membre",
       "promote": "Promouvoir admin",
       "demote": "Retirer admin",
+      "setPassword": "Définir le mot de passe",
+      "delete": "Supprimer",
+      "generatePassword": "Générer",
+      "copyPassword": "Copier",
+      "copiedPassword": "Copié",
+      "fields": {
+        "name": "Nom",
+        "email": "Email",
+        "password": "Mot de passe",
+        "isAdmin": "Créer en admin"
+      },
+      "confirm": {
+        "cancel": "Annuler",
+        "password": {
+          "title": "Confirmer le changement de mot de passe",
+          "description": "Le mot de passe de {name} va être remplacé immédiatement.",
+          "confirm": "Changer le mot de passe"
+        },
+        "delete": {
+          "title": "Confirmer la suppression du membre",
+          "description": "Le compte de {name} sera supprimé définitivement.",
+          "confirm": "Supprimer le membre"
+        }
+      },
       "errors": {
         "missingMemberId": "Impossible de modifier ce membre (identifiant manquant).",
+        "missingMemberName": "Le nom du membre est requis.",
+        "missingMemberEmail": "L'email du membre est requis.",
+        "missingMemberPassword": "Le mot de passe est requis.",
+        "weakPassword": "Le mot de passe doit contenir au moins 8 caractères.",
+        "memberEmailAlreadyExists": "Un membre existe déjà avec cet email.",
+        "memberNotFound": "Membre introuvable.",
         "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle admin.",
+        "cannotDeleteSelf": "Vous ne pouvez pas supprimer votre propre compte.",
         "cannotDemoteLastAdmin": "Impossible de retirer le dernier administrateur."
       }
     }
