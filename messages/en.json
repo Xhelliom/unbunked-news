@@ -315,6 +315,12 @@
     "publishedOn": "Published on",
     "notFound": "Article not found.",
     "originalSummaryTitle": "What the original article says",
+    "suggestions": {
+      "title": "On the same topic, better rated",
+      "fallbackTitle": "We're working on this topic",
+      "fallbackBody": "We don't have a reliable article on this subject yet. Got a source worth checking? Submit it and we'll take care of the rest.",
+      "cta": "Submit an article"
+    },
     "views": {
       "aria": "Choose the article view",
       "analysis": "Analysis",

@@ -203,6 +203,23 @@ export const articleRewrites = pgTable(
   (table) => [primaryKey({ columns: [table.articleId, table.locale] })],
 );
 
+// AI-generated keywords identifying the precise subject of an article,
+// normalized (slugified) so casing/accents don't block cross-article matching.
+// Used to suggest reliable articles on the same topic.
+export const articleKeywords = pgTable(
+  "article_keywords",
+  {
+    articleId: uuid()
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    keyword: text().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.articleId, table.keyword] }),
+    index("article_keywords_keyword_idx").on(table.keyword),
+  ],
+);
+
 export const tags = pgTable("tags", {
   id: uuid().primaryKey().defaultRandom(),
   slug: text().notNull().unique(),
@@ -300,8 +317,19 @@ export const articlesRelations = relations(articles, ({ many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
+  keywords: many(articleKeywords),
   jobs: many(jobs),
 }));
+
+export const articleKeywordsRelations = relations(
+  articleKeywords,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleKeywords.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
 
 export const articleRewritesRelations = relations(
   articleRewrites,
@@ -366,3 +394,5 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 export type ArticleRewrite = typeof articleRewrites.$inferSelect;
 export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
+export type ArticleKeyword = typeof articleKeywords.$inferSelect;
+export type NewArticleKeyword = typeof articleKeywords.$inferInsert;

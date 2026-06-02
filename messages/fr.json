@@ -315,6 +315,12 @@
     "publishedOn": "Publié le",
     "notFound": "Article introuvable.",
     "originalSummaryTitle": "Ce que dit l'article original",
+    "suggestions": {
+      "title": "Sur le même sujet, mieux noté",
+      "fallbackTitle": "On travaille sur ce sujet",
+      "fallbackBody": "Nous n'avons pas encore d'article fiable sur ce thème. Vous avez une source qui mérite d'être vérifiée ? Proposez-la, on s'occupe du reste.",
+      "cta": "Proposer un article"
+    },
     "views": {
       "aria": "Choisir la vue de l'article",
       "analysis": "Analyse",

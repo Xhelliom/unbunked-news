@@ -5,6 +5,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 
 import { routing } from "@/i18n/routing";
 import { getArticleBySlug } from "@/lib/articles";
+import { getSuggestedArticles } from "@/lib/suggestions";
 import { buildReadingModel } from "@/lib/reading";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
@@ -21,6 +22,7 @@ import { ScoreCriteria } from "@/components/score-criteria";
 import { ScoreDescriptors } from "@/components/score-descriptors";
 import { ArticleReader } from "@/components/article-reader";
 import { ArticleViewSwitcher } from "@/components/article-view-switcher";
+import { ArticleSuggestions } from "@/components/article-suggestions";
 import { RewriteBody } from "@/components/rewrite-body";
 
 type View = "analysis" | "unbunked";
@@ -66,6 +68,8 @@ export default async function ArticlePage({
   const { view: viewParam } = await searchParams;
   const view: View =
     viewParam === "unbunked" && rewrite ? "unbunked" : "analysis";
+
+  const suggestions = await getSuggestedArticles(article.id);
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
     status,
@@ -339,6 +343,8 @@ export default async function ArticlePage({
           )}
         </section>
       )}
+
+      <ArticleSuggestions articles={suggestions} />
 
       <ArticleReadTracker />
     </article>

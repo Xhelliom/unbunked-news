@@ -4,6 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
+  articleKeywords,
   articleRewrites,
   articleTags,
   articles,
@@ -133,6 +134,18 @@ export async function runPipeline(jobId: string): Promise<void> {
             body: r.body,
           })),
         );
+      }
+
+      if (analysis.keywords.length > 0) {
+        const keywordRows = [...new Set(analysis.keywords.map(slugify))]
+          .filter(Boolean)
+          .map((keyword) => ({ articleId: created.id, keyword }));
+        if (keywordRows.length > 0) {
+          await tx
+            .insert(articleKeywords)
+            .values(keywordRows)
+            .onConflictDoNothing();
+        }
       }
 
       for (const [index, claim] of analysis.claims.entries()) {

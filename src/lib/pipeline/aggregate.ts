@@ -213,6 +213,9 @@ export async function aggregate(
     tags: Array.isArray(input.tags)
       ? input.tags.filter((t): t is string => typeof t === "string")
       : [],
+    keywords: Array.isArray(input.keywords)
+      ? input.keywords.filter((k): k is string => typeof k === "string")
+      : [],
     claims: toClaims(input.claims),
   };
 }

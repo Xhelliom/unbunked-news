@@ -69,6 +69,7 @@ export type Analysis = {
   killswitch: Killswitch;
   evidence: AnalysisEvidence;
   tags: string[];
+  keywords: string[];
   claims: AnalysisClaim[];
 };
 
@@ -230,6 +231,15 @@ export const recordAnalysisTool: Anthropic.Tool = {
         description: "1-4 thematic topic labels (e.g. Tech, Politics, Health).",
         items: { type: "string" },
       },
+      keywords: {
+        type: "array",
+        description:
+          "5-10 specific keywords identifying the precise subject of the " +
+          "article: named entities, people, places, organisations, specific " +
+          "events. NOT broad categories — those are the tags. Same language " +
+          "as the article.",
+        items: { type: "string" },
+      },
       claims: {
         type: "array",
         items: {
@@ -273,6 +283,7 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "killswitch",
       "descriptors",
       "tags",
+      "keywords",
       "claims",
     ],
     additionalProperties: false,
