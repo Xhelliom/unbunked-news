@@ -3,7 +3,6 @@ import "server-only";
 import {
   firstToolInput,
   getClaude,
-  MODEL,
   usageOf,
   type TokenUsage,
 } from "./client";
@@ -54,10 +53,11 @@ function selectedIndices(
 export async function recoverArticleBody(
   blocks: string[],
   meta: { title: string },
+  model: string,
 ): Promise<RecoveredBody> {
   const client = getClaude();
   const message = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: MAX_TOKENS,
     system: SYSTEM,
     tools: [selectArticleBodyTool],

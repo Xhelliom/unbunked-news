@@ -18,7 +18,12 @@ import {
 import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
-import { addUsage, MODEL, ZERO_USAGE } from "./client";
+import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
+import {
+  DEFAULT_REASONING_MODEL,
+  HAIKU_MODEL,
+  isReasoningModel,
+} from "./models";
 import { extractClaims } from "./extract-claims";
 import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
@@ -60,6 +65,19 @@ async function updateJob(id: string, fields: Partial<NewJob>): Promise<void> {
   await db.update(jobs).set(fields).where(eq(jobs.id, id));
 }
 
+// A tiered run spends tokens on more than one model. Token usage is billed per
+// model, so usage is folded into one entry per model before it is persisted —
+// collapsing to a single row when every phase happened to use the same model.
+type ModelUsage = { model: string; usage: TokenUsage };
+
+function mergeUsageByModel(parts: ModelUsage[]): Map<string, TokenUsage> {
+  const merged = new Map<string, TokenUsage>();
+  for (const { model, usage } of parts) {
+    merged.set(model, addUsage(merged.get(model) ?? ZERO_USAGE, usage));
+  }
+  return merged;
+}
+
 export async function runPipeline(jobId: string): Promise<void> {
   const job = await db.query.jobs.findFirst({ where: eq(jobs.id, jobId) });
   if (!job) return;
@@ -73,42 +91,64 @@ export async function runPipeline(jobId: string): Promise<void> {
       error: null,
     });
 
+    // Mechanical phases (body recovery, claim extraction) run on Haiku; the
+    // reasoning phases (verification, scoring, rewrite) run on reasoningModel,
+    // which the submitter may override (else the default Sonnet tier). Web
+    // search happens only during verification, so its requests bill against the
+    // reasoning model's row.
+    const reasoningModel = isReasoningModel(job.model)
+      ? job.model
+      : DEFAULT_REASONING_MODEL;
+
     let recoverUsage = ZERO_USAGE;
     const { article, provenance } = await scrapeArticle(
       job.url,
       async (blocks, meta) => {
-        const { content, usage } = await recoverArticleBody(blocks, meta);
+        const { content, usage } = await recoverArticleBody(
+          blocks,
+          meta,
+          HAIKU_MODEL,
+        );
         recoverUsage = addUsage(recoverUsage, usage);
         return content;
       },
     );
 
     await updateJob(jobId, { step: "extracting", progress: 25 });
-    const { claims, usage: extractUsage } = await extractClaims(article);
+    const { claims, usage: extractUsage } = await extractClaims(
+      article,
+      HAIKU_MODEL,
+    );
 
     await updateJob(jobId, { step: "verifying", progress: 45 });
-    const verification = await verifyClaims(article, claims);
+    const verification = await verifyClaims(article, claims, reasoningModel);
 
     await updateJob(jobId, { step: "aggregating", progress: 60 });
     const { analysis, usage: aggregateUsage } = await aggregate(
       article,
       claims,
       verification,
+      reasoningModel,
     );
 
     await updateJob(jobId, { step: "rewriting", progress: 75 });
     const rewriteResults = await Promise.all(
-      routing.locales.map((locale) => rewriteArticle(article, analysis, locale)),
+      routing.locales.map((locale) =>
+        rewriteArticle(article, analysis, locale, reasoningModel),
+      ),
     );
     const rewrites = rewriteResults.map((result) => result.rewrite);
 
-    const totalUsage = [
-      recoverUsage,
-      extractUsage,
-      verification.usage,
-      aggregateUsage,
-      ...rewriteResults.map((result) => result.usage),
-    ].reduce(addUsage, ZERO_USAGE);
+    const usageByModel = mergeUsageByModel([
+      { model: HAIKU_MODEL, usage: recoverUsage },
+      { model: HAIKU_MODEL, usage: extractUsage },
+      { model: reasoningModel, usage: verification.usage },
+      { model: reasoningModel, usage: aggregateUsage },
+      ...rewriteResults.map((result) => ({
+        model: reasoningModel,
+        usage: result.usage,
+      })),
+    ]);
 
     await updateJob(jobId, { step: "saving", progress: 92 });
 
@@ -150,16 +190,19 @@ export async function runPipeline(jobId: string): Promise<void> {
         })
         .returning({ id: articles.id });
 
-      await tx.insert(articleTokenUsage).values({
-        articleId: created.id,
-        model: MODEL,
-        inputTokens: totalUsage.inputTokens,
-        outputTokens: totalUsage.outputTokens,
-        cacheCreationTokens: totalUsage.cacheCreationTokens,
-        cacheReadTokens: totalUsage.cacheReadTokens,
-        webSearchRequests: verification.searchRequests,
-        searchProvider: verification.searchProvider,
-      });
+      await tx.insert(articleTokenUsage).values(
+        [...usageByModel.entries()].map(([model, usage]) => ({
+          articleId: created.id,
+          model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          cacheCreationTokens: usage.cacheCreationTokens,
+          cacheReadTokens: usage.cacheReadTokens,
+          webSearchRequests:
+            model === reasoningModel ? verification.searchRequests : 0,
+          searchProvider: verification.searchProvider,
+        })),
+      );
 
       if (rewrites.length > 0) {
         await tx.insert(articleRewrites).values(

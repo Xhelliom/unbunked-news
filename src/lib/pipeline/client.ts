@@ -4,8 +4,6 @@ import Anthropic from "@anthropic-ai/sdk";
 
 import type { ScrapedArticle } from "@/lib/scrape";
 
-export const MODEL = "claude-haiku-4-5-20251001";
-
 // Bound the article body so a single very long page can't blow up token usage.
 const MAX_CONTENT_CHARS = 16_000;
 

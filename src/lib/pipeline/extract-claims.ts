@@ -5,7 +5,6 @@ import {
   firstToolInput,
   formatArticle,
   getClaude,
-  MODEL,
   usageOf,
   type TokenUsage,
 } from "./client";
@@ -25,10 +24,11 @@ const SYSTEM =
 
 export async function extractClaims(
   article: ScrapedArticle,
+  model: string,
 ): Promise<ExtractClaimsResult> {
   const client = getClaude();
   const message = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 2048,
     system: SYSTEM,
     tools: [recordClaimsTool],

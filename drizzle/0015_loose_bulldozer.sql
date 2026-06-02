@@ -1,0 +1,2 @@
+ALTER TABLE "article_token_usage" DROP CONSTRAINT "article_token_usage_pkey";--> statement-breakpoint
+ALTER TABLE "article_token_usage" ADD CONSTRAINT "article_token_usage_article_id_model_pk" PRIMARY KEY("article_id","model");

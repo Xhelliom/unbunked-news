@@ -8,7 +8,6 @@ import {
   collectText,
   formatArticle,
   getClaude,
-  MODEL,
   usageOf,
   ZERO_USAGE,
   type TokenUsage,
@@ -61,6 +60,7 @@ function collectSources(content: Anthropic.ContentBlock[]): AnalysisSource[] {
 export async function verifyClaims(
   article: ScrapedArticle,
   claims: string[],
+  model: string,
 ): Promise<VerificationFindings> {
   const client = getClaude();
   const messages: Anthropic.MessageParam[] = [
@@ -87,7 +87,7 @@ export async function verifyClaims(
   let usage = ZERO_USAGE;
   let searchRequests = 0;
   let message = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 8192,
     system: SYSTEM,
     tools: SEARCH_TOOLS,
@@ -100,7 +100,7 @@ export async function verifyClaims(
   while (message.stop_reason === "pause_turn" && guard < 5) {
     messages.push({ role: "assistant", content: message.content });
     message = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: 8192,
       system: SYSTEM,
       tools: SEARCH_TOOLS,

@@ -5,7 +5,6 @@ import {
   firstToolInput,
   formatArticle,
   getClaude,
-  MODEL,
   usageOf,
   type TokenUsage,
 } from "./client";
@@ -57,12 +56,13 @@ export async function rewriteArticle(
   article: ScrapedArticle,
   analysis: Analysis,
   locale: string,
+  model: string,
 ): Promise<RewriteResult> {
   const client = getClaude();
   const language = languageOf(locale);
 
   const message = await client.messages.create({
-    model: MODEL,
+    model,
     max_tokens: 4096,
     system: SYSTEM,
     tools: [recordRewriteTool],

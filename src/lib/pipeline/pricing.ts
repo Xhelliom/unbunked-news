@@ -1,4 +1,5 @@
 import type { TokenUsage } from "./client";
+import { HAIKU_MODEL, SONNET_MODEL } from "./models";
 
 const TOKENS_PER_MILLION = 1_000_000;
 
@@ -18,8 +19,18 @@ const HAIKU_4_5_PRICING: ModelPricing = {
   cacheReadPerMtok: 0.1,
 };
 
+// Sonnet 4.6 list price (per Anthropic pricing): $3/MTok input, $15/MTok output,
+// 5-minute cache write 1.25x input, cache read 0.1x input.
+const SONNET_4_6_PRICING: ModelPricing = {
+  inputPerMtok: 3.0,
+  outputPerMtok: 15.0,
+  cacheWritePerMtok: 3.75,
+  cacheReadPerMtok: 0.3,
+};
+
 const PRICING_USD: Record<string, ModelPricing> = {
-  "claude-haiku-4-5-20251001": HAIKU_4_5_PRICING,
+  [HAIKU_MODEL]: HAIKU_4_5_PRICING,
+  [SONNET_MODEL]: SONNET_4_6_PRICING,
 };
 
 // An unknown model still gets a defensible estimate rather than a zero cost.
