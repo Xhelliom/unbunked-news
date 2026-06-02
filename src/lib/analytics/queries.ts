@@ -191,22 +191,43 @@ async function loadEdgePages(
   edge: "ASC" | "DESC",
 ): Promise<PathCount[]> {
   const start = new Date(Date.now() - days * DAY_MS);
-  const order = edge === "ASC" ? sql`asc` : sql`desc`;
-  const result = await db.execute(sql`
-    SELECT path, count(*)::int AS views
-    FROM (
-      SELECT DISTINCT ON (visitor_hash) visitor_hash, path
-      FROM analytics_events
-      WHERE created_at >= ${start} AND kind = ${EVENT_PAGEVIEW}
-      ORDER BY visitor_hash, created_at ${order}
-    ) edges
-    GROUP BY path
-    ORDER BY views DESC
-    LIMIT ${TOP_LIST_LIMIT}
-  `);
-  return Array.from(result as Iterable<Record<string, unknown>>).map((row) => ({
-    path: String(row.path),
-    views: Number(row.views),
+  const orderDirection = edge === "ASC" ? sql`asc` : sql`desc`;
+
+  // We rank pageviews inside each visitor/day visit and keep rank 1:
+  // first page (ASC) for entry pages, last page (DESC) for exit pages.
+  const rankedEdges = db.$with("ranked_edges").as(
+    db
+      .select({
+        path: analyticsEvents.path,
+        rank: sql<number>`row_number() over (
+          partition by ${analyticsEvents.visitorHash}
+          order by ${analyticsEvents.createdAt} ${orderDirection}
+        )`.as("rank"),
+      })
+      .from(analyticsEvents)
+      .where(
+        and(
+          gte(analyticsEvents.createdAt, start),
+          eq(analyticsEvents.kind, EVENT_PAGEVIEW),
+        ),
+      ),
+  );
+
+  const rows = await db
+    .with(rankedEdges)
+    .select({
+      path: rankedEdges.path,
+      views: count(),
+    })
+    .from(rankedEdges)
+    .where(eq(rankedEdges.rank, 1))
+    .groupBy(rankedEdges.path)
+    .orderBy(desc(count()))
+    .limit(TOP_LIST_LIMIT);
+
+  return rows.map((row) => ({
+    path: row.path ?? "",
+    views: row.views,
   }));
 }
 

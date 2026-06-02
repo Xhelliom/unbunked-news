@@ -1,0 +1,27 @@
+# One-off admin seeding job (run on demand, not part of base kustomize apply):
+#   kubectl delete job seed-admin -n unbunked --ignore-not-found
+#   kubectl apply -f k8s/seed-admin-job.yaml
+#   kubectl logs -f job/seed-admin -n unbunked
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-admin
+  namespace: unbunked
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed-admin
+          # Reuses the app image (one image for app + migrate + seed); the
+          # bundled CJS entrypoint runs without pnpm/tsx.
+          image: ghcr.io/xhelliom/unbunked-news:latest
+          envFrom:
+            - secretRef:
+                name: unbunked-secrets
+          # Default bootstrap admin email.
+          command:
+            - node
+            - dist/scripts/seed-admin.cjs
+            - admin@unbunked.local

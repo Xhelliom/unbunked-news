@@ -1,10 +1,11 @@
 import "server-only";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 import { db } from "@/db/client";
 import { articleTags, articles, tags } from "@/db/schema";
+import { DAY_MS } from "@/lib/analytics/constants";
 import type { Verdict } from "@/lib/verdicts";
 
 export type FeedFilter = { tag?: string; verdict?: Verdict };
@@ -18,6 +19,9 @@ export const ARTICLES_CACHE_TAG = "articles";
 const ARTICLES_CACHE_REVALIDATE_SECONDS = 60;
 
 const MAX_FEED_ARTICLES = 60;
+
+// Fenêtre glissante affichée sur la page login (« cette semaine »).
+const LOGIN_WEEKLY_PUBLISHED_WINDOW_MS = 7 * DAY_MS;
 
 async function loadPublishedArticles(filter: FeedFilter) {
   const conditions = [eq(articles.published, true)];
@@ -67,7 +71,15 @@ const loadPublishedArticlesCached = unstable_cache(
 export async function getPublishedArticles(
   filter: FeedFilter = {},
 ): Promise<Awaited<ReturnType<typeof loadPublishedArticles>>> {
-  return loadPublishedArticlesCached(filter);
+  // unstable_cache serializes its value to JSON, which turns Date columns into
+  // ISO strings. Revive them so the Date-typed contract holds at runtime.
+  const rows = await loadPublishedArticlesCached(filter);
+  return rows.map((row) => ({
+    ...row,
+    publishedAt: row.publishedAt === null ? null : new Date(row.publishedAt),
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  }));
 }
 
 async function loadArticleBySlug(slug: string) {
@@ -93,7 +105,16 @@ const loadArticleBySlugCached = unstable_cache(
 export async function getArticleBySlug(
   slug: string,
 ): Promise<Awaited<ReturnType<typeof loadArticleBySlug>>> {
-  return loadArticleBySlugCached(slug);
+  // See getPublishedArticles: revive Date columns flattened to strings by the
+  // unstable_cache JSON round-trip.
+  const article = await loadArticleBySlugCached(slug);
+  if (!article) return article;
+  return {
+    ...article,
+    publishedAt: article.publishedAt === null ? null : new Date(article.publishedAt),
+    createdAt: new Date(article.createdAt),
+    updatedAt: new Date(article.updatedAt),
+  };
 }
 
 async function loadAllTags() {
@@ -133,4 +154,30 @@ export async function resolveArticleIdBySlug(
   slug: string,
 ): Promise<string | null> {
   return loadArticleIdBySlugCached(slug);
+}
+
+async function loadPublishedArticlesCountLastSevenDays(): Promise<number> {
+  const since = new Date(Date.now() - LOGIN_WEEKLY_PUBLISHED_WINDOW_MS);
+  const [row] = await db
+    .select({ total: count() })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.published, true),
+        isNotNull(articles.publishedAt),
+        gte(articles.publishedAt, since),
+      ),
+    );
+  return row?.total ?? 0;
+}
+
+const loadPublishedArticlesCountLastSevenDaysCached = unstable_cache(
+  loadPublishedArticlesCountLastSevenDays,
+  ["published-articles-weekly-count"],
+  { revalidate: ARTICLES_CACHE_REVALIDATE_SECONDS, tags: [ARTICLES_CACHE_TAG] },
+);
+
+/** Articles publiés sur les 7 derniers jours (stat vivante de la page login). */
+export async function getPublishedArticlesCountLastSevenDays(): Promise<number> {
+  return loadPublishedArticlesCountLastSevenDaysCached();
 }

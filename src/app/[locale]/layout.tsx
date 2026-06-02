@@ -70,8 +70,14 @@ export default async function LocaleLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} h-full`}
     >
+      <head>
+        {/* Ce script est injecté côté serveur pour appliquer le thème avant le premier paint. */}
+        <script
+          id="theme-init"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <ThemeProvider defaultTheme="system" disableTransitionOnChange>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </ThemeProvider>

@@ -13,8 +13,10 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          # Build & push the "migrator" target, then set your registry/tag here.
-          image: ghcr.io/xhelliom/unbunked-migrator:latest
+          # Même image que l'app (app + migrate + seed). En prod, épingler par
+          # digest pour éviter toute dérive.
+          image: ghcr.io/xhelliom/unbunked-news:latest
+          command: ["node", "dist/scripts/migrate.cjs"]
           envFrom:
             - secretRef:
                 name: unbunked-secrets

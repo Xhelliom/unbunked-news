@@ -1,12 +1,16 @@
 import { getJob } from "@/lib/jobs";
-import { getSession } from "@/lib/session";
+import { isUnauthorizedError, requireAdminSession } from "@/lib/session";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getSession();
-  if (!session) {
+  try {
+    await requireAdminSession();
+  } catch (error) {
+    if (!isUnauthorizedError(error)) {
+      return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    }
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,6 +1,6 @@
 {
-  "id": "38cf857c-093e-40af-94e6-5fbbf1987765",
-  "prevId": "c081cd27-eda2-4102-ad41-9bbde71f8101",
+  "id": "c391bbbf-bd74-494b-b4ef-1355ab078882",
+  "prevId": "5e99578f-40aa-4d86-aa2c-72a89af39818",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -147,69 +147,6 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.article_keywords": {
-      "name": "article_keywords",
-      "schema": "",
-      "columns": {
-        "article_id": {
-          "name": "article_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "keyword": {
-          "name": "keyword",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "article_keywords_keyword_idx": {
-          "name": "article_keywords_keyword_idx",
-          "columns": [
-            {
-              "expression": "keyword",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "article_keywords_article_id_articles_id_fk": {
-          "name": "article_keywords_article_id_articles_id_fk",
-          "tableFrom": "article_keywords",
-          "tableTo": "articles",
-          "columnsFrom": [
-            "article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "article_keywords_article_id_keyword_pk": {
-          "name": "article_keywords_article_id_keyword_pk",
-          "columns": [
-            "article_id",
-            "keyword"
-          ]
-        }
-      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -364,6 +301,110 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.article_token_usage": {
+      "name": "article_token_usage",
+      "schema": "",
+      "columns": {
+        "article_id": {
+          "name": "article_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "cache_creation_tokens": {
+          "name": "cache_creation_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "cache_read_tokens": {
+          "name": "cache_read_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "web_search_requests": {
+          "name": "web_search_requests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "search_provider": {
+          "name": "search_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'anthropic'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "article_token_usage_created_at_idx": {
+          "name": "article_token_usage_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "article_token_usage_article_id_articles_id_fk": {
+          "name": "article_token_usage_article_id_articles_id_fk",
+          "tableFrom": "article_token_usage",
+          "tableTo": "articles",
+          "columnsFrom": [
+            "article_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.articles": {
       "name": "articles",
       "schema": "",
@@ -461,14 +502,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "corroboration_score": {
-          "name": "corroboration_score",
+        "sourcing_score": {
+          "name": "sourcing_score",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "sourcing_score": {
-          "name": "sourcing_score",
+        "neutrality_score": {
+          "name": "neutrality_score",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -488,79 +529,6 @@
         "recency_score": {
           "name": "recency_score",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "neutrality_score": {
-          "name": "neutrality_score",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "framing": {
-          "name": "framing",
-          "type": "framing",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "content_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fabrication_detected": {
-          "name": "fabrication_detected",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "domain_impersonation": {
-          "name": "domain_impersonation",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "central_claim_debunked": {
-          "name": "central_claim_debunked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "undisclosed_ai_with_errors": {
-          "name": "undisclosed_ai_with_errors",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "global_confidence": {
-          "name": "global_confidence",
-          "type": "confidence",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "criteria_version": {
-          "name": "criteria_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "model_version": {
-          "name": "model_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "evidence": {
-          "name": "evidence",
-          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -1372,26 +1340,6 @@
         "unverifiable"
       ]
     },
-    "public.confidence": {
-      "name": "confidence",
-      "schema": "public",
-      "values": [
-        "low",
-        "medium",
-        "high"
-      ]
-    },
-    "public.content_type": {
-      "name": "content_type",
-      "schema": "public",
-      "values": [
-        "actualité",
-        "analyse",
-        "opinion",
-        "sponsorisé",
-        "généré-IA"
-      ]
-    },
     "public.device_type": {
       "name": "device_type",
       "schema": "public",
@@ -1407,16 +1355,6 @@
       "values": [
         "pageview",
         "read"
-      ]
-    },
-    "public.framing": {
-      "name": "framing",
-      "schema": "public",
-      "values": [
-        "neutre",
-        "orienté-modéré",
-        "orienté-marqué",
-        "militant"
       ]
     },
     "public.job_status": {
@@ -1444,7 +1382,7 @@
       "values": [
         "reliable",
         "nuanced",
-        "fragile",
+        "biased",
         "debunked",
         "unverifiable"
       ]

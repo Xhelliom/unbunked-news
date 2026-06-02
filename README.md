@@ -50,7 +50,13 @@ docker compose up -d db
 pnpm db:migrate
 
 # 4. Créer le premier compte admin
-ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD='un-mot-de-passe-fort' pnpm db:seed-admin
+pnpm db:seed-admin "toi@exemple.com" "un-mot-de-passe-fort"
+# ou sans mot de passe: génération automatique (affichée en sortie)
+pnpm db:seed-admin "toi@exemple.com"
+# note: avec email CLI, la génération auto est prioritaire même si ADMIN_PASSWORD
+# est présent dans .env (fallback legacy uniquement sans arguments CLI)
+# reset password d'un compte existant (+ promotion admin)
+pnpm db:seed-admin "toi@exemple.com" --reset-password
 
 # 5. Démarrer l'app
 pnpm dev
@@ -92,7 +98,10 @@ Seed admin dans le conteneur :
 
 ```bash
 docker compose exec app sh -c \
-  'ADMIN_EMAIL=toi@exemple.com ADMIN_PASSWORD="..." pnpm db:seed-admin'
+  'pnpm db:seed-admin "toi@exemple.com" "mot-de-passe-fort"'
+# ou reset sur un compte existant:
+docker compose exec app sh -c \
+  'pnpm db:seed-admin "toi@exemple.com" --reset-password'
 ```
 
 Adminer (inspecteur DB) :
@@ -114,7 +123,7 @@ docker compose --profile tools up adminer
 | `pnpm lint` | ESLint |
 | `pnpm db:generate` | Génère une migration depuis le schéma Drizzle |
 | `pnpm db:migrate` | Applique les migrations en attente |
-| `pnpm db:seed-admin` | Crée le compte admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) |
+| `pnpm db:seed-admin "email" ["password"] [--reset-password]` | Crée/promeut le compte admin; auto-génère le mot de passe si absent; `--reset-password` force une mise à jour du mot de passe pour un compte existant |
 | `pnpm db:studio` | Ouvre Drizzle Studio |
 
 ---
@@ -229,11 +238,9 @@ Au-delà, plafonne `DATABASE_POOL_MAX` ou place PgBouncer devant Postgres.
 ## Déploiement Kubernetes
 
 ```bash
-# 1. Construire et pousser les images
-docker build --target runner   -t ton-registry/unbunked:latest .
-docker build --target migrator -t ton-registry/unbunked-migrate:latest .
+# 1. Construire et pousser l'image (une seule image : app + migrate + seed)
+docker build --target runner -t ton-registry/unbunked:latest .
 docker push ton-registry/unbunked:latest
-docker push ton-registry/unbunked-migrate:latest
 
 # 2. Créer les secrets
 cp k8s/secret.example.yaml k8s/secret.yaml
@@ -242,6 +249,12 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 # 3. Appliquer
 kubectl apply -f k8s/
 ```
+
+La même image sert l'app (`node server.js`), applique les migrations
+(`node dist/scripts/migrate.cjs`, en initContainer) et seed l'admin
+(`node dist/scripts/seed-admin.cjs <email>`). Les entrypoints migrate/seed sont
+bundlés au build (esbuild, cf. `build:scripts`) et migrent via le migrator
+runtime de drizzle-orm — pas besoin de drizzle-kit en production.
 
 Le manifest déploie deux groupes de pods à partir de la **même image** :
 
@@ -262,6 +275,42 @@ déploiement qui change le schéma :
 kubectl delete job migrate -n unbunked --ignore-not-found
 kubectl apply -f k8s/migrate-job.yaml
 ```
+
+Le **seed admin** se lance aussi via un `Job` ponctuel (même secrets que l'app) :
+
+```bash
+# 1) Le job utilise par défaut l'image latest et admin@unbunked.local.
+#    Le secret peut exposer la clé database-url (kebab-case) : le script
+#    la mappe automatiquement vers DATABASE_URL.
+#    Ajuster l'email dans la commande si nécessaire.
+kubectl delete job seed-admin -n unbunked --ignore-not-found
+kubectl apply -f k8s/seed-admin-job.yaml
+kubectl logs -f job/seed-admin -n unbunked
+```
+
+Pour forcer un reset du mot de passe d'un compte existant, ajoute
+`--reset-password` dans la `command` du job.
+
+### Seed admin en Docker simple (hors Kubernetes)
+
+```bash
+# 1) Construire l'image (une seule image app + migrate + seed)
+docker build --target runner -t unbunked:local .
+
+# 2) Lancer le seed admin en one-shot (même env que l'app)
+docker run --rm --env-file .env.production \
+  unbunked:local \
+  node dist/scripts/seed-admin.cjs "toi@exemple.com"
+
+# Variante: forcer un reset de mot de passe
+docker run --rm --env-file .env.production \
+  unbunked:local \
+  node dist/scripts/seed-admin.cjs "toi@exemple.com" --reset-password
+```
+
+Variables minimales attendues dans l'environnement du conteneur :
+`DATABASE_URL`, `BETTER_AUTH_SECRET` (et optionnellement `BETTER_AUTH_URL`,
+`ADMIN_NAME`).
 
 > Avant de monter `web` (HPA) ou `worker` en nombre de replicas, vérifie le
 > calcul des connexions DB ci-dessus.

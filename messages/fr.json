@@ -136,13 +136,27 @@
     "unverifiable": "Non vérifiable"
   },
   "auth": {
-    "loginTitle": "Connexion admin",
+    "loginTitle": "Login",
+    "loginSubtitle": "La rédaction vous a gardé une place. On reprend le fact-checking ?",
     "email": "Email",
+    "emailPlaceholder": "vous@unbunked.fr",
     "password": "Mot de passe",
-    "signIn": "Se connecter",
+    "signIn": "On y retourne",
     "signingIn": "Connexion…",
     "error": "Email ou mot de passe incorrect.",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "toggleTheme": "Changer de thème",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "forgot": "Oublié ?",
+    "rememberMe": "Se souvenir de moi sur ce poste",
+    "or": "ou",
+    "continueWithGoogle": "Continuer avec Google",
+    "editorialConsole": "Console de rédaction",
+    "heroTitle": "Le fact-checking, claim par claim.",
+    "heroSubtitle": "Soumettez un lien, l'analyse extrait chaque affirmation, la confronte aux sources, et publie le verdict. Vous gardez la main sur chaque nuance.",
+    "weeklyChecks": "articles vérifiés cette semaine",
+    "fiveVerdicts": "Cinq verdicts, jamais binaires"
   },
   "admin": {
     "title": "Administration",
@@ -150,7 +164,10 @@
       "dashboard": "Tableau de bord",
       "submit": "Soumettre une URL",
       "proposals": "Propositions",
-      "analytics": "Statistiques"
+      "analytics": "Statistiques",
+      "costs": "Coûts",
+      "members": "Membres",
+      "account": "Mon compte"
     },
     "analytics": {
       "title": "Statistiques",
@@ -196,6 +213,28 @@
         "retention": "Les données sont conservées au maximum {days} jours.",
         "oldest": "Donnée la plus ancienne : {date}. Conservation maximale : {days} jours.",
         "purge": "Purger les anciennes données"
+      }
+    },
+    "costs": {
+      "title": "Coûts IA",
+      "subtitle": "Tokens consommés et coût estimé de production par article.",
+      "totalCost": "Coût total",
+      "searchCost": "Coût recherche",
+      "totalTokens": "Tokens totaux",
+      "articles": "Articles analysés",
+      "avgCost": "Coût moyen / article",
+      "empty": "Aucune consommation enregistrée pour l'instant.",
+      "note": "Coûts estimés à partir des tarifs Anthropic, en dollars américains (USD). Les tokens de cache (lecture et écriture) sont facturés à un tarif réduit. La recherche web est facturée séparément des tokens (~10 $ pour 1000 requêtes) et est incluse dans les coûts ci-dessus.",
+      "table": {
+        "title": "Détail par article",
+        "truncated": "Affichage des {count} articles les plus récents ; les totaux ci-dessus portent sur l'ensemble.",
+        "article": "Article",
+        "input": "Entrée",
+        "output": "Sortie",
+        "cache": "Cache",
+        "total": "Total",
+        "search": "Recherches",
+        "cost": "Coût"
       }
     },
     "dashboard": {
@@ -277,6 +316,73 @@
         "pending": "En attente",
         "accepted": "Acceptée",
         "rejected": "Rejetée"
+      }
+    },
+    "members": {
+      "title": "Gestion des membres",
+      "subtitle": "Gérez les accès administrateur de l'équipe et les mots de passe.",
+      "empty": "Aucun membre pour l'instant.",
+      "addMemberTitle": "Ajouter un membre",
+      "addMember": "Ajouter",
+      "saveMember": "Enregistrer",
+      "admin": "Admin",
+      "member": "Membre",
+      "promote": "Promouvoir admin",
+      "demote": "Retirer admin",
+      "setPassword": "Définir le mot de passe",
+      "delete": "Supprimer",
+      "generatePassword": "Générer",
+      "copyPassword": "Copier",
+      "copiedPassword": "Copié",
+      "fields": {
+        "name": "Nom",
+        "email": "Email",
+        "password": "Mot de passe",
+        "isAdmin": "Créer en admin"
+      },
+      "confirm": {
+        "cancel": "Annuler",
+        "password": {
+          "title": "Confirmer le changement de mot de passe",
+          "description": "Le mot de passe de {name} va être remplacé immédiatement.",
+          "confirm": "Changer le mot de passe"
+        },
+        "delete": {
+          "title": "Confirmer la suppression du membre",
+          "description": "Le compte de {name} sera supprimé définitivement.",
+          "confirm": "Supprimer le membre"
+        }
+      },
+      "errors": {
+        "missingMemberId": "Impossible de modifier ce membre (identifiant manquant).",
+        "missingMemberName": "Le nom du membre est requis.",
+        "missingMemberEmail": "L'email du membre est requis.",
+        "missingMemberPassword": "Le mot de passe est requis.",
+        "weakPassword": "Le mot de passe doit contenir au moins 8 caractères.",
+        "memberEmailAlreadyExists": "Un membre existe déjà avec cet email.",
+        "memberNotFound": "Membre introuvable.",
+        "cannotDemoteSelf": "Vous ne pouvez pas retirer votre propre rôle admin.",
+        "cannotDeleteSelf": "Vous ne pouvez pas supprimer votre propre compte.",
+        "cannotDemoteLastAdmin": "Impossible de retirer le dernier administrateur."
+      }
+    },
+    "account": {
+      "title": "Mon compte",
+      "subtitle": "Mettez à jour vos informations personnelles et votre mot de passe.",
+      "save": "Enregistrer",
+      "updated": "Votre profil a bien été mis à jour.",
+      "fields": {
+        "name": "Nom",
+        "email": "Email",
+        "password": "Nouveau mot de passe",
+        "passwordPlaceholder": "Laisser vide pour ne pas changer"
+      },
+      "errors": {
+        "missingName": "Le nom est requis.",
+        "missingEmail": "L'email est requis.",
+        "weakPassword": "Le mot de passe doit contenir au moins 8 caractères.",
+        "emailAlreadyExists": "Cet email est déjà utilisé par un autre compte.",
+        "userNotFound": "Compte introuvable."
       }
     }
   },

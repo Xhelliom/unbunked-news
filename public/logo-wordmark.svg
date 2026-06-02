@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 194 46" width="194" height="46" role="img" aria-label="Unbunked">
+  <text x="0" y="31" font-family="&#39;Source Serif 4&#39;, Georgia, &#39;Times New Roman&#39;, serif" font-weight="700" font-size="42">
+    <tspan fill="#6366F1">Un</tspan><tspan fill="#171717">bunked</tspan>
+  </text>
+  <g>
+    <rect x="0" y="39" width="35.8" height="5" rx="2.5" fill="#059669"></rect>
+    <rect x="39.3" y="39" width="35.8" height="5" rx="2.5" fill="#f59e0b"></rect>
+    <rect x="78.6" y="39" width="35.8" height="5" rx="2.5" fill="#ea580c"></rect>
+    <rect x="117.9" y="39" width="35.8" height="5" rx="2.5" fill="#dc2626"></rect>
+    <rect x="157.2" y="39" width="35.8" height="5" rx="2.5" fill="#71717a"></rect>
+  </g>
+</svg>

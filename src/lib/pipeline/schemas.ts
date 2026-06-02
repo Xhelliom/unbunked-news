@@ -31,6 +31,14 @@ export const CLAIM_STATUSES = [
 ] as const;
 export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
 
+// Search engine that produced the verification evidence. Web search is billed
+// separately from tokens (see src/lib/pipeline/pricing.ts). Only the native
+// Anthropic search exists today; cheaper external providers will extend this
+// list when they are wired in.
+export const SEARCH_PROVIDERS = ["anthropic"] as const;
+export type SearchProvider = (typeof SEARCH_PROVIDERS)[number];
+export const DEFAULT_SEARCH_PROVIDER: SearchProvider = "anthropic";
+
 export type ExtractedClaims = { claims: string[] };
 
 export type AnalysisSource = { url: string; title: string };

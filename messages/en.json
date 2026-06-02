@@ -136,13 +136,27 @@
     "unverifiable": "Unverifiable"
   },
   "auth": {
-    "loginTitle": "Admin sign in",
+    "loginTitle": "Login",
+    "loginSubtitle": "The newsroom saved your seat. Ready to resume fact-checking?",
     "email": "Email",
+    "emailPlaceholder": "you@unbunked.fr",
     "password": "Password",
-    "signIn": "Sign in",
+    "signIn": "Let's go back in",
     "signingIn": "Signing in…",
     "error": "Incorrect email or password.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "toggleTheme": "Toggle theme",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "forgot": "Forgot?",
+    "rememberMe": "Remember me on this device",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "editorialConsole": "Editorial console",
+    "heroTitle": "Fact-checking, claim by claim.",
+    "heroSubtitle": "Submit a link, the pipeline extracts each claim, cross-checks it against sources, and publishes a verdict. You stay in control of every nuance.",
+    "weeklyChecks": "articles checked this week",
+    "fiveVerdicts": "Five verdicts, never binary"
   },
   "admin": {
     "title": "Administration",
@@ -150,7 +164,10 @@
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
       "proposals": "Proposals",
-      "analytics": "Analytics"
+      "analytics": "Analytics",
+      "costs": "Costs",
+      "members": "Members",
+      "account": "My account"
     },
     "analytics": {
       "title": "Analytics",
@@ -196,6 +213,28 @@
         "retention": "Data is kept for at most {days} days.",
         "oldest": "Oldest data point: {date}. Maximum retention: {days} days.",
         "purge": "Purge old data"
+      }
+    },
+    "costs": {
+      "title": "AI costs",
+      "subtitle": "Tokens consumed and estimated production cost per article.",
+      "totalCost": "Total cost",
+      "searchCost": "Search cost",
+      "totalTokens": "Total tokens",
+      "articles": "Articles analysed",
+      "avgCost": "Average cost / article",
+      "empty": "No consumption recorded yet.",
+      "note": "Costs estimated from Anthropic pricing, in US dollars (USD). Cache tokens (reads and writes) are billed at a reduced rate. Web search is billed separately from tokens (~$10 per 1000 requests) and is included in the costs above.",
+      "table": {
+        "title": "Per-article breakdown",
+        "truncated": "Showing the {count} most recent articles; the totals above cover all of them.",
+        "article": "Article",
+        "input": "Input",
+        "output": "Output",
+        "cache": "Cache",
+        "total": "Total",
+        "search": "Searches",
+        "cost": "Cost"
       }
     },
     "dashboard": {
@@ -277,6 +316,73 @@
         "pending": "Pending",
         "accepted": "Accepted",
         "rejected": "Rejected"
+      }
+    },
+    "members": {
+      "title": "Member management",
+      "subtitle": "Manage admin access and passwords for your team.",
+      "empty": "No members yet.",
+      "addMemberTitle": "Add member",
+      "addMember": "Add",
+      "saveMember": "Save",
+      "admin": "Admin",
+      "member": "Member",
+      "promote": "Promote to admin",
+      "demote": "Remove admin",
+      "setPassword": "Set password",
+      "delete": "Delete",
+      "generatePassword": "Generate",
+      "copyPassword": "Copy",
+      "copiedPassword": "Copied",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "password": "Password",
+        "isAdmin": "Create as admin"
+      },
+      "confirm": {
+        "cancel": "Cancel",
+        "password": {
+          "title": "Confirm password change",
+          "description": "The password for {name} will be replaced immediately.",
+          "confirm": "Change password"
+        },
+        "delete": {
+          "title": "Confirm member deletion",
+          "description": "The account for {name} will be permanently deleted.",
+          "confirm": "Delete member"
+        }
+      },
+      "errors": {
+        "missingMemberId": "Unable to update this member (missing identifier).",
+        "missingMemberName": "Member name is required.",
+        "missingMemberEmail": "Member email is required.",
+        "missingMemberPassword": "Password is required.",
+        "weakPassword": "Password must be at least 8 characters long.",
+        "memberEmailAlreadyExists": "A member already exists with this email.",
+        "memberNotFound": "Member not found.",
+        "cannotDemoteSelf": "You cannot revoke your own admin role.",
+        "cannotDeleteSelf": "You cannot delete your own account.",
+        "cannotDemoteLastAdmin": "Cannot remove the last admin."
+      }
+    },
+    "account": {
+      "title": "My account",
+      "subtitle": "Update your personal information and password.",
+      "save": "Save",
+      "updated": "Your profile has been updated.",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "password": "New password",
+        "passwordPlaceholder": "Leave blank to keep current password"
+      },
+      "errors": {
+        "missingName": "Name is required.",
+        "missingEmail": "Email is required.",
+        "weakPassword": "Password must be at least 8 characters long.",
+        "emailAlreadyExists": "This email is already used by another account.",
+        "userNotFound": "Account not found."
       }
     }
   },

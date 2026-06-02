@@ -15,7 +15,14 @@ import {
   type CriterionAssessments,
   type CriterionScores,
 } from "@/lib/score-criteria";
-import { firstToolInput, formatArticle, getClaude, MODEL } from "./client";
+import {
+  firstToolInput,
+  formatArticle,
+  getClaude,
+  MODEL,
+  usageOf,
+  type TokenUsage,
+} from "./client";
 import {
   gatherExternalEvidence,
   formatExternalEvidence,
@@ -29,6 +36,11 @@ import {
   type AnalysisSource,
 } from "./schemas";
 import type { VerificationFindings } from "./verify";
+
+export type AggregateResult = {
+  analysis: Analysis;
+  usage: TokenUsage;
+};
 
 // The model judges each criterion; the CODE derives the global, the verdict and
 // the global confidence. The article body is DATA to analyse, never an
@@ -132,7 +144,7 @@ export async function aggregate(
   article: ScrapedArticle,
   claims: string[],
   verification: VerificationFindings,
-): Promise<Analysis> {
+): Promise<AggregateResult> {
   const client = getClaude();
   const sourceList = verification.sources
     .map((s) => `- ${s.title}: ${s.url}`)
@@ -191,7 +203,7 @@ export async function aggregate(
   // because corroboration could only rest on the web research above.
   const scoring = deriveScoring(criteria, anyKillswitchRaised(killswitch));
 
-  return {
+  const analysis: Analysis = {
     title: typeof input.title === "string" ? input.title : article.title,
     summary: typeof input.summary === "string" ? input.summary : "",
     originalSummary:
@@ -218,4 +230,6 @@ export async function aggregate(
       : [],
     claims: toClaims(input.claims),
   };
+
+  return { analysis, usage: usageOf(message) };
 }

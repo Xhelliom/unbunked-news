@@ -1,0 +1,2 @@
+ALTER TABLE "article_token_usage" ADD COLUMN "web_search_requests" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "article_token_usage" ADD COLUMN "search_provider" text DEFAULT 'anthropic' NOT NULL;

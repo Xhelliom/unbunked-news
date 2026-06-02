@@ -50,3 +50,39 @@ export function collectText(message: Anthropic.Message): string {
     .map((block) => (block as Anthropic.TextBlock).text)
     .join("\n");
 }
+
+// Token counts captured from a Claude response so the pipeline can report the
+// AI cost of each article. Cache tokens are tracked separately because they are
+// billed at a different rate (see pricing.ts).
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+};
+
+export const ZERO_USAGE: TokenUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheCreationTokens: 0,
+  cacheReadTokens: 0,
+};
+
+export function usageOf(message: Anthropic.Message): TokenUsage {
+  const { usage } = message;
+  return {
+    inputTokens: usage.input_tokens,
+    outputTokens: usage.output_tokens,
+    cacheCreationTokens: usage.cache_creation_input_tokens ?? 0,
+    cacheReadTokens: usage.cache_read_input_tokens ?? 0,
+  };
+}
+
+export function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
+  return {
+    inputTokens: a.inputTokens + b.inputTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+    cacheCreationTokens: a.cacheCreationTokens + b.cacheCreationTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+  };
+}

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev -p ${APP_PORT:-3030}",
     "build": "next build",
+    "build:scripts": "esbuild src/db/migrate.ts src/db/seed-admin.ts --bundle --platform=node --target=node22 --format=cjs --outdir=dist/scripts --out-extension:.js=.cjs",
     "start": "next start",
     "lint": "eslint",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
@@ -23,6 +24,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",
     "@extractus/article-extractor": "^8.1.0",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.4",
     "better-auth": "^1.6.11",
@@ -46,6 +48,7 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

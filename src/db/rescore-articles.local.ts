@@ -55,9 +55,9 @@ async function rescore(): Promise<void> {
     console.log(`\n• ${article.title}\n  ${article.urlOrigine}`);
     try {
       const scraped = await scrapedFor(article);
-      const claims = await extractClaims(scraped);
+      const { claims } = await extractClaims(scraped);
       const verification = await verifyClaims(scraped, claims);
-      const analysis = await aggregate(scraped, claims, verification);
+      const { analysis } = await aggregate(scraped, claims, verification);
 
       await db.transaction(async (tx) => {
         await tx

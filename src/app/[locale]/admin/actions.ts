@@ -1,16 +1,25 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+
+import { and, eq, ne, sql } from "drizzle-orm";
+import { hashPassword } from "better-auth/crypto";
 import { revalidateTag } from "next/cache";
 import { getLocale } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articleRewrites, articles, proposals } from "@/db/schema";
+import {
+  account,
+  articleRewrites,
+  articles,
+  proposals,
+  user,
+} from "@/db/schema";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob } from "@/lib/jobs";
-import { requireSession } from "@/lib/session";
+import { requireAdminSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
@@ -20,6 +29,48 @@ import {
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
+
+const MEMBERS_ROUTE = "/admin/members";
+const MEMBER_ERROR_PARAM = "error";
+const ACCOUNT_ROUTE = "/admin/account";
+const ACCOUNT_ERROR_PARAM = "error";
+const ACCOUNT_SUCCESS_PARAM = "updated";
+
+const MEMBER_ERROR = {
+  MISSING_ID: "missingMemberId",
+  MISSING_NAME: "missingMemberName",
+  MISSING_EMAIL: "missingMemberEmail",
+  MISSING_PASSWORD: "missingMemberPassword",
+  WEAK_PASSWORD: "weakPassword",
+  EMAIL_EXISTS: "memberEmailAlreadyExists",
+  MEMBER_NOT_FOUND: "memberNotFound",
+  SELF_DEMOTE: "cannotDemoteSelf",
+  SELF_DELETE: "cannotDeleteSelf",
+  LAST_ADMIN: "cannotDemoteLastAdmin",
+} as const;
+
+type MemberErrorCode = (typeof MEMBER_ERROR)[keyof typeof MEMBER_ERROR];
+
+function memberErrorHref(code: MemberErrorCode): string {
+  return `${MEMBERS_ROUTE}?${MEMBER_ERROR_PARAM}=${code}`;
+}
+
+const ACCOUNT_ERROR = {
+  MISSING_NAME: "missingName",
+  MISSING_EMAIL: "missingEmail",
+  WEAK_PASSWORD: "weakPassword",
+  EMAIL_EXISTS: "emailAlreadyExists",
+  USER_NOT_FOUND: "userNotFound",
+} as const;
+
+type AccountErrorCode = (typeof ACCOUNT_ERROR)[keyof typeof ACCOUNT_ERROR];
+
+function accountErrorHref(code: AccountErrorCode): string {
+  return `${ACCOUNT_ROUTE}?${ACCOUNT_ERROR_PARAM}=${code}`;
+}
+
+const CREDENTIAL_PROVIDER_ID = "credential";
+const MIN_PASSWORD_LENGTH = 8;
 
 // Next 16's revalidateTag takes a cache profile as its second argument; "max"
 // fully invalidates every entry carrying the tag.
@@ -46,7 +97,7 @@ export async function submitUrl(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const url = parseUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
@@ -60,7 +111,7 @@ export async function saveArticle(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const verdictValue = String(formData.get("verdict") ?? "");
   const verdict = (VERDICTS as readonly string[]).includes(verdictValue)
@@ -95,7 +146,7 @@ export async function saveRewrite(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await requireSession();
+  await requireAdminSession();
   const articleId = String(formData.get("articleId") ?? "");
   const localeRaw = String(formData.get("locale") ?? "");
   if (!(routing.locales as readonly string[]).includes(localeRaw)) {
@@ -121,7 +172,7 @@ export async function saveRewrite(
 }
 
 export async function setPublished(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const published = formData.get("published") === "true";
   await db
@@ -133,7 +184,7 @@ export async function setPublished(formData: FormData): Promise<void> {
 }
 
 export async function acceptProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   const proposal = await db.query.proposals.findFirst({
     where: eq(proposals.id, id),
@@ -148,11 +199,340 @@ export async function acceptProposal(formData: FormData): Promise<void> {
 }
 
 export async function rejectProposal(formData: FormData): Promise<void> {
-  await requireSession();
+  await requireAdminSession();
   const id = String(formData.get("id") ?? "");
   await db
     .update(proposals)
     .set({ status: "rejected" })
     .where(eq(proposals.id, id));
   redirect({ href: `/admin/proposals`, locale: await getLocale() });
+}
+
+export async function setMemberAdminStatus(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const shouldBeAdmin = formData.get("isAdmin") === "true";
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+
+  if (!shouldBeAdmin && targetUserId === actingUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DEMOTE), locale: await getLocale() });
+  }
+
+  // Keep at least one admin at all times to avoid locking the team out.
+  if (!shouldBeAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
+    }
+  }
+
+  await db
+    .update(user)
+    .set({ isAdmin: shouldBeAdmin })
+    .where(eq(user.id, targetUserId));
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
+export async function createMember(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const isAdmin = formData.get("isAdmin") === "true";
+
+  if (!name) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_NAME), locale: await getLocale() });
+  }
+  if (!email) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_EMAIL), locale: await getLocale() });
+  }
+  if (!password) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MISSING_PASSWORD),
+      locale: await getLocale(),
+    });
+  }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.WEAK_PASSWORD), locale: await getLocale() });
+  }
+
+  const existingUser = await db.query.user.findFirst({
+    where: eq(user.email, email),
+    columns: { id: true },
+  });
+  if (existingUser) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.EMAIL_EXISTS), locale: await getLocale() });
+  }
+
+  const userId = randomUUID();
+  const hashedPassword = await hashPassword(password);
+
+  // We create both BetterAuth user row and credential account in one flow.
+  await db.insert(user).values({
+    id: userId,
+    name,
+    email,
+    isAdmin,
+    emailVerified: true,
+  });
+  await db.insert(account).values({
+    id: randomUUID(),
+    accountId: email,
+    providerId: CREDENTIAL_PROVIDER_ID,
+    userId,
+    password: hashedPassword,
+  });
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
+export async function updateMember(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const shouldBeAdmin = formData.get("isAdmin") === "true";
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+  if (!name) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_NAME), locale: await getLocale() });
+  }
+  if (!email) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_EMAIL), locale: await getLocale() });
+  }
+
+  const targetUser = await db.query.user.findFirst({
+    where: eq(user.id, targetUserId),
+    columns: { id: true, email: true, isAdmin: true },
+  });
+  if (!targetUser) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MEMBER_NOT_FOUND),
+      locale: await getLocale(),
+    });
+    return;
+  }
+
+  if (!shouldBeAdmin && targetUserId === actingUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DEMOTE), locale: await getLocale() });
+  }
+
+  // On évite tout doublon d'email au moment de l'édition.
+  const existingUserWithEmail = await db.query.user.findFirst({
+    where: and(eq(user.email, email), ne(user.id, targetUserId)),
+    columns: { id: true },
+  });
+  if (existingUserWithEmail) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.EMAIL_EXISTS), locale: await getLocale() });
+  }
+
+  // Même règle que pour la suppression/rétrogradation: garder au moins 1 admin.
+  if (targetUser.isAdmin && !shouldBeAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
+    }
+  }
+
+  await db
+    .update(user)
+    .set({ name, email, isAdmin: shouldBeAdmin })
+    .where(eq(user.id, targetUserId));
+
+  // BetterAuth credential utilise accountId (ici l'email) pour le login.
+  // On le synchronise si l'email utilisateur a changé.
+  if (targetUser.email !== email) {
+    await db
+      .update(account)
+      .set({ accountId: email })
+      .where(and(eq(account.userId, targetUserId), eq(account.providerId, CREDENTIAL_PROVIDER_ID)));
+  }
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
+export async function setMemberPassword(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+  if (!password) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MISSING_PASSWORD),
+      locale: await getLocale(),
+    });
+  }
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.WEAK_PASSWORD), locale: await getLocale() });
+  }
+
+  const targetUser = await db.query.user.findFirst({
+    where: eq(user.id, targetUserId),
+    columns: { id: true, email: true },
+  });
+  if (!targetUser) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MEMBER_NOT_FOUND),
+      locale: await getLocale(),
+    });
+    return;
+  }
+
+  const hashedPassword = await hashPassword(password);
+  const credentialAccount = await db.query.account.findFirst({
+    where: eq(account.userId, targetUserId),
+    columns: { id: true },
+  });
+
+  if (credentialAccount) {
+    await db
+      .update(account)
+      .set({ password: hashedPassword })
+      .where(eq(account.id, credentialAccount.id));
+  } else {
+    // Some users might exist without local credentials (future OAuth usage).
+    await db.insert(account).values({
+      id: randomUUID(),
+      accountId: targetUser.email,
+      providerId: CREDENTIAL_PROVIDER_ID,
+      userId: targetUserId,
+      password: hashedPassword,
+    });
+  }
+
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
+}
+
+export async function updateOwnProfile(formData: FormData): Promise<void> {
+  const { userId } = await requireAdminSession();
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!name) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.MISSING_NAME), locale: await getLocale() });
+  }
+  if (!email) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.MISSING_EMAIL), locale: await getLocale() });
+  }
+  if (password && password.length < MIN_PASSWORD_LENGTH) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.WEAK_PASSWORD), locale: await getLocale() });
+  }
+
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: { id: true, email: true },
+  });
+  if (!currentUser) {
+    redirect({ href: accountErrorHref(ACCOUNT_ERROR.USER_NOT_FOUND), locale: await getLocale() });
+    return;
+  }
+
+  // On empêche de prendre l'email d'un autre membre.
+  if (email !== currentUser.email) {
+    const existingUser = await db.query.user.findFirst({
+      where: eq(user.email, email),
+      columns: { id: true },
+    });
+    if (existingUser) {
+      redirect({
+        href: accountErrorHref(ACCOUNT_ERROR.EMAIL_EXISTS),
+        locale: await getLocale(),
+      });
+    }
+  }
+
+  await db.update(user).set({ name, email }).where(eq(user.id, userId));
+
+  const credentialAccount = await db.query.account.findFirst({
+    where: eq(account.userId, userId),
+    columns: { id: true },
+  });
+
+  if (credentialAccount) {
+    // L'accountId doit rester aligné sur l'email de connexion, même si
+    // l'utilisateur ne change pas son mot de passe dans ce formulaire.
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      await db
+        .update(account)
+        .set({ password: hashedPassword, accountId: email })
+        .where(eq(account.id, credentialAccount.id));
+    } else {
+      await db
+        .update(account)
+        .set({ accountId: email })
+        .where(eq(account.id, credentialAccount.id));
+    }
+  } else if (password) {
+    const hashedPassword = await hashPassword(password);
+    await db.insert(account).values({
+      id: randomUUID(),
+      accountId: email,
+      providerId: CREDENTIAL_PROVIDER_ID,
+      userId,
+      password: hashedPassword,
+    });
+  }
+
+  redirect({
+    href: `${ACCOUNT_ROUTE}?${ACCOUNT_SUCCESS_PARAM}=1`,
+    locale: await getLocale(),
+  });
+}
+
+export async function deleteMember(formData: FormData): Promise<void> {
+  const { userId: actingUserId } = await requireAdminSession();
+  const targetUserId = String(formData.get("id") ?? "");
+
+  if (!targetUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.MISSING_ID), locale: await getLocale() });
+  }
+  if (targetUserId === actingUserId) {
+    redirect({ href: memberErrorHref(MEMBER_ERROR.SELF_DELETE), locale: await getLocale() });
+  }
+
+  const targetUser = await db.query.user.findFirst({
+    where: eq(user.id, targetUserId),
+    columns: { isAdmin: true },
+  });
+  if (!targetUser) {
+    redirect({
+      href: memberErrorHref(MEMBER_ERROR.MEMBER_NOT_FOUND),
+      locale: await getLocale(),
+    });
+    return;
+  }
+
+  // If deleting an admin, we enforce at least one admin remains.
+  if (targetUser.isAdmin) {
+    const adminCountResult = await db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(user)
+      .where(eq(user.isAdmin, true));
+    const adminCount = adminCountResult[0]?.value ?? 0;
+    if (adminCount <= 1) {
+      redirect({ href: memberErrorHref(MEMBER_ERROR.LAST_ADMIN), locale: await getLocale() });
+    }
+  }
+
+  await db.delete(user).where(eq(user.id, targetUserId));
+  redirect({ href: MEMBERS_ROUTE, locale: await getLocale() });
 }

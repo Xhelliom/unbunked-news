@@ -13,24 +13,20 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
-# Build the Next.js standalone output.
+# Build the Next.js standalone output, then bundle the one-off DB entrypoints
+# (migrate + seed) into self-contained CJS so the slim runner can run them
+# without drizzle-kit/tsx. See package.json "build:scripts".
 FROM base AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
+RUN pnpm build:scripts
 
-# Migration runner: drizzle-kit + schema + SQL migrations only.
-# Run as a one-off (compose service / k8s Job) before the app starts.
-FROM base AS migrator
-ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml drizzle.config.ts ./
-COPY drizzle ./drizzle
-COPY src/db ./src/db
-CMD ["pnpm", "db:migrate"]
-
-# Minimal production image for the app.
+# Minimal production image. One image, three roles via the command:
+#   app      -> node server.js            (default; APP_ROLE selects web/worker)
+#   migrate  -> node dist/scripts/migrate.cjs       (db-migrate initContainer)
+#   seed     -> node dist/scripts/seed-admin.cjs <email>
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -43,6 +39,10 @@ RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Bundled migrate/seed entrypoints + the SQL migrations (runtime migrator reads
+# drizzle/meta/_journal.json).
+COPY --from=builder --chown=nextjs:nodejs /app/dist/scripts ./dist/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 USER nextjs
 EXPOSE 3000
 # Same command for every role: the APP_ROLE env var selects web / worker /

@@ -3,8 +3,21 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
 import type { ScrapedArticle } from "@/lib/scrape";
-import { collectText, formatArticle, getClaude, MODEL } from "./client";
-import type { AnalysisSource } from "./schemas";
+import {
+  addUsage,
+  collectText,
+  formatArticle,
+  getClaude,
+  MODEL,
+  usageOf,
+  ZERO_USAGE,
+  type TokenUsage,
+} from "./client";
+import {
+  DEFAULT_SEARCH_PROVIDER,
+  type AnalysisSource,
+  type SearchProvider,
+} from "./schemas";
 
 const SYSTEM =
   "You are a fact-checking researcher. For each claim, use web search to find " +
@@ -19,7 +32,16 @@ const SEARCH_TOOLS: Anthropic.Messages.ToolUnion[] = [
 export type VerificationFindings = {
   findings: string;
   sources: AnalysisSource[];
+  usage: TokenUsage;
+  searchRequests: number;
+  searchProvider: SearchProvider;
 };
+
+// Web search is billed per request, separately from tokens. The count is
+// reported per response, so it is summed across the pause_turn continuations.
+function searchRequestsOf(message: Anthropic.Message): number {
+  return message.usage.server_tool_use?.web_search_requests ?? 0;
+}
 
 function collectSources(content: Anthropic.ContentBlock[]): AnalysisSource[] {
   const sources: AnalysisSource[] = [];
@@ -62,6 +84,8 @@ export async function verifyClaims(
 
   const allContent: Anthropic.ContentBlock[] = [];
   let guard = 0;
+  let usage = ZERO_USAGE;
+  let searchRequests = 0;
   let message = await client.messages.create({
     model: MODEL,
     max_tokens: 8192,
@@ -70,6 +94,8 @@ export async function verifyClaims(
     messages,
   });
   allContent.push(...message.content);
+  usage = addUsage(usage, usageOf(message));
+  searchRequests += searchRequestsOf(message);
 
   while (message.stop_reason === "pause_turn" && guard < 5) {
     messages.push({ role: "assistant", content: message.content });
@@ -81,6 +107,8 @@ export async function verifyClaims(
       messages,
     });
     allContent.push(...message.content);
+    usage = addUsage(usage, usageOf(message));
+    searchRequests += searchRequestsOf(message);
     guard += 1;
   }
 
@@ -91,5 +119,8 @@ export async function verifyClaims(
   return {
     findings: collectText({ ...message, content: allContent }),
     sources: unique,
+    usage,
+    searchRequests,
+    searchProvider: DEFAULT_SEARCH_PROVIDER,
   };
 }

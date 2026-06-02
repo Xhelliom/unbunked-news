@@ -285,6 +285,41 @@ export const jobs = pgTable(
   (table) => [index("jobs_status_idx").on(table.status)],
 );
 
+// Token consumption recorded once per article when the pipeline finishes, so
+// the admin has a financial view of what each article cost to produce. One row
+// per article; the monetary cost is derived from these counts at read time
+// (see src/lib/pipeline/pricing.ts) so a later price change reprices history.
+// Web search is billed separately from tokens, so its request count and the
+// provider that ran it are tracked alongside (see SEARCH_PROVIDERS).
+export const articleTokenUsage = pgTable(
+  "article_token_usage",
+  {
+    articleId: uuid()
+      .primaryKey()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    // The Claude model used, so the correct price applies even if it changes.
+    model: text().notNull(),
+    inputTokens: integer().notNull().default(0),
+    outputTokens: integer().notNull().default(0),
+    cacheCreationTokens: integer().notNull().default(0),
+    cacheReadTokens: integer().notNull().default(0),
+    // Web search requests issued during verification, priced per provider. Kept
+    // raw (not as a cost) so a price change reprices history like the tokens do.
+    webSearchRequests: integer().notNull().default(0),
+    // Plain text rather than a pgEnum on purpose: external providers are still
+    // experimental, so the set must grow without an ALTER TYPE migration. The
+    // canonical list lives in SEARCH_PROVIDERS; costForSearch prices unknown
+    // values via a fallback rather than rejecting them.
+    searchProvider: text().notNull().default("anthropic"),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("article_token_usage_created_at_idx").on(table.createdAt),
+  ],
+);
+
 // Privacy-first, cookieless analytics. No personal data is stored: we keep the
 // pathname (query string stripped), the resolved article, the locale and the
 // external referrer host. `visitorHash` is a daily-rotating salted hash of
@@ -313,12 +348,13 @@ export const analyticsEvents = pgTable(
   ],
 );
 
-export const articlesRelations = relations(articles, ({ many }) => ({
+export const articlesRelations = relations(articles, ({ one, many }) => ({
   claims: many(claims),
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
   keywords: many(articleKeywords),
   jobs: many(jobs),
+  tokenUsage: one(articleTokenUsage),
 }));
 
 export const articleKeywordsRelations = relations(
@@ -326,6 +362,16 @@ export const articleKeywordsRelations = relations(
   ({ one }) => ({
     article: one(articles, {
       fields: [articleKeywords.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
+
+export const articleTokenUsageRelations = relations(
+  articleTokenUsage,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleTokenUsage.articleId],
       references: [articles.id],
     }),
   }),
@@ -396,3 +442,5 @@ export type ArticleRewrite = typeof articleRewrites.$inferSelect;
 export type NewArticleRewrite = typeof articleRewrites.$inferInsert;
 export type ArticleKeyword = typeof articleKeywords.$inferSelect;
 export type NewArticleKeyword = typeof articleKeywords.$inferInsert;
+export type ArticleTokenUsage = typeof articleTokenUsage.$inferSelect;
+export type NewArticleTokenUsage = typeof articleTokenUsage.$inferInsert;

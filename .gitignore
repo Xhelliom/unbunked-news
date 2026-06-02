@@ -19,6 +19,8 @@
 
 # production
 /build
+# bundled one-off entrypoints (generated at image build time)
+/dist
 
 # misc
 .DS_Store
