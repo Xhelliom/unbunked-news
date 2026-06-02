@@ -10,6 +10,7 @@ import { VerdictBadge } from "@/components/verdict-badge";
 import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
 import { RewriteForm } from "@/components/admin/rewrite-form";
+import { ScrapeDebug } from "@/components/admin/scrape-debug";
 import { ScrapedBody } from "@/components/admin/scraped-body";
 
 export default async function AdminArticleReviewPage({
@@ -74,6 +75,8 @@ export default async function AdminArticleReviewPage({
       />
 
       <CriteriaEvidence evidence={article.evidence} />
+
+      <ScrapeDebug provenance={article.scrapeDebug} />
 
       <ScrapedBody content={article.content} />
 

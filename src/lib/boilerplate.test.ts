@@ -15,10 +15,23 @@ test("accepts a real article body", () => {
 });
 
 test("rejects a Le Monde paywall teaser", () => {
-  const teaser =
-    "Cet article vous est offert. Cet article est réservé aux abonnés, connectez-vous pour le lire. Inscrivez-vous pour accéder à l'intégralité des articles du journal et profiter de nos offres.";
+  // Long enough to clear the length floor, so the rejection can only come from
+  // a paywall marker — otherwise this test would silently pass even if every
+  // PAYWALL_MARKERS pattern were removed.
+  const teaser = [
+    "Cet article vous est offert.",
+    "Cet article est réservé aux abonnés, connectez-vous pour le lire.",
+    "Inscrivez-vous pour accéder à l'intégralité des articles du journal et profiter de nos offres.",
+    Array.from(
+      { length: 8 },
+      (_, i) =>
+        `Le contexte de cette affaire ${i} a été longuement débattu dans les médias au cours des derniers mois.`,
+    ).join(" "),
+  ].join(" ");
+  assert.ok(teaser.length >= 600, "teaser must clear the length floor");
   const quality = assessScrapeQuality(teaser);
   assert.equal(quality.ok, false);
+  assert.match(quality.ok ? "" : quality.reason, /paywall or consent wall/);
 });
 
 test("rejects a body shorter than the minimum", () => {

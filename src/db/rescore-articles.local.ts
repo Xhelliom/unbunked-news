@@ -5,6 +5,7 @@ import { articles, claimSources, claims as claimsTable } from "./schema";
 import { scrapeArticle, type ScrapedArticle } from "@/lib/scrape";
 import { aggregate } from "@/lib/pipeline/aggregate";
 import { extractClaims } from "@/lib/pipeline/extract-claims";
+import { recoverArticleBody } from "@/lib/pipeline/recover-body";
 import { verifyClaims } from "@/lib/pipeline/verify";
 
 // Re-scores existing local articles with the v1.2 pipeline IN PLACE (no new
@@ -40,7 +41,11 @@ async function scrapedFor(article: {
       publishedAt: article.publishedAt,
     };
   }
-  return scrapeArticle(article.urlOrigine);
+  const { article: scraped } = await scrapeArticle(
+    article.urlOrigine,
+    async (blocks, meta) => (await recoverArticleBody(blocks, meta)).content,
+  );
+  return scraped;
 }
 
 async function rescore(): Promise<void> {

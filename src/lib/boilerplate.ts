@@ -88,8 +88,9 @@ function hasNavMenuRepetition(text: string): boolean {
 export type ScrapeQuality = { ok: true } | { ok: false; reason: string };
 
 // Verdict on whether a scraped body is real article prose or a paywall/nav
-// artefact. Used by scrapeArticle() to force the Puppeteer fallback and, if the
-// rendered body is still bad, to fail the job with an operator-readable reason.
+// artefact. Used by scrapeArticle() to trigger the AI body-recovery fallback
+// and, if the recovered body is still bad, to fail the job with an operator-
+// readable reason.
 export function assessScrapeQuality(content: string): ScrapeQuality {
   const text = content.trim();
   if (text.length < MIN_ARTICLE_CONTENT_CHARS) {

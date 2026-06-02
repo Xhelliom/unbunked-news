@@ -1,0 +1,1 @@
+ALTER TABLE "articles" ADD COLUMN "scrape_debug" jsonb;

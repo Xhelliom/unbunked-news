@@ -32,11 +32,12 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-# Chromium for the Puppeteer scraping fallback.
+# Chromium for the last-resort headless render: pages whose body exists only
+# after client-side JS (the cheap fetch + AI fallback handle everything else).
 RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 # Fail the build loudly if the Alpine package ever moves the binary, rather than
-# silently shipping an image whose paywall fallback can never launch.
+# silently shipping an image whose render fallback can never launch.
 RUN test -x "$CHROMIUM_PATH" || { echo "Chromium missing at $CHROMIUM_PATH"; ls -l /usr/bin/chromium* || true; exit 1; }
 RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001
 COPY --from=builder /app/public ./public

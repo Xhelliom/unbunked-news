@@ -105,6 +105,28 @@ export const recordClaimsTool: Anthropic.Tool = {
   },
 };
 
+export const selectArticleBodyTool: Anthropic.Tool = {
+  name: "select_article_body",
+  description:
+    "Record which of the numbered text blocks together form the main body of " +
+    "the news article, in reading order.",
+  input_schema: {
+    type: "object",
+    properties: {
+      indices: {
+        type: "array",
+        description:
+          "0-based indices of the blocks that are article prose, in reading " +
+          "order. Exclude navigation, teasers, paywall/subscription prompts, " +
+          "ads, related-article lists, author bios and legal footers.",
+        items: { type: "integer" },
+      },
+    },
+    required: ["indices"],
+    additionalProperties: false,
+  },
+};
+
 // Criteria whose evidence (rationale AND sources) is mandatory: you may not
 // score them "from memory". The others still require a rationale.
 const EVIDENCE_STRICT: readonly ScoreCriterion[] = [

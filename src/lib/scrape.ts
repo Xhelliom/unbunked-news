@@ -1,4 +1,4 @@
-import { extract, extractFromHtml } from "@extractus/article-extractor";
+import { extractFromHtml } from "@extractus/article-extractor";
 
 import {
   assessScrapeQuality,
@@ -15,6 +15,54 @@ export type ScrapedArticle = {
   author: string | null;
   publishedAt: Date | null;
 };
+
+export type ScrapeMethod =
+  | "extractor"
+  | "ai-recovery"
+  | "rendered-extractor"
+  | "rendered-ai-recovery";
+
+// Diagnostic trail of how the stored body was obtained, surfaced to admins so a
+// bad scrape is debuggable: which stage won, whether a headless render was
+// needed, how many candidate blocks the AI chose from, and what rejection
+// triggered the AI fallback.
+export type ScrapeProvenance = {
+  method: ScrapeMethod;
+  rendered: boolean;
+  candidateBlocks: number | null;
+  contentChars: number;
+  aiTriggerReason: string | null;
+};
+
+export type ScrapeResult = {
+  article: ScrapedArticle;
+  provenance: ScrapeProvenance;
+};
+
+// Some publishers serve a stub to the default fetch agent; a browser-like UA
+// gets the same static HTML a reader's browser receives (article body included,
+// even behind a soft paywall overlay).
+const SCRAPE_USER_AGENT =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
+const FETCH_TIMEOUT_MS = 20_000;
+const RENDER_TIMEOUT_MS = 30_000;
+
+// Candidate-block filters for the AI body-recovery fallback: keep prose-shaped
+// blocks, drop nav items, bare numbers, and embedded JSON/markup noise.
+const MIN_BLOCK_CHARS = 40;
+const MAX_BLOCK_CHARS = 3_000;
+const MIN_BLOCK_WORDS = 6;
+const MIN_LETTER_RATIO = 0.5;
+const MAX_CANDIDATE_CHARS = 24_000;
+
+// Injected so scraping stays decoupled from the AI pipeline (importing the
+// Anthropic client here would create a server-only import cycle). Given the
+// page's candidate text blocks, returns the selected article body verbatim, or
+// an empty string when no block qualifies.
+export type BodyRecoverer = (
+  blocks: string[],
+  meta: { title: string },
+) => Promise<string>;
 
 function hostnameToSource(url: string): string {
   try {
@@ -53,7 +101,32 @@ function htmlToParagraphs(html: string): string[] {
     .filter((paragraph) => paragraph.length > 0);
 }
 
-type ExtractorResult = Awaited<ReturnType<typeof extract>>;
+function looksLikeProse(block: string): boolean {
+  if (block.length < MIN_BLOCK_CHARS || block.length > MAX_BLOCK_CHARS) {
+    return false;
+  }
+  if (block.split(/\s+/).length < MIN_BLOCK_WORDS) return false;
+  const letters = (block.match(/\p{L}/gu) ?? []).length;
+  return letters / block.length > MIN_LETTER_RATIO;
+}
+
+// Prose-shaped, deduplicated text blocks from the whole page, bounded in total
+// size, for the AI fallback to pick the article body out of.
+export function buildCandidateBlocks(html: string): string[] {
+  const seen = new Set<string>();
+  const blocks: string[] = [];
+  let total = 0;
+  for (const block of stripBoilerplate(htmlToParagraphs(html))) {
+    if (!looksLikeProse(block) || seen.has(block)) continue;
+    if (total + block.length > MAX_CANDIDATE_CHARS) break;
+    seen.add(block);
+    blocks.push(block);
+    total += block.length;
+  }
+  return blocks;
+}
+
+type ExtractorResult = Awaited<ReturnType<typeof extractFromHtml>>;
 
 function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
   if (!data?.content || !data.title) {
@@ -70,14 +143,26 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
   };
 }
 
-// Renders a JS-heavy page with headless Chromium and extracts from the result.
-// Requires a Chromium binary; configure CHROMIUM_PATH in production.
-async function scrapeWithPuppeteer(url: string): Promise<ScrapedArticle | null> {
-  const executablePath =
-    process.env.CHROMIUM_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
-  if (!executablePath) {
+async function fetchHtml(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: { "user-agent": SCRAPE_USER_AGENT },
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
     return null;
   }
+}
+
+// Last-resort render for pages whose body exists only after client-side JS, so
+// the cheap fetch returns a shell. Requires a Chromium binary (CHROMIUM_PATH in
+// production); returns null when unavailable so callers degrade gracefully.
+async function renderHtml(url: string): Promise<string | null> {
+  const executablePath =
+    process.env.CHROMIUM_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (!executablePath) return null;
 
   const { launch } = await import("puppeteer-core");
   const browser = await launch({
@@ -87,50 +172,128 @@ async function scrapeWithPuppeteer(url: string): Promise<ScrapedArticle | null> 
   });
   try {
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30_000 });
-    const html = await page.content();
-    const data = await extractFromHtml(html, url);
-    return normalize(url, data);
+    await page.goto(url, {
+      waitUntil: "networkidle2",
+      timeout: RENDER_TIMEOUT_MS,
+    });
+    return await page.content();
   } finally {
     await browser.close();
   }
 }
 
-export async function scrapeArticle(url: string): Promise<ScrapedArticle> {
-  let result: ScrapedArticle | null = null;
-  try {
-    result = normalize(url, await extract(url));
-  } catch {
-    result = null;
-  }
+// Re-runs the article body through the same paragraph cleaning normalize()
+// applies, so a recovered body and an extracted one are shaped identically.
+function cleanBody(body: string): string {
+  return stripBoilerplate(
+    body
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter((paragraph) => paragraph.length > 0),
+  ).join("\n\n");
+}
 
-  let quality: ScrapeQuality = result
+type Attempt = {
+  result: ScrapedArticle | null;
+  quality: ScrapeQuality;
+  usedAi: boolean;
+  candidateBlocks: number | null;
+  aiTriggerReason: string | null;
+};
+
+// Extracts the best body obtainable from a single HTML document: the generic
+// extractor first, then — if it grabbed a paywall teaser or nav menu while the
+// real body sits elsewhere in the SAME HTML (Le Monde & co.) — the AI picks the
+// article-body blocks out of the page verbatim, so downstream claim quotes
+// still resolve.
+async function attemptFromHtml(
+  url: string,
+  html: string,
+  recoverBody?: BodyRecoverer,
+): Promise<Attempt> {
+  const result = normalize(url, await extractFromHtml(html, url));
+  const quality: ScrapeQuality = result
     ? assessScrapeQuality(result.content)
     : { ok: false, reason: "extractor returned no usable content" };
 
-  // Force the renderer when the cheap fetch returned nothing OR returned a
-  // paywall/nav artefact that normalize() accepted. Le Monde & co. answer the
-  // plain fetch with a subscription teaser; only the headless render gets the
-  // real body. Keep the rendered result whenever it is no worse than the fetch.
-  if (!result || !quality.ok) {
-    const rendered = await scrapeWithPuppeteer(url);
-    if (rendered) {
-      const renderedQuality = assessScrapeQuality(rendered.content);
-      if (!result || renderedQuality.ok) {
-        result = rendered;
-        quality = renderedQuality;
+  if (!result || quality.ok || !recoverBody) {
+    return { result, quality, usedAi: false, candidateBlocks: null, aiTriggerReason: null };
+  }
+
+  const triggerReason = quality.reason;
+  const blocks = buildCandidateBlocks(html);
+  if (blocks.length === 0) {
+    return { result, quality, usedAi: false, candidateBlocks: 0, aiTriggerReason: triggerReason };
+  }
+
+  const recovered = cleanBody(await recoverBody(blocks, { title: result.title }));
+  const recoveredQuality = assessScrapeQuality(recovered);
+  return recoveredQuality.ok
+    ? {
+        result: { ...result, content: recovered },
+        quality: recoveredQuality,
+        usedAi: true,
+        candidateBlocks: blocks.length,
+        aiTriggerReason: triggerReason,
+      }
+    : { result, quality, usedAi: false, candidateBlocks: blocks.length, aiTriggerReason: triggerReason };
+}
+
+export async function scrapeArticle(
+  url: string,
+  recoverBody?: BodyRecoverer,
+): Promise<ScrapeResult> {
+  const html = await fetchHtml(url);
+  let attempt: Attempt = html
+    ? await attemptFromHtml(url, html, recoverBody)
+    : {
+        result: null,
+        quality: { ok: false, reason: "could not fetch the page" },
+        usedAi: false,
+        candidateBlocks: null,
+        aiTriggerReason: null,
+      };
+  let rendered = false;
+
+  // Only pay for a headless render when the cheap fetch + AI fallback still
+  // failed — i.e. the body was never in the static HTML (a client-rendered page).
+  if (!attempt.quality.ok) {
+    const renderedHtml = await renderHtml(url);
+    if (renderedHtml) {
+      const second = await attemptFromHtml(url, renderedHtml, recoverBody);
+      if (second.result && (!attempt.result || second.quality.ok)) {
+        attempt = second;
+        rendered = true;
       }
     }
   }
 
-  if (!result) {
+  if (!attempt.result) {
     throw new Error(`Could not extract article content from ${url}`);
   }
-  if (!quality.ok) {
+  if (!attempt.quality.ok) {
     throw new Error(
-      `Scraped content from ${url} failed the quality check: ${quality.reason}. ` +
-        `The page is likely paywalled or needs JavaScript the renderer could not run.`,
+      `Scraped content from ${url} failed the quality check: ${attempt.quality.reason}. ` +
+        `The page is likely paywalled or rendered entirely client-side.`,
     );
   }
-  return result;
+
+  const method: ScrapeMethod = rendered
+    ? attempt.usedAi
+      ? "rendered-ai-recovery"
+      : "rendered-extractor"
+    : attempt.usedAi
+      ? "ai-recovery"
+      : "extractor";
+
+  return {
+    article: attempt.result,
+    provenance: {
+      method,
+      rendered,
+      candidateBlocks: attempt.usedAi ? attempt.candidateBlocks : null,
+      contentChars: attempt.result.content.length,
+      aiTriggerReason: attempt.usedAi ? attempt.aiTriggerReason : null,
+    },
+  };
 }
