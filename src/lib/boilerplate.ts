@@ -70,6 +70,11 @@ const PAYWALL_MARKERS: RegExp[] = [
 
 // Below this, a "body" is a teaser, not an article.
 const MIN_ARTICLE_CONTENT_CHARS = 600;
+// A paywall/consent wall always sits at the very top of the captured body, so we
+// only scan the opening for its markers. Scanning the whole text would reject a
+// legitimately recovered article that merely mentions "inscrivez-vous à la
+// newsletter" or "connectez-vous" somewhere in its prose.
+const PAYWALL_SCAN_CHARS = 500;
 // Above this share of tokens that merely repeat their immediate predecessor,
 // the text is a navigation menu ("Politique Politique PSG PSG"), not prose.
 const REPEATED_TOKEN_RATIO_LIMIT = 0.15;
@@ -99,7 +104,8 @@ export function assessScrapeQuality(content: string): ScrapeQuality {
       reason: `scraped body is too short (${text.length} chars, expected at least ${MIN_ARTICLE_CONTENT_CHARS})`,
     };
   }
-  if (PAYWALL_MARKERS.some((pattern) => pattern.test(text))) {
+  const opening = text.slice(0, PAYWALL_SCAN_CHARS);
+  if (PAYWALL_MARKERS.some((pattern) => pattern.test(opening))) {
     return {
       ok: false,
       reason: "scraped body looks like a paywall or consent wall, not the article",

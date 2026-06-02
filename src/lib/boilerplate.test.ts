@@ -34,6 +34,17 @@ test("rejects a Le Monde paywall teaser", () => {
   assert.match(quality.ok ? "" : quality.reason, /paywall or consent wall/);
 });
 
+test("accepts a real body whose only paywall marker is past the opening", () => {
+  const lead = Array.from(
+    { length: 6 },
+    (_, i) =>
+      `La réforme adoptée cette semaine ${i} modifie en profondeur les règles applicables aux salariés concernés, selon le rapport publié mardi.`,
+  ).join(" ");
+  const body = `${lead} Pour aller plus loin, inscrivez-vous à notre newsletter hebdomadaire.`;
+  assert.equal(/inscrivez/i.test(body.slice(0, 500)), false);
+  assert.deepEqual(assessScrapeQuality(body), { ok: true });
+});
+
 test("rejects a body shorter than the minimum", () => {
   const quality = assessScrapeQuality("Trop court.");
   assert.equal(quality.ok, false);
