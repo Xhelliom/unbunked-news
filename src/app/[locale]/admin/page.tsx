@@ -1,33 +1,52 @@
-import { isNotNull, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 
-import { db } from "@/db/client";
-import { articles } from "@/db/schema";
 import { Link } from "@/i18n/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { VerdictBadge } from "@/components/verdict-badge";
+import { DashboardFilters } from "@/components/admin/dashboard-filters";
+import { DashboardKpis } from "@/components/admin/dashboard-kpis";
+import { DashboardTable } from "@/components/admin/dashboard-table";
+import { PublishingHeatmap } from "@/components/admin/publishing-heatmap";
+import {
+  parseFlagFilter,
+  parseSort,
+  parseStatusFilter,
+  parseVerdictFilter,
+  TRASH_VIEW,
+} from "@/lib/admin/dashboard-params";
+import {
+  ACTIVITY_DAYS,
+  loadDashboardArticles,
+  loadEditorialKpis,
+  loadPublishingActivity,
+} from "@/lib/admin/dashboard-queries";
 
-const TRASH_VIEW = "trash";
+type SearchParams = {
+  view?: string;
+  sort?: string;
+  verdict?: string;
+  status?: string;
+  flag?: string;
+};
 
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
   const t = await getTranslations("admin.dashboard");
-  const { view } = await searchParams;
-  const showTrash = view === TRASH_VIEW;
+  const params = await searchParams;
+  const showTrash = params.view === TRASH_VIEW;
 
-  const items = await db.query.articles.findMany({
-    where: showTrash
-      ? isNotNull(articles.deletedAt)
-      : isNull(articles.deletedAt),
-    orderBy: (article, { desc }) => [
-      desc(showTrash ? article.deletedAt : article.createdAt),
-    ],
-    limit: 50,
-  });
+  const sort = parseSort(params.sort);
+  const verdict = parseVerdictFilter(params.verdict);
+  const status = parseStatusFilter(params.status);
+  const flagReview = parseFlagFilter(params.flag);
+
+  const [articles, kpis, activity] = await Promise.all([
+    loadDashboardArticles({ view: params.view, sort, verdict, status, flagReview }),
+    showTrash ? null : loadEditorialKpis(),
+    showTrash ? null : loadPublishingActivity(ACTIVITY_DAYS),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -42,41 +61,30 @@ export default async function AdminDashboard({
         </Button>
       </div>
 
-      {items.length === 0 ? (
+      {kpis && <DashboardKpis kpis={kpis} />}
+
+      {activity && activity.length > 0 && (
+        <PublishingHeatmap data={activity} />
+      )}
+
+      {!showTrash && (
+        <DashboardFilters
+          sort={sort}
+          verdict={verdict}
+          status={status}
+          flagReview={flagReview}
+          showTrash={showTrash}
+        />
+      )}
+
+      {articles.length === 0 ? (
         <p className="text-muted-foreground">
           {showTrash ? t("trashEmpty") : t("empty")}
         </p>
       ) : (
-        <ul className="divide-border divide-y rounded-lg border">
-          {items.map((article) => (
-            <li
-              key={article.id}
-              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{article.title}</p>
-                <p className="text-muted-foreground truncate text-sm">
-                  {article.sourceName}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {article.verdict && <VerdictBadge verdict={article.verdict} />}
-                {showTrash ? (
-                  <Badge variant="destructive">{t("deleted")}</Badge>
-                ) : (
-                  <Badge variant={article.published ? "default" : "secondary"}>
-                    {article.published ? t("published") : t("draft")}
-                  </Badge>
-                )}
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/articles/${article.id}`}>
-                    {t("review")}
-                  </Link>
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className="rounded-lg border">
+          <DashboardTable articles={articles} showTrash={showTrash} />
+        </div>
       )}
     </div>
   );
