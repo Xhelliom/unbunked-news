@@ -493,8 +493,24 @@
     "score": "Score",
     "claimsCount": "{count} claims",
     "verdictFilter": "Verdict",
-    "tagFilter": "Topic",
+    "rubricFilter": "Section",
     "all": "All"
+  },
+  "rubrics": {
+    "france": { "label": "France" },
+    "international": { "label": "World" },
+    "politique": { "label": "Politics" },
+    "economie-social": { "label": "Economy & Society" },
+    "ecologie": { "label": "Environment" },
+    "sciences-sante": { "label": "Science & Health" },
+    "culture-idees": { "label": "Culture & Ideas" },
+    "societe": { "label": "Society" }
+  },
+  "search": {
+    "label": "Search",
+    "placeholder": "Search articles…",
+    "title": "Results for “{query}”",
+    "empty": "No articles match your search."
   },
   "article": {
     "originalSource": "Original source",
