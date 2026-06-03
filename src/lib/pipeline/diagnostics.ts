@@ -13,6 +13,7 @@ export const PIPELINE_STEPS = [
   "extracting",
   "verifying",
   "aggregating",
+  "assessing-claims",
   "rewriting",
   "saving",
 ] as const;
@@ -60,6 +61,25 @@ export function toolCallDiagnostic(
     warnings: meta.truncated
       ? [...warnings, `output truncated at max_tokens (${meta.outputTokens})`]
       : warnings,
+  };
+}
+
+// One locale's rewrite threw (API error, no tool input) while the others may
+// have succeeded. Recorded as a non-truncated step carrying the reason so the
+// run can survive a partial rewrite instead of failing wholesale.
+export function rewriteFailureDiagnostic(
+  locale: string,
+  error: unknown,
+): StepDiagnostic {
+  const message = error instanceof Error ? error.message : String(error);
+  return {
+    step: "rewriting",
+    model: null,
+    stopReason: null,
+    outputTokens: null,
+    truncated: false,
+    metrics: { locale, failed: true },
+    warnings: [`rewrite (${locale}) failed: ${message}`],
   };
 }
 

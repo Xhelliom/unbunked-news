@@ -27,14 +27,7 @@ import {
   formatExternalEvidence,
 } from "./data-sources";
 import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
-import {
-  CLAIM_STATUSES,
-  recordAnalysisTool,
-  type Analysis,
-  type AnalysisClaim,
-  type ClaimStatus,
-  type AnalysisSource,
-} from "./schemas";
+import { recordAnalysisTool, type Analysis } from "./schemas";
 import type { VerificationFindings } from "./verify";
 
 export type AggregateResult = {
@@ -43,9 +36,9 @@ export type AggregateResult = {
   diagnostic: StepDiagnostic;
 };
 
-// The record_analysis tool emits every criterion (with rationale + sources),
-// the killswitch flags, descriptors, tags, keywords AND the claims array last.
-// 4096 truncated that tail on long articles, silently dropping all claims.
+// record_analysis emits every criterion (with rationale + sources), the
+// killswitch flags, descriptors, tags and keywords. The per-claim verdicts now
+// live in their own phase (assess-claims) so the two no longer share a budget.
 const MAX_TOKENS = 8192;
 
 // The model judges each criterion; the CODE derives the global, the verdict and
@@ -83,42 +76,6 @@ const SYSTEM = [
   "neutral paraphrase in your own words — never copy sentences from the article.",
   "For each claim, copy its sourceQuote verbatim from the article body.",
 ].join(" ");
-
-function toClaimStatus(value: unknown): ClaimStatus {
-  return typeof value === "string" &&
-    (CLAIM_STATUSES as readonly string[]).includes(value)
-    ? (value as ClaimStatus)
-    : "unverifiable";
-}
-
-function toSources(value: unknown): AnalysisSource[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    if (item && typeof item === "object" && typeof item.url === "string") {
-      return [{ url: item.url, title: String(item.title ?? item.url) }];
-    }
-    return [];
-  });
-}
-
-function toClaims(value: unknown): AnalysisClaim[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) => {
-    if (!item || typeof item !== "object" || typeof item.text !== "string") {
-      return [];
-    }
-    return [
-      {
-        text: item.text,
-        status: toClaimStatus(item.status),
-        explanation: typeof item.explanation === "string" ? item.explanation : "",
-        sourceQuote:
-          typeof item.sourceQuote === "string" ? item.sourceQuote : "",
-        sources: toSources(item.sources),
-      },
-    ];
-  });
-}
 
 // Reads the per-criterion assessments from the (untyped) tool input. A missing
 // or malformed entry stays null: absent is never coerced to a number.
@@ -235,12 +192,10 @@ export async function aggregate(
     keywords: Array.isArray(input.keywords)
       ? input.keywords.filter((k): k is string => typeof k === "string")
       : [],
-    claims: toClaims(input.claims),
   };
 
   const omittedCriteria = SCORE_CRITERIA.filter((c) => criteria[c] == null);
   const warnings: string[] = [];
-  if (analysis.claims.length === 0) warnings.push("analysis returned no claims");
   if (omittedCriteria.length > 0) {
     warnings.push(`criteria omitted: ${omittedCriteria.join(", ")}`);
   }
@@ -253,7 +208,6 @@ export async function aggregate(
     model,
     message,
     {
-      claims: analysis.claims.length,
       sourcesIn: verification.sources.length,
       factChecksFound: external.factChecks.length,
       externalAvailable: external.available,

@@ -18,8 +18,10 @@ import {
 import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
+import { assessClaims } from "./assess-claims";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
 import {
+  rewriteFailureDiagnostic,
   saveDiagnostic,
   scrapeDiagnostic,
   type StepDiagnostic,
@@ -162,34 +164,60 @@ export async function runPipeline(jobId: string): Promise<void> {
     steps.push(aggregateDiagnostic);
     if (aggregateDiagnostic.truncated) {
       throw new Error(
-        "Aggregation hit max_tokens; the claims/criteria tail was truncated. Raise the aggregate budget",
+        "Aggregation hit max_tokens; the criteria tail was truncated. Raise the aggregate budget",
       );
     }
 
-    await updateJob(jobId, { step: "rewriting", progress: 75 });
-    const rewriteResults = await Promise.all(
-      routing.locales.map((locale) =>
-        rewriteArticle(article, analysis, locale, reasoningModel),
-      ),
-    );
-    for (const result of rewriteResults) steps.push(result.diagnostic);
-    const truncatedRewrite = rewriteResults.find((r) => r.diagnostic.truncated);
-    if (truncatedRewrite) {
+    await updateJob(jobId, { step: "assessing-claims", progress: 72 });
+    const {
+      claims: assessedClaims,
+      usage: assessUsage,
+      diagnostic: assessDiagnostic,
+    } = await assessClaims(article, claims, verification, reasoningModel);
+    steps.push(assessDiagnostic);
+    if (assessDiagnostic.truncated) {
       throw new Error(
-        `Rewrite (${truncatedRewrite.rewrite.locale}) hit max_tokens; the body was truncated`,
+        "Claim assessment hit max_tokens; the claims tail was truncated. Raise the assess-claims budget",
       );
     }
-    const rewrites = rewriteResults.map((result) => result.rewrite);
+
+    await updateJob(jobId, { step: "rewriting", progress: 80 });
+    // One locale failing or getting truncated must not sink the whole run: the
+    // article is still scored and the other locale(s) still publish. Every
+    // outcome (success, truncation or hard failure) is recorded in the
+    // diagnostics; only a total wipeout throws.
+    const rewriteOutcomes = await Promise.allSettled(
+      routing.locales.map((locale) =>
+        rewriteArticle(article, analysis, assessedClaims, locale, reasoningModel),
+      ),
+    );
+    const rewriteResults = rewriteOutcomes.flatMap((outcome, index) => {
+      if (outcome.status === "rejected") {
+        steps.push(rewriteFailureDiagnostic(routing.locales[index], outcome.reason));
+        return [];
+      }
+      steps.push(outcome.value.diagnostic);
+      return [outcome.value];
+    });
+    // Token cost is billed for every attempt that reached the model, including a
+    // truncated one; a truncated body is just not persisted.
+    const rewriteUsages = rewriteResults.map((result) => result.usage);
+    const rewrites = rewriteResults
+      .filter((result) => !result.diagnostic.truncated)
+      .map((result) => result.rewrite);
+    if (rewrites.length === 0) {
+      throw new Error(
+        "Every locale rewrite failed or was truncated; no usable rewrite produced",
+      );
+    }
 
     const usageByModel = mergeUsageByModel([
       { model: HAIKU_MODEL, usage: recoverUsage },
       { model: HAIKU_MODEL, usage: extractUsage },
       { model: reasoningModel, usage: verification.usage },
       { model: reasoningModel, usage: aggregateUsage },
-      ...rewriteResults.map((result) => ({
-        model: reasoningModel,
-        usage: result.usage,
-      })),
+      { model: reasoningModel, usage: assessUsage },
+      ...rewriteUsages.map((usage) => ({ model: reasoningModel, usage })),
     ]);
 
     await updateJob(jobId, { step: "saving", progress: 92 });
@@ -272,7 +300,7 @@ export async function runPipeline(jobId: string): Promise<void> {
         }
       }
 
-      for (const [index, claim] of analysis.claims.entries()) {
+      for (const [index, claim] of assessedClaims.entries()) {
         const [createdClaim] = await tx
           .insert(claimsTable)
           .values({
@@ -329,8 +357,8 @@ export async function runPipeline(jobId: string): Promise<void> {
 
     steps.push(
       saveDiagnostic({
-        claimsSaved: analysis.claims.length,
-        claimSourcesSaved: analysis.claims.reduce(
+        claimsSaved: assessedClaims.length,
+        claimSourcesSaved: assessedClaims.reduce(
           (total, claim) => total + claim.sources.length,
           0,
         ),

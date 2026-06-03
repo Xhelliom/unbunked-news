@@ -12,6 +12,7 @@ type JobStep =
   | "extracting"
   | "verifying"
   | "aggregating"
+  | "assessing-claims"
   | "rewriting"
   | "saving"
   | "done";

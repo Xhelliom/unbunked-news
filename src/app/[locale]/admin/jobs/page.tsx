@@ -45,6 +45,7 @@ const JOB_STEPS = [
   "extracting",
   "verifying",
   "aggregating",
+  "assessing-claims",
   "rewriting",
   "saving",
   "done",
