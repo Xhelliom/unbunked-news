@@ -21,6 +21,7 @@ import { aggregate } from "./aggregate";
 import { assessClaims } from "./assess-claims";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
 import {
+  rewriteFailureDiagnostic,
   saveDiagnostic,
   scrapeDiagnostic,
   type StepDiagnostic,
@@ -181,19 +182,34 @@ export async function runPipeline(jobId: string): Promise<void> {
     }
 
     await updateJob(jobId, { step: "rewriting", progress: 80 });
-    const rewriteResults = await Promise.all(
+    // One locale failing or getting truncated must not sink the whole run: the
+    // article is still scored and the other locale(s) still publish. Every
+    // outcome (success, truncation or hard failure) is recorded in the
+    // diagnostics; only a total wipeout throws.
+    const rewriteOutcomes = await Promise.allSettled(
       routing.locales.map((locale) =>
         rewriteArticle(article, analysis, assessedClaims, locale, reasoningModel),
       ),
     );
-    for (const result of rewriteResults) steps.push(result.diagnostic);
-    const truncatedRewrite = rewriteResults.find((r) => r.diagnostic.truncated);
-    if (truncatedRewrite) {
+    const rewriteResults = rewriteOutcomes.flatMap((outcome, index) => {
+      if (outcome.status === "rejected") {
+        steps.push(rewriteFailureDiagnostic(routing.locales[index], outcome.reason));
+        return [];
+      }
+      steps.push(outcome.value.diagnostic);
+      return [outcome.value];
+    });
+    // Token cost is billed for every attempt that reached the model, including a
+    // truncated one; a truncated body is just not persisted.
+    const rewriteUsages = rewriteResults.map((result) => result.usage);
+    const rewrites = rewriteResults
+      .filter((result) => !result.diagnostic.truncated)
+      .map((result) => result.rewrite);
+    if (rewrites.length === 0) {
       throw new Error(
-        `Rewrite (${truncatedRewrite.rewrite.locale}) hit max_tokens; the body was truncated`,
+        "Every locale rewrite failed or was truncated; no usable rewrite produced",
       );
     }
-    const rewrites = rewriteResults.map((result) => result.rewrite);
 
     const usageByModel = mergeUsageByModel([
       { model: HAIKU_MODEL, usage: recoverUsage },
@@ -201,10 +217,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       { model: reasoningModel, usage: verification.usage },
       { model: reasoningModel, usage: aggregateUsage },
       { model: reasoningModel, usage: assessUsage },
-      ...rewriteResults.map((result) => ({
-        model: reasoningModel,
-        usage: result.usage,
-      })),
+      ...rewriteUsages.map((usage) => ({ model: reasoningModel, usage })),
     ]);
 
     await updateJob(jobId, { step: "saving", progress: 92 });
