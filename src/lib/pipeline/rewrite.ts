@@ -61,6 +61,7 @@ const SYSTEM =
 export async function rewriteArticle(
   article: ScrapedArticle,
   analysis: Analysis,
+  claims: AnalysisClaim[],
   locale: string,
   model: string,
 ): Promise<RewriteResult> {
@@ -90,7 +91,7 @@ export async function rewriteArticle(
               `OUR VERDICT: ${analysis.verdict} (reliability ${analysis.reliabilityScore ?? "—"}/100)`,
               `OUR SUMMARY: ${analysis.summary}`,
               "",
-              `CHECKED CLAIMS:\n${claimsBrief(analysis.claims)}`,
+              `CHECKED CLAIMS:\n${claimsBrief(claims)}`,
               "",
               `Produce the Unbunked rewrite in ${language}. Insert [[claim:N]] markers as instructed.`,
             ].join("\n"),

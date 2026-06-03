@@ -13,6 +13,7 @@ export const PIPELINE_STEPS = [
   "extracting",
   "verifying",
   "aggregating",
+  "assessing-claims",
   "rewriting",
   "saving",
 ] as const;

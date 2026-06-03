@@ -78,7 +78,6 @@ export type Analysis = {
   evidence: AnalysisEvidence;
   tags: string[];
   keywords: string[];
-  claims: AnalysisClaim[];
 };
 
 export type Rewrite = {
@@ -195,6 +194,62 @@ function killswitchSignalProperty(): Record<string, unknown> {
   };
 }
 
+// Per-claim verdict shape, shared by the dedicated claims-assessment tool. The
+// status enum derives from CLAIM_STATUSES so the DB enum, the tool schema and
+// the runtime check stay in lockstep.
+const claimAssessmentItem: Record<string, unknown> = {
+  type: "object",
+  properties: {
+    text: { type: "string" },
+    status: { type: "string", enum: [...CLAIM_STATUSES] },
+    explanation: {
+      type: "string",
+      description: "Why this status, referencing the sources.",
+    },
+    sourceQuote: {
+      type: "string",
+      description:
+        "The exact sentence(s) copied verbatim from the article body that this claim is based on, so it can be located in the original text. Empty string if the claim is not stated in a specific passage.",
+    },
+    sources: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          url: { type: "string" },
+          title: { type: "string" },
+        },
+        required: ["url", "title"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["text", "status", "explanation", "sourceQuote", "sources"],
+  additionalProperties: false,
+};
+
+export const recordClaimsAssessmentTool: Anthropic.Tool = {
+  name: "record_claims_assessment",
+  description:
+    "Record the per-claim verdict: each checkable claim with its status, an " +
+    "explanation grounded in the provided research, the verbatim source quote " +
+    "and the URLs actually consulted.",
+  input_schema: {
+    type: "object",
+    properties: {
+      claims: {
+        type: "array",
+        description:
+          "One entry per checkable claim, in the order supplied. Status from " +
+          "the fixed enum; never invent sources.",
+        items: claimAssessmentItem,
+      },
+    },
+    required: ["claims"],
+    additionalProperties: false,
+  },
+};
+
 const criteriaProperties = Object.fromEntries(
   SCORE_CRITERIA.map((criterion) => [criterion, criterionProperty(criterion)]),
 );
@@ -270,39 +325,6 @@ export const recordAnalysisTool: Anthropic.Tool = {
           "as the article.",
         items: { type: "string" },
       },
-      claims: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            text: { type: "string" },
-            status: { type: "string", enum: [...CLAIM_STATUSES] },
-            explanation: {
-              type: "string",
-              description: "Why this status, referencing the sources.",
-            },
-            sourceQuote: {
-              type: "string",
-              description:
-                "The exact sentence(s) copied verbatim from the article body that this claim is based on, so it can be located in the original text. Empty string if the claim is not stated in a specific passage.",
-            },
-            sources: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  url: { type: "string" },
-                  title: { type: "string" },
-                },
-                required: ["url", "title"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["text", "status", "explanation", "sourceQuote", "sources"],
-          additionalProperties: false,
-        },
-      },
     },
     required: [
       "title",
@@ -314,7 +336,6 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "descriptors",
       "tags",
       "keywords",
-      "claims",
     ],
     additionalProperties: false,
   },

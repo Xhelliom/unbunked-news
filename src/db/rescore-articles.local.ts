@@ -4,6 +4,7 @@ import { db } from "./client";
 import { articles, claimSources, claims as claimsTable } from "./schema";
 import { scrapeArticle, type ScrapedArticle } from "@/lib/scrape";
 import { aggregate } from "@/lib/pipeline/aggregate";
+import { assessClaims } from "@/lib/pipeline/assess-claims";
 import { extractClaims } from "@/lib/pipeline/extract-claims";
 import { HAIKU_MODEL, SONNET_MODEL } from "@/lib/pipeline/models";
 import { recoverArticleBody } from "@/lib/pipeline/recover-body";
@@ -70,6 +71,12 @@ async function rescore(): Promise<void> {
         verification,
         SONNET_MODEL,
       );
+      const { claims: assessedClaims } = await assessClaims(
+        scraped,
+        claims,
+        verification,
+        SONNET_MODEL,
+      );
 
       await db.transaction(async (tx) => {
         await tx
@@ -102,7 +109,7 @@ async function rescore(): Promise<void> {
 
         // Replace the claims (cascade also clears their sources).
         await tx.delete(claimsTable).where(eq(claimsTable.articleId, article.id));
-        for (const [index, claim] of analysis.claims.entries()) {
+        for (const [index, claim] of assessedClaims.entries()) {
           const [createdClaim] = await tx
             .insert(claimsTable)
             .values({

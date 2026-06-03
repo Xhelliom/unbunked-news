@@ -18,6 +18,7 @@ import {
 import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
+import { assessClaims } from "./assess-claims";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
 import {
   saveDiagnostic,
@@ -162,14 +163,27 @@ export async function runPipeline(jobId: string): Promise<void> {
     steps.push(aggregateDiagnostic);
     if (aggregateDiagnostic.truncated) {
       throw new Error(
-        "Aggregation hit max_tokens; the claims/criteria tail was truncated. Raise the aggregate budget",
+        "Aggregation hit max_tokens; the criteria tail was truncated. Raise the aggregate budget",
       );
     }
 
-    await updateJob(jobId, { step: "rewriting", progress: 75 });
+    await updateJob(jobId, { step: "assessing-claims", progress: 72 });
+    const {
+      claims: assessedClaims,
+      usage: assessUsage,
+      diagnostic: assessDiagnostic,
+    } = await assessClaims(article, claims, verification, reasoningModel);
+    steps.push(assessDiagnostic);
+    if (assessDiagnostic.truncated) {
+      throw new Error(
+        "Claim assessment hit max_tokens; the claims tail was truncated. Raise the assess-claims budget",
+      );
+    }
+
+    await updateJob(jobId, { step: "rewriting", progress: 80 });
     const rewriteResults = await Promise.all(
       routing.locales.map((locale) =>
-        rewriteArticle(article, analysis, locale, reasoningModel),
+        rewriteArticle(article, analysis, assessedClaims, locale, reasoningModel),
       ),
     );
     for (const result of rewriteResults) steps.push(result.diagnostic);
@@ -186,6 +200,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       { model: HAIKU_MODEL, usage: extractUsage },
       { model: reasoningModel, usage: verification.usage },
       { model: reasoningModel, usage: aggregateUsage },
+      { model: reasoningModel, usage: assessUsage },
       ...rewriteResults.map((result) => ({
         model: reasoningModel,
         usage: result.usage,
@@ -272,7 +287,7 @@ export async function runPipeline(jobId: string): Promise<void> {
         }
       }
 
-      for (const [index, claim] of analysis.claims.entries()) {
+      for (const [index, claim] of assessedClaims.entries()) {
         const [createdClaim] = await tx
           .insert(claimsTable)
           .values({
@@ -329,8 +344,8 @@ export async function runPipeline(jobId: string): Promise<void> {
 
     steps.push(
       saveDiagnostic({
-        claimsSaved: analysis.claims.length,
-        claimSourcesSaved: analysis.claims.reduce(
+        claimsSaved: assessedClaims.length,
+        claimSourcesSaved: assessedClaims.reduce(
           (total, claim) => total + claim.sources.length,
           0,
         ),
