@@ -98,12 +98,13 @@ function PasswordFieldWithTools({
 
   return (
     <div className="space-y-1">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           name={name}
           required
           minLength={8}
           type="password"
+          className="min-w-0 flex-1"
           placeholder={placeholder}
           value={value}
           onChange={(event) => {
@@ -236,7 +237,7 @@ export function MemberManagementClient({
                   <form
                     id={`set-password-${member.id}`}
                     action={setMemberPasswordAction}
-                    className="flex items-center gap-2"
+                    className="flex flex-wrap items-center gap-2"
                   >
                     <input type="hidden" name="id" value={member.id} />
                     <div className="w-[28rem] max-w-full">

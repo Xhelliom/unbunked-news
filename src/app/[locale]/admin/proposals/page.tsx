@@ -23,7 +23,10 @@ export default async function AdminProposalsPage() {
       ) : (
         <ul className="divide-border divide-y rounded-lg border">
           {items.map((proposal) => (
-            <li key={proposal.id} className="flex items-center gap-4 px-4 py-3">
+            <li
+              key={proposal.id}
+              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
+            >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{proposal.url}</p>
                 {proposal.email && (
@@ -32,29 +35,31 @@ export default async function AdminProposalsPage() {
                   </p>
                 )}
               </div>
-              <Badge
-                variant={
-                  proposal.status === "pending" ? "secondary" : "outline"
-                }
-              >
-                {t(`statuses.${proposal.status}`)}
-              </Badge>
-              {proposal.status === "pending" && (
-                <div className="flex gap-2">
-                  <form action={acceptProposal}>
-                    <input type="hidden" name="id" value={proposal.id} />
-                    <Button type="submit" size="sm">
-                      {t("accept")}
-                    </Button>
-                  </form>
-                  <form action={rejectProposal}>
-                    <input type="hidden" name="id" value={proposal.id} />
-                    <Button type="submit" size="sm" variant="outline">
-                      {t("reject")}
-                    </Button>
-                  </form>
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant={
+                    proposal.status === "pending" ? "secondary" : "outline"
+                  }
+                >
+                  {t(`statuses.${proposal.status}`)}
+                </Badge>
+                {proposal.status === "pending" && (
+                  <div className="flex gap-2">
+                    <form action={acceptProposal}>
+                      <input type="hidden" name="id" value={proposal.id} />
+                      <Button type="submit" size="sm">
+                        {t("accept")}
+                      </Button>
+                    </form>
+                    <form action={rejectProposal}>
+                      <input type="hidden" name="id" value={proposal.id} />
+                      <Button type="submit" size="sm" variant="outline">
+                        {t("reject")}
+                      </Button>
+                    </form>
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ul>

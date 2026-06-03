@@ -22,6 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 type AdminSidebarProps = {
@@ -60,6 +61,11 @@ function initialsFromName(name: string): string {
 
 export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { isMobile, setOpen } = useSidebar();
+  // Sur mobile, suivre un lien doit refermer le tiroir superposé.
+  const closeOnMobile = () => {
+    if (isMobile) setOpen(false);
+  };
   const items: NavItem[] = [
     { href: "/admin", label: labels.dashboard, icon: LayoutDashboard },
     { href: "/admin/submit", label: labels.submit, icon: Send },
@@ -93,7 +99,11 @@ export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
             const Icon = item.icon;
             return (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} className="block">
+                <Link
+                  href={item.href}
+                  onClick={closeOnMobile}
+                  className="block"
+                >
                   <SidebarMenuButton isActive={isActive}>
                     <span className="flex items-center gap-2">
                       <Icon className="size-4 shrink-0" />
@@ -110,6 +120,7 @@ export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
         {/* Carte compacte du compte courant avec accès direct à l'édition. */}
         <Link
           href="/admin/account"
+          onClick={closeOnMobile}
           className="hover:bg-accent block rounded-md p-2 transition-colors"
         >
           <div className="flex items-center gap-2">
