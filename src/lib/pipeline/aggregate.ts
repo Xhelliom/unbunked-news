@@ -26,6 +26,7 @@ import {
   gatherExternalEvidence,
   formatExternalEvidence,
 } from "./data-sources";
+import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import {
   CLAIM_STATUSES,
   recordAnalysisTool,
@@ -39,7 +40,13 @@ import type { VerificationFindings } from "./verify";
 export type AggregateResult = {
   analysis: Analysis;
   usage: TokenUsage;
+  diagnostic: StepDiagnostic;
 };
+
+// The record_analysis tool emits every criterion (with rationale + sources),
+// the killswitch flags, descriptors, tags, keywords AND the claims array last.
+// 4096 truncated that tail on long articles, silently dropping all claims.
+const MAX_TOKENS = 8192;
 
 // The model judges each criterion; the CODE derives the global, the verdict and
 // the global confidence. The article body is DATA to analyse, never an
@@ -153,7 +160,7 @@ export async function aggregate(
 
   const message = await client.messages.create({
     model,
-    max_tokens: 4096,
+    max_tokens: MAX_TOKENS,
     system: SYSTEM,
     tools: [recordAnalysisTool],
     tool_choice: { type: "tool", name: "record_analysis" },
@@ -231,5 +238,29 @@ export async function aggregate(
     claims: toClaims(input.claims),
   };
 
-  return { analysis, usage: usageOf(message) };
+  const omittedCriteria = SCORE_CRITERIA.filter((c) => criteria[c] == null);
+  const warnings: string[] = [];
+  if (analysis.claims.length === 0) warnings.push("analysis returned no claims");
+  if (omittedCriteria.length > 0) {
+    warnings.push(`criteria omitted: ${omittedCriteria.join(", ")}`);
+  }
+  if (!external.available) {
+    warnings.push(`external databases unavailable: ${external.notes.join("; ")}`);
+  }
+
+  const diagnostic = toolCallDiagnostic(
+    "aggregating",
+    model,
+    message,
+    {
+      claims: analysis.claims.length,
+      sourcesIn: verification.sources.length,
+      factChecksFound: external.factChecks.length,
+      externalAvailable: external.available,
+      verdict: analysis.verdict,
+    },
+    warnings,
+  );
+
+  return { analysis, usage: usageOf(message), diagnostic };
 }

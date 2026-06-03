@@ -127,6 +127,13 @@
       "when": 1780432237282,
       "tag": "0017_dusty_nicolaos",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1780463342738,
+      "tag": "0018_chemical_lady_vermin",
+      "breakpoints": true
     }
   ]
 }

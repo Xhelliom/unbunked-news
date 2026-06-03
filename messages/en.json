@@ -284,6 +284,17 @@
         "rewriting": "Multilingual rewrite",
         "saving": "Saving",
         "done": "Done"
+      },
+      "diagnostics": {
+        "title": "Run diagnostics",
+        "empty": "No diagnostics recorded for this run.",
+        "model": "Model",
+        "stopReason": "Stop reason",
+        "outputTokens": "Output tokens",
+        "truncated": "Truncated",
+        "warnings": "Warnings",
+        "yes": "Yes",
+        "no": "No"
       }
     },
     "jobs": {

@@ -80,6 +80,12 @@ export async function recoverArticleBody(
     ],
   });
 
+  if (message.stop_reason === "max_tokens") {
+    throw new Error(
+      "Body recovery was truncated at max_tokens; the selected indices are unreliable",
+    );
+  }
+
   const input = firstToolInput(message, "select_article_body");
   const indices = selectedIndices(input, blocks.length);
   const content = indices.map((index) => blocks[index]).join("\n\n");

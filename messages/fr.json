@@ -284,6 +284,17 @@
         "rewriting": "Réécriture multilingue",
         "saving": "Enregistrement",
         "done": "Terminé"
+      },
+      "diagnostics": {
+        "title": "Diagnostics du run",
+        "empty": "Aucun diagnostic enregistré pour ce run.",
+        "model": "Modèle",
+        "stopReason": "Raison d'arrêt",
+        "outputTokens": "Tokens de sortie",
+        "truncated": "Tronqué",
+        "warnings": "Avertissements",
+        "yes": "Oui",
+        "no": "Non"
       }
     },
     "jobs": {
