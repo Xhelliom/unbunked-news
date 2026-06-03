@@ -49,26 +49,31 @@ export default async function AdminDashboard({
       ) : (
         <ul className="divide-border divide-y rounded-lg border">
           {items.map((article) => (
-            <li key={article.id} className="flex items-center gap-4 px-4 py-3">
+            <li
+              key={article.id}
+              className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
+            >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{article.title}</p>
                 <p className="text-muted-foreground truncate text-sm">
                   {article.sourceName}
                 </p>
               </div>
-              {article.verdict && <VerdictBadge verdict={article.verdict} />}
-              {showTrash ? (
-                <Badge variant="destructive">{t("deleted")}</Badge>
-              ) : (
-                <Badge variant={article.published ? "default" : "secondary"}>
-                  {article.published ? t("published") : t("draft")}
-                </Badge>
-              )}
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/articles/${article.id}`}>
-                  {t("review")}
-                </Link>
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {article.verdict && <VerdictBadge verdict={article.verdict} />}
+                {showTrash ? (
+                  <Badge variant="destructive">{t("deleted")}</Badge>
+                ) : (
+                  <Badge variant={article.published ? "default" : "secondary"}>
+                    {article.published ? t("published") : t("draft")}
+                  </Badge>
+                )}
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/admin/articles/${article.id}`}>
+                    {t("review")}
+                  </Link>
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
