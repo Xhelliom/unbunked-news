@@ -114,17 +114,11 @@ export function scrapeDiagnostic(
 export function saveDiagnostic(metrics: {
   claimsSaved: number;
   claimSourcesSaved: number;
-  tagsRequested: number;
-  tagsLinked: number;
   keywordsRequested: number;
   keywordsStored: number;
 }): StepDiagnostic {
   const warnings: string[] = [];
-  const droppedTags = metrics.tagsRequested - metrics.tagsLinked;
   const droppedKeywords = metrics.keywordsRequested - metrics.keywordsStored;
-  if (droppedTags > 0) {
-    warnings.push(`${droppedTags} tag(s) dropped (slug collision/empty)`);
-  }
   if (droppedKeywords > 0) {
     warnings.push(`${droppedKeywords} keyword(s) dropped (slug collision/empty)`);
   }

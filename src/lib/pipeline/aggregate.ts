@@ -28,6 +28,7 @@ import {
 } from "./data-sources";
 import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import { recordAnalysisTool, type Analysis } from "./schemas";
+import { FALLBACK_RUBRIC, isRubric } from "@/lib/rubrics";
 import type { VerificationFindings } from "./verify";
 
 export type AggregateResult = {
@@ -186,9 +187,9 @@ export async function aggregate(
     contentType: toContentType(descriptors.contentType),
     killswitch,
     evidence: { criteria, killswitch },
-    tags: Array.isArray(input.tags)
-      ? input.tags.filter((t): t is string => typeof t === "string")
-      : [],
+    // The tool enum constrains this, but guard anyway: an off-list or missing
+    // value falls back to the catch-all rubric rather than breaking the insert.
+    rubric: isRubric(input.rubric) ? input.rubric : FALLBACK_RUBRIC,
     keywords: Array.isArray(input.keywords)
       ? input.keywords.filter((k): k is string => typeof k === "string")
       : [],
