@@ -1,6 +1,7 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -18,6 +19,15 @@ import {
   CONTENT_TYPE_VALUES,
   FRAMING_VALUES,
 } from "@/lib/score-criteria";
+import { RUBRICS } from "@/lib/rubrics";
+
+// Postgres full-text search vector. Drizzle has no native tsvector column type,
+// so we declare a minimal custom type for it (used only as a generated column).
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 import type { RunDiagnostics } from "@/lib/pipeline/diagnostics";
 import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
 import type { ScrapeProvenance } from "@/lib/scrape";
@@ -39,6 +49,10 @@ export const verdictEnum = pgEnum("verdict", [
 export const framingEnum = pgEnum("framing", [...FRAMING_VALUES]);
 export const contentTypeEnum = pgEnum("content_type", [...CONTENT_TYPE_VALUES]);
 export const confidenceEnum = pgEnum("confidence", [...CONFIDENCE_LEVELS]);
+
+// Fixed editorial taxonomy, one per article. Values kept in sync with
+// src/lib/rubrics.ts (the navigation source of truth).
+export const rubricEnum = pgEnum("rubric", [...RUBRICS]);
 
 export const claimStatusEnum = pgEnum("claim_status", [
   "supported",
@@ -130,6 +144,18 @@ export const articles = pgTable(
     // Frozen audit snapshot: per-criterion level/score/confidence/rationale/
     // sources + killswitch signals. Lets a third party replay the verdict.
     evidence: jsonb().$type<AnalysisEvidence>(),
+    // Fixed editorial rubric (one per article). Added nullable so existing rows
+    // can be backfilled (src/db/backfill-rubrics.local.ts) before a later
+    // migration flips it to NOT NULL; the pipeline always sets it on new rows.
+    rubric: rubricEnum(),
+    // Postgres-maintained full-text index over the headline, summary and body.
+    // Generated-column expressions can't reference the table object being
+    // defined, so the column names are inlined here as a documented technical
+    // exception to the no-raw-identifiers rule (see CLAUDE.md); the search query
+    // that consumes it has a non-regression test.
+    searchVector: tsvector("search_vector").generatedAlwaysAs(
+      sql`to_tsvector('french', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(content, ''))`,
+    ),
     locale: varchar({ length: 5 }).notNull().default("fr"),
     published: boolean().notNull().default(false),
     publishedAt: timestamp({ withTimezone: true, mode: "date" }),
@@ -149,6 +175,8 @@ export const articles = pgTable(
     index("articles_verdict_idx").on(table.verdict),
     index("articles_published_idx").on(table.published, table.publishedAt),
     index("articles_deleted_at_idx").on(table.deletedAt),
+    index("articles_rubric_idx").on(table.rubric),
+    index("articles_search_vector_idx").using("gin", table.searchVector),
   ],
 );
 
@@ -230,6 +258,9 @@ export const articleKeywords = pgTable(
   ],
 );
 
+// DEPRECATED: the open tag cloud is being replaced by the fixed `rubric` enum.
+// Kept only so the heuristic backfill (src/db/backfill-rubrics.local.ts) can read
+// existing assignments; dropped once every article has a rubric (final migration).
 export const tags = pgTable("tags", {
   id: uuid().primaryKey().defaultRandom(),
   slug: text().notNull().unique(),
