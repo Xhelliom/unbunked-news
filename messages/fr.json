@@ -248,7 +248,50 @@
       "trash": "Corbeille",
       "trashTitle": "Corbeille",
       "backToActive": "Articles actifs",
-      "trashEmpty": "La corbeille est vide."
+      "trashEmpty": "La corbeille est vide.",
+      "recentViews": "{count} sur 7j",
+      "claimsCount": "{count, plural, one {# affirmation} other {# affirmations}}",
+      "kpis": {
+        "published": "Publiés",
+        "drafts": "Brouillons",
+        "avgScore": "Fiabilité moy.",
+        "needsReview": "À revoir",
+        "publishedRecently": "Publiés ({days}j)"
+      },
+      "sort": {
+        "recent": "Plus récents",
+        "oldest": "Plus anciens",
+        "views": "Plus vus",
+        "score": "Meilleur score"
+      },
+      "filters": {
+        "allVerdicts": "Tous les verdicts",
+        "toReview": "À revoir",
+        "reset": "Réinitialiser"
+      },
+      "columns": {
+        "article": "Article",
+        "date": "Date",
+        "verdict": "Verdict",
+        "views": "Vues",
+        "readRate": "Taux de lecture",
+        "claims": "Affirmations",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "attention": {
+        "killswitch": "Killswitch activé",
+        "lowScoreHighViews": "Fragile & exposé",
+        "manyUnverified": "Peu vérifié",
+        "noImage": "Sans image"
+      },
+      "heatmap": {
+        "title": "Activité de publication",
+        "total": "{count, plural, one {# article} other {# articles}}",
+        "dayCount": "{count, plural, one {# article} other {# articles}}",
+        "less": "Moins",
+        "more": "Plus"
+      }
     },
     "submit": {
       "title": "Analyser un article",

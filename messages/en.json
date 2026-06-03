@@ -248,7 +248,50 @@
       "trash": "Trash",
       "trashTitle": "Trash",
       "backToActive": "Active articles",
-      "trashEmpty": "The trash is empty."
+      "trashEmpty": "The trash is empty.",
+      "recentViews": "{count} in 7d",
+      "claimsCount": "{count, plural, one {# claim} other {# claims}}",
+      "kpis": {
+        "published": "Published",
+        "drafts": "Drafts",
+        "avgScore": "Avg. reliability",
+        "needsReview": "To review",
+        "publishedRecently": "Published ({days}d)"
+      },
+      "sort": {
+        "recent": "Newest",
+        "oldest": "Oldest",
+        "views": "Most viewed",
+        "score": "Highest score"
+      },
+      "filters": {
+        "allVerdicts": "All verdicts",
+        "toReview": "To review",
+        "reset": "Reset"
+      },
+      "columns": {
+        "article": "Article",
+        "date": "Date",
+        "verdict": "Verdict",
+        "views": "Views",
+        "readRate": "Read rate",
+        "claims": "Claims",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "attention": {
+        "killswitch": "Killswitch raised",
+        "lowScoreHighViews": "Fragile & exposed",
+        "manyUnverified": "Thinly verified",
+        "noImage": "No image"
+      },
+      "heatmap": {
+        "title": "Publishing activity",
+        "total": "{count, plural, one {# article} other {# articles}}",
+        "dayCount": "{count, plural, one {# article} other {# articles}}",
+        "less": "Less",
+        "more": "More"
+      }
     },
     "submit": {
       "title": "Analyze an article",
