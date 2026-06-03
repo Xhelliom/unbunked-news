@@ -8,6 +8,7 @@ import {
   usageOf,
   type TokenUsage,
 } from "./client";
+import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import {
   recordRewriteTool,
   type Analysis,
@@ -15,9 +16,14 @@ import {
   type Rewrite,
 } from "./schemas";
 
+// A full-article rewrite in markdown can be long; 4096 truncated the body on
+// longer pieces, dropping trailing paragraphs and [[claim:N]] markers.
+const MAX_TOKENS = 8192;
+
 export type RewriteResult = {
   rewrite: Rewrite;
   usage: TokenUsage;
+  diagnostic: StepDiagnostic;
 };
 
 const LOCALE_NAMES: Record<string, string> = {
@@ -63,7 +69,7 @@ export async function rewriteArticle(
 
   const message = await client.messages.create({
     model,
-    max_tokens: 4096,
+    max_tokens: MAX_TOKENS,
     system: SYSTEM,
     tools: [recordRewriteTool],
     tool_choice: { type: "tool", name: "record_rewrite" },
@@ -99,12 +105,25 @@ export async function rewriteArticle(
     throw new Error(`Rewrite (${locale}) did not return a structured result`);
   }
 
+  const body = typeof input.body === "string" ? input.body : "";
+  const warnings: string[] = [];
+  if (body.trim().length === 0) warnings.push(`empty rewrite body (${locale})`);
+
+  const diagnostic = toolCallDiagnostic(
+    "rewriting",
+    model,
+    message,
+    { locale, bodyChars: body.length },
+    warnings,
+  );
+
   return {
     rewrite: {
       locale,
       title: typeof input.title === "string" ? input.title : analysis.title,
-      body: typeof input.body === "string" ? input.body : "",
+      body,
     },
     usage: usageOf(message),
+    diagnostic,
   };
 }

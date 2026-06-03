@@ -84,3 +84,20 @@ export function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
     cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
   };
 }
+
+// Response shape worth surfacing for diagnostics. `truncated` means the model
+// hit max_tokens mid-output; for a forced tool call that leaves the tool input
+// incomplete, so trailing fields (e.g. the claims array) silently go missing.
+export type MessageMeta = {
+  stopReason: string | null;
+  outputTokens: number;
+  truncated: boolean;
+};
+
+export function messageMeta(message: Anthropic.Message): MessageMeta {
+  return {
+    stopReason: message.stop_reason,
+    outputTokens: message.usage.output_tokens,
+    truncated: message.stop_reason === "max_tokens",
+  };
+}

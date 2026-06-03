@@ -18,6 +18,7 @@ import {
   CONTENT_TYPE_VALUES,
   FRAMING_VALUES,
 } from "@/lib/score-criteria";
+import type { RunDiagnostics } from "@/lib/pipeline/diagnostics";
 import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
 import type { ScrapeProvenance } from "@/lib/scrape";
 
@@ -285,6 +286,10 @@ export const jobs = pgTable(
     // retries so a job that repeatedly stalls eventually fails for good.
     attempts: integer().notNull().default(0),
     error: text(),
+    // Per-step audit trail (stop reasons, token counts, truncation, warnings)
+    // captured during the run, for admin diagnosis. Null for jobs run before
+    // this existed or that never started.
+    diagnostics: jsonb().$type<RunDiagnostics>(),
     startedAt: timestamp({ withTimezone: true, mode: "date" }),
     finishedAt: timestamp({ withTimezone: true, mode: "date" }),
     createdAt: timestamp({ withTimezone: true, mode: "date" })

@@ -20,6 +20,11 @@ import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
 import {
+  saveDiagnostic,
+  scrapeDiagnostic,
+  type StepDiagnostic,
+} from "./diagnostics";
+import {
   DEFAULT_REASONING_MODEL,
   HAIKU_MODEL,
   isReasoningModel,
@@ -31,6 +36,11 @@ import { verifyClaims } from "./verify";
 
 // Upper bound on the stored article body to keep rows reasonable.
 const MAX_STORED_CONTENT_CHARS = 60_000;
+
+// Below this the scraped body is suspiciously thin; the run still proceeds but
+// the diagnostics flag it so an admin can tell a near-empty scrape from a real
+// short article.
+const SHORT_BODY_WARNING_CHARS = 800;
 
 const TAG_PALETTE = [
   "#6366f1",
@@ -82,6 +92,10 @@ export async function runPipeline(jobId: string): Promise<void> {
   const job = await db.query.jobs.findFirst({ where: eq(jobs.id, jobId) });
   if (!job) return;
 
+  // Per-step audit trail, persisted on the job on BOTH the success and the
+  // failure path so a degraded or aborted run can be explained after the fact.
+  const steps: StepDiagnostic[] = [];
+
   try {
     await updateJob(jobId, {
       status: "running",
@@ -114,22 +128,43 @@ export async function runPipeline(jobId: string): Promise<void> {
       },
     );
 
-    await updateJob(jobId, { step: "extracting", progress: 25 });
-    const { claims, usage: extractUsage } = await extractClaims(
-      article,
-      HAIKU_MODEL,
+    steps.push(
+      scrapeDiagnostic(
+        provenance,
+        article.content.length,
+        SHORT_BODY_WARNING_CHARS,
+      ),
     );
+
+    await updateJob(jobId, { step: "extracting", progress: 25 });
+    const {
+      claims,
+      usage: extractUsage,
+      diagnostic: extractDiagnostic,
+    } = await extractClaims(article, HAIKU_MODEL);
+    steps.push(extractDiagnostic);
+    if (extractDiagnostic.truncated) {
+      throw new Error(
+        "Claim extraction hit max_tokens; raise the extract budget or shorten the article",
+      );
+    }
 
     await updateJob(jobId, { step: "verifying", progress: 45 });
     const verification = await verifyClaims(article, claims, reasoningModel);
+    steps.push(verification.diagnostic);
 
     await updateJob(jobId, { step: "aggregating", progress: 60 });
-    const { analysis, usage: aggregateUsage } = await aggregate(
-      article,
-      claims,
-      verification,
-      reasoningModel,
-    );
+    const {
+      analysis,
+      usage: aggregateUsage,
+      diagnostic: aggregateDiagnostic,
+    } = await aggregate(article, claims, verification, reasoningModel);
+    steps.push(aggregateDiagnostic);
+    if (aggregateDiagnostic.truncated) {
+      throw new Error(
+        "Aggregation hit max_tokens; the claims/criteria tail was truncated. Raise the aggregate budget",
+      );
+    }
 
     await updateJob(jobId, { step: "rewriting", progress: 75 });
     const rewriteResults = await Promise.all(
@@ -137,6 +172,13 @@ export async function runPipeline(jobId: string): Promise<void> {
         rewriteArticle(article, analysis, locale, reasoningModel),
       ),
     );
+    for (const result of rewriteResults) steps.push(result.diagnostic);
+    const truncatedRewrite = rewriteResults.find((r) => r.diagnostic.truncated);
+    if (truncatedRewrite) {
+      throw new Error(
+        `Rewrite (${truncatedRewrite.rewrite.locale}) hit max_tokens; the body was truncated`,
+      );
+    }
     const rewrites = rewriteResults.map((result) => result.rewrite);
 
     const usageByModel = mergeUsageByModel([
@@ -152,6 +194,8 @@ export async function runPipeline(jobId: string): Promise<void> {
 
     await updateJob(jobId, { step: "saving", progress: 92 });
 
+    let tagsLinked = 0;
+    let keywordsStored = 0;
     const articleId = await db.transaction(async (tx) => {
       const [created] = await tx
         .insert(articles)
@@ -219,6 +263,7 @@ export async function runPipeline(jobId: string): Promise<void> {
         const keywordRows = [...new Set(analysis.keywords.map(slugify))]
           .filter(Boolean)
           .map((keyword) => ({ articleId: created.id, keyword }));
+        keywordsStored = keywordRows.length;
         if (keywordRows.length > 0) {
           await tx
             .insert(articleKeywords)
@@ -270,6 +315,7 @@ export async function runPipeline(jobId: string): Promise<void> {
               tagRows.map((t) => t.slug),
             ),
           );
+        tagsLinked = stored.length;
         if (stored.length > 0) {
           await tx
             .insert(articleTags)
@@ -281,18 +327,34 @@ export async function runPipeline(jobId: string): Promise<void> {
       return created.id;
     });
 
+    steps.push(
+      saveDiagnostic({
+        claimsSaved: analysis.claims.length,
+        claimSourcesSaved: analysis.claims.reduce(
+          (total, claim) => total + claim.sources.length,
+          0,
+        ),
+        tagsRequested: analysis.tags.length,
+        tagsLinked,
+        keywordsRequested: analysis.keywords.length,
+        keywordsStored,
+      }),
+    );
+
     await updateJob(jobId, {
       status: "succeeded",
       step: "done",
       progress: 100,
       articleId,
       finishedAt: new Date(),
+      diagnostics: { steps },
     });
   } catch (error) {
     await updateJob(jobId, {
       status: "failed",
       error: error instanceof Error ? error.message : String(error),
       finishedAt: new Date(),
+      diagnostics: { steps },
     });
   }
 }

@@ -8,11 +8,17 @@ import {
   usageOf,
   type TokenUsage,
 } from "./client";
+import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import { recordClaimsTool } from "./schemas";
+
+// 3-8 short claim sentences fit easily; the headroom only guards against a
+// pathological article producing a long list and getting cut off mid-array.
+const MAX_TOKENS = 4096;
 
 export type ExtractClaimsResult = {
   claims: string[];
   usage: TokenUsage;
+  diagnostic: StepDiagnostic;
 };
 
 const SYSTEM =
@@ -29,7 +35,7 @@ export async function extractClaims(
   const client = getClaude();
   const message = await client.messages.create({
     model,
-    max_tokens: 2048,
+    max_tokens: MAX_TOKENS,
     system: SYSTEM,
     tools: [recordClaimsTool],
     tool_choice: { type: "tool", name: "record_claims" },
@@ -57,5 +63,19 @@ export async function extractClaims(
     (claim): claim is string =>
       typeof claim === "string" && claim.trim().length > 0,
   );
-  return { claims, usage: usageOf(message) };
+
+  const dropped = rawClaims.length - claims.length;
+  const warnings: string[] = [];
+  if (!input) warnings.push("record_claims tool was not called");
+  if (claims.length === 0) warnings.push("no claims extracted");
+  if (dropped > 0) warnings.push(`${dropped} malformed/empty claim(s) dropped`);
+
+  const diagnostic = toolCallDiagnostic(
+    "extracting",
+    model,
+    message,
+    { claims: claims.length, dropped },
+    warnings,
+  );
+  return { claims, usage: usageOf(message), diagnostic };
 }
