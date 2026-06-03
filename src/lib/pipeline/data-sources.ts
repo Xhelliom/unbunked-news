@@ -23,10 +23,20 @@ export type FactCheckReview = {
   url: string;
 };
 
+// Per-claim outcome of the ClaimReview lookup: "found" = at least one review,
+// "none" = the database was queried and returned nothing, "unknown" = the query
+// could not run (no key, network/timeout/parse failure). "none" and "unknown"
+// are NOT the same: the assessor should treat "unknown" as missing evidence
+// (lower confidence), never as a clean record.
+export type FactCheckStatus = "found" | "none" | "unknown";
+export type ClaimFactCheck = { claim: string; status: FactCheckStatus };
+
 // Aggregated evidence for one article. `available` is false only when EVERY
 // source came back unknown, which the caller uses to lower global confidence.
 export type ExternalEvidence = {
   factChecks: FactCheckReview[];
+  // Per-claim coverage of the fact-check lookup (one entry per queried claim).
+  factCheckStatuses: ClaimFactCheck[];
   // null = unknown (source not configured / unreachable); never a guessed bool.
   unreliableDomain: boolean | null;
   domainAgeDays: number | null;
@@ -104,19 +114,36 @@ async function searchOneFactCheck(
 
 async function lookupFactChecks(
   claims: string[],
-): Promise<{ reviews: FactCheckReview[]; known: boolean }> {
+): Promise<{
+  reviews: FactCheckReview[];
+  known: boolean;
+  statuses: ClaimFactCheck[];
+}> {
+  const queried = claims.slice(0, MAX_FACTCHECK_CLAIMS);
   const key = process.env.GOOGLE_FACTCHECK_API_KEY;
-  if (!key) return { reviews: [], known: false };
+  if (!key) {
+    return {
+      reviews: [],
+      known: false,
+      statuses: queried.map((claim) => ({ claim, status: "unknown" })),
+    };
+  }
 
   const results = await Promise.all(
-    claims.slice(0, MAX_FACTCHECK_CLAIMS).map((claim) =>
+    queried.map((claim) =>
       cached(`factcheck:${claim}`, () => searchOneFactCheck(claim, key)),
     ),
   );
+  const statuses: ClaimFactCheck[] = queried.map((claim, index) => {
+    const result = results[index];
+    const status: FactCheckStatus =
+      result === null ? "unknown" : result.length > 0 ? "found" : "none";
+    return { claim, status };
+  });
   // known = at least one query actually completed (non-null).
   const known = results.some((r) => r !== null);
   const reviews = results.flatMap((r) => r ?? []);
-  return { reviews, known };
+  return { reviews, known, statuses };
 }
 
 // --- Unreliable-domain list (stub) ---
@@ -165,6 +192,7 @@ export async function gatherExternalEvidence(
 
   return {
     factChecks: factChecks.reviews,
+    factCheckStatuses: factChecks.statuses,
     unreliableDomain,
     domainAgeDays,
     available,
@@ -185,6 +213,12 @@ export function formatExternalEvidence(evidence: ExternalEvidence): string {
     }
   } else {
     lines.push("- Fact-checks found: none");
+  }
+  if (evidence.factCheckStatuses.length > 0) {
+    lines.push("- Fact-check coverage per claim:");
+    for (const { claim, status } of evidence.factCheckStatuses) {
+      lines.push(`  · [${status}] "${claim}"`);
+    }
   }
   lines.push(
     `- Domain on an unreliable-source list: ${

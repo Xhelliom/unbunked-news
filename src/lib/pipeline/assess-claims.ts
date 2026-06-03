@@ -149,6 +149,9 @@ export async function assessClaims(
   }
 
   const assessed = toClaims(input.claims);
+  const factCheckUnknown = external.factCheckStatuses.filter(
+    (s) => s.status === "unknown",
+  ).length;
   const warnings: string[] = [];
   if (assessed.length === 0) warnings.push("assessment returned no claims");
   if (claims.length > 0 && assessed.length < claims.length) {
@@ -166,6 +169,7 @@ export async function assessClaims(
       claimsOut: assessed.length,
       sourcesIn: verification.sources.length,
       factChecksFound: external.factChecks.length,
+      factCheckUnknown,
       externalAvailable: external.available,
     },
     warnings,
