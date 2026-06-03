@@ -11,8 +11,9 @@ type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
 
 export function HeroCard({ article }: { article: FeedArticle }) {
   const t = useTranslations("feed");
+  const tr = useTranslations("rubrics");
   const format = useFormatter();
-  const tag = article.articleTags[0]?.tag.label;
+  const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
 
   return (
     <Link
@@ -52,7 +53,7 @@ export function HeroCard({ article }: { article: FeedArticle }) {
           <span className="bg-primary size-2 shrink-0 rounded-full" />
           <span>
             {t("featured")}
-            {tag ? ` · ${tag}` : ""}
+            {rubric ? ` · ${rubric}` : ""}
           </span>
         </span>
         <h2 className="group-hover:text-primary font-serif text-3xl leading-[1.08] font-extrabold tracking-tight text-balance transition-colors lg:text-4xl">

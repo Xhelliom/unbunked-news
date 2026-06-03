@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
 import { ArticleImage } from "@/components/article-image";
@@ -7,8 +9,9 @@ import { VerdictBadge } from "@/components/verdict-badge";
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
 
 export function SecondaryCard({ article }: { article: FeedArticle }) {
-  const tag = article.articleTags[0]?.tag.label;
-  const eyebrow = [article.sourceName, tag].filter(Boolean).join(" · ");
+  const tr = useTranslations("rubrics");
+  const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
+  const eyebrow = [article.sourceName, rubric].filter(Boolean).join(" · ");
 
   return (
     <Link

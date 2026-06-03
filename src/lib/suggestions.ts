@@ -55,7 +55,6 @@ async function loadSuggestedArticles(articleId: string) {
       inArray(articles.verdict, [...TRUSTWORTHY_VERDICTS]),
     ),
     with: {
-      articleTags: { with: { tag: true } },
       claims: { columns: { status: true } },
     },
   });

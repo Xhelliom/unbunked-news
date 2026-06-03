@@ -12,6 +12,7 @@ test("every mapped tag points at a real rubric", () => {
 
 test("maps the seeded tag slugs to their rubric", () => {
   assert.equal(rubricForTagSlugs(["politics"]), "politique");
+  assert.equal(rubricForTagSlugs(["economy"]), "economie-social");
   assert.equal(rubricForTagSlugs(["environment"]), "ecologie");
   assert.equal(rubricForTagSlugs(["health"]), "sciences-sante");
   assert.equal(rubricForTagSlugs(["tech"]), "sciences-sante");

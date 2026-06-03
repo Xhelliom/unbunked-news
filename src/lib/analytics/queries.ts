@@ -14,13 +14,8 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import {
-  analyticsEvents,
-  articleTags,
-  articles,
-  proposals,
-  tags,
-} from "@/db/schema";
+import { analyticsEvents, articles, proposals } from "@/db/schema";
+import type { Rubric } from "@/lib/rubrics";
 import type { Verdict } from "@/lib/verdicts";
 
 import {
@@ -301,18 +296,22 @@ export async function loadVerdictBreakdown(
   );
 }
 
-export type TagCount = { id: string; label: string; views: number };
+export type RubricCount = { rubric: Rubric; views: number };
 
-export async function loadTagBreakdown(days: number): Promise<TagCount[]> {
-  return db
-    .select({ id: tags.id, label: tags.label, views: count() })
+export async function loadRubricBreakdown(
+  days: number,
+): Promise<RubricCount[]> {
+  const rows = await db
+    .select({ rubric: articles.rubric, views: count() })
     .from(analyticsEvents)
-    .innerJoin(articleTags, eq(analyticsEvents.articleId, articleTags.articleId))
-    .innerJoin(tags, eq(articleTags.tagId, tags.id))
-    .where(pageviewWhere(days))
-    .groupBy(tags.id, tags.label)
+    .innerJoin(articles, eq(analyticsEvents.articleId, articles.id))
+    .where(and(pageviewWhere(days), isNotNull(articles.rubric)))
+    .groupBy(articles.rubric)
     .orderBy(desc(count()))
     .limit(TOP_LIST_LIMIT);
+  return rows.flatMap((row) =>
+    row.rubric ? [{ rubric: row.rubric, views: row.views }] : [],
+  );
 }
 
 export type DeviceCount = { deviceType: DeviceType; views: number };

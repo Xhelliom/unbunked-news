@@ -9,10 +9,6 @@
   },
   "nav": {
     "home": "Top stories",
-    "tech": "Tech",
-    "politics": "Politics",
-    "environment": "Environment",
-    "health": "Health",
     "submit": "Submit an article"
   },
   "themeToggle": {
@@ -371,7 +367,7 @@
       "criteriaHint": "Uncheck an optional criterion if it can't be assessed reliably.",
       "optional": "optional",
       "source": "Original source",
-      "tags": "Tags",
+      "rubric": "Section",
       "claims": "Analyzed claims",
       "noClaims": "No claims.",
       "sources": "Sources",

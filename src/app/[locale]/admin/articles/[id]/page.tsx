@@ -26,7 +26,6 @@ export default async function AdminArticleReviewPage({
         orderBy: (claim, { asc }) => [asc(claim.position)],
         with: { sources: true },
       },
-      articleTags: { with: { tag: true } },
       rewrites: true,
     },
   });
@@ -36,6 +35,7 @@ export default async function AdminArticleReviewPage({
 
   const t = await getTranslations("admin.review");
   const ts = await getTranslations("claimStatus");
+  const tRubric = await getTranslations("rubrics");
 
   return (
     <div className="space-y-8">
@@ -105,15 +105,11 @@ export default async function AdminArticleReviewPage({
         </div>
       </div>
 
-      {article.articleTags.length > 0 && (
+      {article.rubric && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold">{t("tags")}</h2>
+          <h2 className="text-sm font-semibold">{t("rubric")}</h2>
           <div className="flex flex-wrap gap-2">
-            {article.articleTags.map(({ tag }) => (
-              <Badge key={tag.id} variant="secondary">
-                {tag.label}
-              </Badge>
-            ))}
+            <Badge variant="secondary">{tRubric(`${article.rubric}.label`)}</Badge>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import { FALLBACK_RUBRIC, type Rubric } from "./rubrics";
 // and should be reviewed by an editor. Keys are tag slugs (slugified labels).
 export const TAG_RUBRIC_MAP: Record<string, Rubric> = {
   politics: "politique",
+  economy: "economie-social",
   environment: "ecologie",
   health: "sciences-sante",
   tech: "sciences-sante",

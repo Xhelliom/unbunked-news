@@ -3,7 +3,8 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
-import { getAllTags, getPublishedArticles } from "@/lib/articles";
+import { getPublishedArticles } from "@/lib/articles";
+import { isRubric, RUBRICS, type Rubric } from "@/lib/rubrics";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { cn } from "@/lib/utils";
 import { ArticleCard } from "@/components/article-card";
@@ -17,12 +18,16 @@ function asVerdict(value: string | undefined): Verdict | undefined {
     : undefined;
 }
 
+function asRubric(value: string | undefined): Rubric | undefined {
+  return isRubric(value) ? value : undefined;
+}
+
 export default async function HomePage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ verdict?: string; tag?: string }>;
+  searchParams: Promise<{ verdict?: string; rubric?: string }>;
 }) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) {
@@ -30,17 +35,16 @@ export default async function HomePage({
   }
   setRequestLocale(locale);
 
-  const { verdict: verdictParam, tag } = await searchParams;
+  const { verdict: verdictParam, rubric: rubricParam } = await searchParams;
   const verdict = asVerdict(verdictParam);
+  const rubric = asRubric(rubricParam);
 
-  const [items, tags] = await Promise.all([
-    getPublishedArticles({ verdict, tag }),
-    getAllTags(),
-  ]);
+  const items = await getPublishedArticles({ verdict, rubric });
   const t = await getTranslations("feed");
   const tv = await getTranslations("verdicts");
+  const trub = await getTranslations("rubrics");
 
-  const hasFilter = Boolean(verdict || tag);
+  const hasFilter = Boolean(verdict || rubric);
 
   // The editorial layout (hero + two secondaries) only kicks in on the
   // unfiltered feed when there are enough stories to fill it.
@@ -51,8 +55,8 @@ export default async function HomePage({
 
   const sectionTitle = verdict
     ? tv(`${verdict}.label`)
-    : tag
-      ? (tags.find((candidate) => candidate.slug === tag)?.label ?? tag)
+    : rubric
+      ? trub(`${rubric}.label`)
       : t("allArticles");
 
   // Only show the bare empty state when there is genuinely nothing to browse.
@@ -84,7 +88,7 @@ export default async function HomePage({
           <h2 className="font-serif text-[22px] font-bold tracking-tight whitespace-nowrap">
             {sectionTitle}
           </h2>
-          <FeedFilters tags={tags} current={{ verdict, tag }} />
+          <FeedFilters rubrics={[...RUBRICS]} current={{ verdict, rubric }} />
         </header>
 
         {grid.length > 0 ? (

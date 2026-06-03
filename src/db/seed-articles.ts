@@ -13,6 +13,7 @@ import {
 } from "./schema";
 import { ARTICLES, TAGS } from "./seed-articles-data";
 import { REWRITES } from "./seed-articles-rewrites";
+import { rubricForTagSlugs } from "@/lib/tag-rubric-map";
 
 // Inserts the demo articles, their claims, sources, tags and Unbunked
 // rewrites. Re-runnable: it wipes and re-inserts the seeded slugs only.
@@ -60,6 +61,7 @@ async function main() {
         completenessScore: article.completenessScore ?? null,
         transparencyScore: article.transparencyScore ?? null,
         recencyScore: article.recencyScore ?? null,
+        rubric: rubricForTagSlugs([article.tagSlug]),
         locale: "fr",
         published: true,
         publishedAt: new Date(article.publishedAt),

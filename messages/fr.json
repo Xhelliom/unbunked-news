@@ -9,10 +9,6 @@
   },
   "nav": {
     "home": "À la une",
-    "tech": "Tech",
-    "politics": "Politique",
-    "environment": "Environnement",
-    "health": "Santé",
     "submit": "Proposer un article"
   },
   "themeToggle": {
@@ -371,7 +367,7 @@
       "criteriaHint": "Décochez un critère facultatif s'il n'est pas évaluable de façon fiable.",
       "optional": "facultatif",
       "source": "Source d'origine",
-      "tags": "Tags",
+      "rubric": "Rubrique",
       "claims": "Claims analysés",
       "noClaims": "Aucun claim.",
       "sources": "Sources",
