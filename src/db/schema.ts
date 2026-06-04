@@ -145,8 +145,8 @@ export const articles = pgTable(
     // sources + killswitch signals. Lets a third party replay the verdict.
     evidence: jsonb().$type<AnalysisEvidence>(),
     // Fixed editorial rubric (one per article). Added nullable so existing rows
-    // can be backfilled (src/db/backfill-rubrics.local.ts) before a later
-    // migration flips it to NOT NULL; the pipeline always sets it on new rows.
+    // can be backfilled (data migration 0020) before a later migration flips it
+    // to NOT NULL; the pipeline always sets it on new rows.
     rubric: rubricEnum(),
     // Postgres-maintained full-text index over the headline, summary and body.
     // Generated-column expressions can't reference the table object being

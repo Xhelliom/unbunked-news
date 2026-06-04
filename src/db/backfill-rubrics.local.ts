@@ -6,14 +6,15 @@ import { FALLBACK_RUBRIC } from "@/lib/rubrics";
 import { rubricForTagSlugs } from "@/lib/tag-rubric-map";
 
 // Deterministic, no-AI backfill of `articles.rubric` from the retired open-tag
-// vocabulary (heuristic in src/lib/tag-rubric-map.ts). Run once, after migration
-// 0019 (which adds the nullable column) and BEFORE the migration that flips the
-// column to NOT NULL and drops the tags tables:
+// vocabulary (heuristic in src/lib/tag-rubric-map.ts).
 //
 //   pnpm db:backfill-rubrics-local
 //
-// Idempotent: only touches rows whose rubric is still null. Articles with no
-// mappable tag get the `societe` catch-all and are logged for editor review.
+// In every environment the backfill runs automatically via data migration 0020
+// (db-migrate Job). This script is the equivalent local/ad-hoc helper: it logs
+// each assignment and the `societe` fallbacks for editor review, which the SQL
+// migration can't. Idempotent: only touches rows whose rubric is still null;
+// articles with no mappable tag get the `societe` catch-all.
 
 async function backfill(): Promise<void> {
   const rows = await db.query.articles.findMany({
