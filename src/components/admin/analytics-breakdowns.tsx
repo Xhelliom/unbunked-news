@@ -5,9 +5,10 @@ import type {
   LocaleCount,
   PathCount,
   ReferrerCount,
-  TagCount,
+  RubricCount,
   VerdictCount,
 } from "@/lib/analytics/queries";
+import type { Rubric } from "@/lib/rubrics";
 import type { Verdict } from "@/lib/verdicts";
 
 import { AnalyticsBreakdown, type BreakdownRow } from "./analytics-breakdown";
@@ -30,7 +31,7 @@ export type BreakdownLabels = {
 type AnalyticsBreakdownsProps = {
   articles: ArticleViews[];
   verdicts: VerdictCount[];
-  topics: TagCount[];
+  topics: RubricCount[];
   referrers: ReferrerCount[];
   directCount: number;
   pages: PathCount[];
@@ -40,6 +41,7 @@ type AnalyticsBreakdownsProps = {
   locales: LocaleCount[];
   labels: BreakdownLabels;
   verdictLabel: (verdict: Verdict) => string;
+  rubricLabel: (rubric: Rubric) => string;
   deviceLabel: (device: DeviceType) => string;
   formatNumber: (value: number) => string;
 };
@@ -60,6 +62,7 @@ export function AnalyticsBreakdowns({
   locales,
   labels,
   verdictLabel,
+  rubricLabel,
   deviceLabel,
   formatNumber,
 }: AnalyticsBreakdownsProps) {
@@ -95,8 +98,8 @@ export function AnalyticsBreakdowns({
       title: labels.byTopic,
       emptyLabel: labels.noData,
       rows: topics.map((topic) => ({
-        key: topic.id,
-        label: topic.label,
+        key: topic.rubric,
+        label: rubricLabel(topic.rubric),
         value: topic.views,
       })),
     },

@@ -48,6 +48,7 @@ export default async function ArticlePage({
   const t = await getTranslations("article");
   const tStatus = await getTranslations("claimStatus");
   const tVerdict = await getTranslations("verdicts");
+  const tRubric = await getTranslations("rubrics");
   const format = await getFormatter();
 
   const { paragraphs, claims: locatedClaims, orphans } = buildReadingModel(
@@ -211,13 +212,13 @@ export default async function ArticlePage({
           </div>
         )}
 
-        {article.articleTags.length > 0 && (
+        {article.rubric && (
           <div className="mt-5 flex flex-wrap gap-2">
-            {article.articleTags.map(({ tag }) => (
-              <Badge key={tag.id} variant="secondary">
-                {tag.label}
+            <Link href={`/?rubric=${article.rubric}`}>
+              <Badge variant="secondary">
+                {tRubric(`${article.rubric}.label`)}
               </Badge>
-            ))}
+            </Link>
           </div>
         )}
       </div>

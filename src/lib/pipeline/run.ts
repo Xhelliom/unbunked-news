@@ -1,18 +1,16 @@
 import "server-only";
 
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
   articleKeywords,
   articleRewrites,
-  articleTags,
   articleTokenUsage,
   articles,
   claimSources,
   claims as claimsTable,
   jobs,
-  tags as tagsTable,
   type NewJob,
 } from "@/db/schema";
 import { routing } from "@/i18n/routing";
@@ -44,17 +42,6 @@ const MAX_STORED_CONTENT_CHARS = 60_000;
 // short article.
 const SHORT_BODY_WARNING_CHARS = 800;
 
-const TAG_PALETTE = [
-  "#6366f1",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-];
-
 function slugify(input: string): string {
   return input
     .normalize("NFKD")
@@ -63,14 +50,6 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-}
-
-function colorForTag(slug: string): string {
-  let hash = 0;
-  for (const ch of slug) {
-    hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  }
-  return TAG_PALETTE[hash % TAG_PALETTE.length];
 }
 
 async function updateJob(id: string, fields: Partial<NewJob>): Promise<void> {
@@ -222,7 +201,6 @@ export async function runPipeline(jobId: string): Promise<void> {
 
     await updateJob(jobId, { step: "saving", progress: 92 });
 
-    let tagsLinked = 0;
     let keywordsStored = 0;
     const articleId = await db.transaction(async (tx) => {
       const [created] = await tx
@@ -257,6 +235,7 @@ export async function runPipeline(jobId: string): Promise<void> {
           criteriaVersion: analysis.criteriaVersion,
           modelVersion: analysis.modelVersion,
           evidence: analysis.evidence,
+          rubric: analysis.rubric,
           locale: analysis.language,
           published: false,
         })
@@ -324,34 +303,6 @@ export async function runPipeline(jobId: string): Promise<void> {
         }
       }
 
-      if (analysis.tags.length > 0) {
-        const tagRows = analysis.tags.map((label) => {
-          const slug = slugify(label);
-          return { label, slug, color: colorForTag(slug) };
-        });
-        await tx
-          .insert(tagsTable)
-          .values(tagRows)
-          .onConflictDoNothing({ target: tagsTable.slug });
-
-        const stored = await tx
-          .select({ id: tagsTable.id })
-          .from(tagsTable)
-          .where(
-            inArray(
-              tagsTable.slug,
-              tagRows.map((t) => t.slug),
-            ),
-          );
-        tagsLinked = stored.length;
-        if (stored.length > 0) {
-          await tx
-            .insert(articleTags)
-            .values(stored.map((t) => ({ articleId: created.id, tagId: t.id })))
-            .onConflictDoNothing();
-        }
-      }
-
       return created.id;
     });
 
@@ -362,8 +313,6 @@ export async function runPipeline(jobId: string): Promise<void> {
           (total, claim) => total + claim.sources.length,
           0,
         ),
-        tagsRequested: analysis.tags.length,
-        tagsLinked,
         keywordsRequested: analysis.keywords.length,
         keywordsStored,
       }),

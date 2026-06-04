@@ -11,8 +11,9 @@ type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
 
 export function ArticleCard({ article }: { article: FeedArticle }) {
   const t = useTranslations("feed");
-  const tag = article.articleTags[0]?.tag.label;
-  const eyebrow = [article.sourceName, tag].filter(Boolean).join(" · ");
+  const tr = useTranslations("rubrics");
+  const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
+  const eyebrow = [article.sourceName, rubric].filter(Boolean).join(" · ");
 
   // Aggregate claim statuses into the verdict-coloured breakdown bar.
   const total = article.claims.length;

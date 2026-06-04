@@ -20,6 +20,7 @@ import {
   type ScoreCriterion,
 } from "@/lib/score-criteria";
 import type { Verdict } from "@/lib/verdicts";
+import { RUBRICS, type Rubric } from "@/lib/rubrics";
 
 // Matches the claim_status enum in the database schema.
 export const CLAIM_STATUSES = [
@@ -76,7 +77,7 @@ export type Analysis = {
   contentType: ContentType;
   killswitch: Killswitch;
   evidence: AnalysisEvidence;
-  tags: string[];
+  rubric: Rubric;
   keywords: string[];
 };
 
@@ -311,17 +312,20 @@ export const recordAnalysisTool: Anthropic.Tool = {
         required: ["framing", "contentType"],
         additionalProperties: false,
       },
-      tags: {
-        type: "array",
-        description: "1-4 thematic topic labels (e.g. Tech, Politics, Health).",
-        items: { type: "string" },
+      rubric: {
+        type: "string",
+        enum: [...RUBRICS],
+        description:
+          "The single best-fitting editorial section for this article, chosen " +
+          "from the fixed list. Exactly one. Tech/digital subjects go under " +
+          "'sciences-sante'.",
       },
       keywords: {
         type: "array",
         description:
           "5-10 specific keywords identifying the precise subject of the " +
           "article: named entities, people, places, organisations, specific " +
-          "events. NOT broad categories — those are the tags. Same language " +
+          "events. NOT broad categories — that is the rubric. Same language " +
           "as the article.",
         items: { type: "string" },
       },
@@ -334,7 +338,7 @@ export const recordAnalysisTool: Anthropic.Tool = {
       "criteria",
       "killswitch",
       "descriptors",
-      "tags",
+      "rubric",
       "keywords",
     ],
     additionalProperties: false,

@@ -9,10 +9,6 @@
   },
   "nav": {
     "home": "À la une",
-    "tech": "Tech",
-    "politics": "Politique",
-    "environment": "Environnement",
-    "health": "Santé",
     "submit": "Proposer un article"
   },
   "themeToggle": {
@@ -371,7 +367,7 @@
       "criteriaHint": "Décochez un critère facultatif s'il n'est pas évaluable de façon fiable.",
       "optional": "facultatif",
       "source": "Source d'origine",
-      "tags": "Tags",
+      "rubric": "Rubrique",
       "claims": "Claims analysés",
       "noClaims": "Aucun claim.",
       "sources": "Sources",
@@ -493,8 +489,24 @@
     "score": "Score",
     "claimsCount": "{count} claims",
     "verdictFilter": "Verdict",
-    "tagFilter": "Thème",
+    "rubricFilter": "Rubrique",
     "all": "Tout"
+  },
+  "rubrics": {
+    "france": { "label": "France" },
+    "international": { "label": "International" },
+    "politique": { "label": "Politique" },
+    "economie-social": { "label": "Économie & social" },
+    "ecologie": { "label": "Écologie" },
+    "sciences-sante": { "label": "Sciences & Santé" },
+    "culture-idees": { "label": "Culture & idées" },
+    "societe": { "label": "Société" }
+  },
+  "search": {
+    "label": "Rechercher",
+    "placeholder": "Rechercher un article…",
+    "title": "Résultats pour « {query} »",
+    "empty": "Aucun article ne correspond à votre recherche."
   },
   "article": {
     "originalSource": "Source d'origine",

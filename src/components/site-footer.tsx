@@ -2,11 +2,10 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/logo";
-
-const SECTIONS = ["tech", "politics", "environment", "health"] as const;
+import { RUBRICS } from "@/lib/rubrics";
 
 export function SiteFooter() {
-  const t = useTranslations("nav");
+  const tRubrics = useTranslations("rubrics");
   const tFooter = useTranslations("footer");
   const tCommon = useTranslations("common");
   const year = new Date().getFullYear();
@@ -26,13 +25,13 @@ export function SiteFooter() {
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">{tFooter("sectionsTitle")}</h2>
           <ul className="space-y-2">
-            {SECTIONS.map((section) => (
-              <li key={section}>
+            {RUBRICS.map((rubric) => (
+              <li key={rubric}>
                 <Link
-                  href={`/?tag=${section}`}
+                  href={`/?rubric=${rubric}`}
                   className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
-                  {t(section)}
+                  {tRubrics(`${rubric}.label`)}
                 </Link>
               </li>
             ))}

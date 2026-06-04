@@ -16,7 +16,7 @@ import {
   loadLocaleBreakdown,
   loadOldestEventDate,
   loadProposalsCount,
-  loadTagBreakdown,
+  loadRubricBreakdown,
   loadTopArticles,
   loadTopEntryPages,
   loadTopExitPages,
@@ -50,6 +50,7 @@ export default async function AdminAnalytics({
 
   const t = await getTranslations("admin.analytics");
   const tv = await getTranslations("verdicts");
+  const trub = await getTranslations("rubrics");
   const format = await getFormatter();
 
   const [
@@ -77,7 +78,7 @@ export default async function AdminAnalytics({
     loadHourlyDistribution(days),
     loadTopArticles(days),
     loadVerdictBreakdown(days),
-    loadTagBreakdown(days),
+    loadRubricBreakdown(days),
     loadTopReferrers(days),
     loadDirectCount(days),
     loadTopPages(days),
@@ -206,6 +207,7 @@ export default async function AdminAnalytics({
         devices={devices}
         locales={locales}
         verdictLabel={(verdict) => tv(`${verdict}.label`)}
+        rubricLabel={(rubric) => trub(`${rubric}.label`)}
         deviceLabel={(device) => t(`deviceTypes.${device}`)}
         formatNumber={formatNumber}
         labels={{
