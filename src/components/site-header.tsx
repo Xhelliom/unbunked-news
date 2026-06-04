@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SearchBox } from "@/components/search-box";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteHeader() {
@@ -17,7 +18,8 @@ export function SiteHeader() {
           <Logo className="text-[28px]" />
         </Link>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-2">
+          <SearchBox />
           <Button asChild variant="outline" size="sm" className="hidden sm:flex">
             <Link href="/submit">
               <Plus className="size-3.5" />
