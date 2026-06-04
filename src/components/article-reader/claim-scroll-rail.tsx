@@ -14,6 +14,12 @@ type Props = {
   indicatorRatio: number;
   displayedIndex: number;
   hoveredIndex: number | null;
+  // Lets each call site own the rail's visibility / position / height. Desktop
+  // passes its in-panel sizing; mobile pins it to the right edge.
+  className?: string;
+  // When set, the dots become tappable (mobile navigation between claims).
+  onSelect?: (index: number) => void;
+  selectLabel?: string;
 };
 
 // Rail vertical : repères par claim + curseur de position « virtuelle » dans l'article.
@@ -23,6 +29,9 @@ export function ClaimScrollRail({
   indicatorRatio,
   displayedIndex,
   hoveredIndex,
+  className,
+  onSelect,
+  selectLabel,
 }: Props) {
   const railRef = useRef<HTMLDivElement>(null);
   const [railHeight, setRailHeight] = useState(0);
@@ -50,22 +59,44 @@ export function ClaimScrollRail({
   return (
     <div
       ref={railRef}
-      className="relative hidden h-[calc(100dvh-9rem)] w-3 shrink-0 lg:block"
-      aria-hidden
+      className={cn("relative", className)}
+      aria-hidden={onSelect ? undefined : true}
     >
       <div className="bg-border/70 absolute inset-y-3 left-1/2 w-px -translate-x-1/2 rounded-full" />
 
-      {anchors.map(({ index, ratio }) => (
-        <span
-          key={index}
-          className={cn(
-            "absolute left-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-[transform,opacity] duration-200",
-            claimStatusDotClasses[claims[index].status],
-            index === displayedIndex ? "scale-150 opacity-100" : "opacity-55",
-          )}
-          style={{ top: `${ratio * 100}%` }}
-        />
-      ))}
+      {anchors.map(({ index, ratio }) => {
+        const dotClass = cn(
+          "block size-1.5 rounded-full transition-[transform,opacity] duration-200",
+          claimStatusDotClasses[claims[index].status],
+          index === displayedIndex ? "scale-150 opacity-100" : "opacity-55",
+        );
+
+        if (onSelect) {
+          return (
+            <button
+              key={index}
+              type="button"
+              aria-label={selectLabel}
+              onClick={() => onSelect(index)}
+              className="absolute left-1/2 flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+              style={{ top: `${ratio * 100}%` }}
+            >
+              <span className={dotClass} />
+            </button>
+          );
+        }
+
+        return (
+          <span
+            key={index}
+            className={cn(
+              "absolute left-1/2 -translate-x-1/2 -translate-y-1/2",
+              dotClass,
+            )}
+            style={{ top: `${ratio * 100}%` }}
+          />
+        );
+      })}
 
       {activeStatus && (
         <AnimatedRailCursor
