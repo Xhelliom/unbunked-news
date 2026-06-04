@@ -1,7 +1,9 @@
 import { extractFromHtml } from "@extractus/article-extractor";
 
 import {
+  BLOCK_KINDS,
   type ArticleBlock,
+  type BlockKind,
   serializeBlock,
 } from "@/lib/article-blocks";
 import {
@@ -39,6 +41,7 @@ export type ScrapeProvenance = {
   candidateBlocks: number | null;
   contentChars: number;
   aiTriggerReason: string | null;
+  aiStructured: boolean;
 };
 
 export type ScrapeResult = {
@@ -73,6 +76,17 @@ export type BodyRecoverer = (
   blocks: string[],
   meta: { title: string },
 ) => Promise<string>;
+
+// Injected for the same decoupling reason as BodyRecoverer. Given the article's
+// parsed blocks (each with its HTML-derived kind guess), returns the body blocks
+// in reading order with corrected kinds, dropping chrome and the comment thread.
+// Returns an empty list when the model produced nothing usable, so the caller
+// falls back to the deterministic body. Must not throw — failures degrade to the
+// fallback, they don't sink the scrape.
+export type BodyStructurer = (
+  blocks: ArticleBlock[],
+  meta: { title: string },
+) => Promise<ArticleBlock[]>;
 
 function hostnameToSource(url: string): string {
   try {
@@ -198,6 +212,58 @@ function dropCommentBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
   return index === -1 ? blocks : blocks.slice(0, index);
 }
 
+function serializeBlocks(blocks: ArticleBlock[]): string {
+  return blocks.map(serializeBlock).join("\n\n");
+}
+
+// Deduplicates and size-bounds the parsed blocks before they are handed to the
+// AI structurer, so a single huge page can't blow up token usage and repeated
+// chrome doesn't crowd out the body. Order is preserved.
+function boundBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
+  const seen = new Set<string>();
+  const bounded: ArticleBlock[] = [];
+  let total = 0;
+  for (const block of blocks) {
+    if (seen.has(block.text)) continue;
+    if (total + block.text.length > MAX_CANDIDATE_CHARS) break;
+    seen.add(block.text);
+    bounded.push(block);
+    total += block.text.length;
+  }
+  return bounded;
+}
+
+const KIND_SET = new Set<string>(BLOCK_KINDS);
+
+// Turns the AI structurer's `{ index, kind }` selection into article blocks,
+// rebuilt VERBATIM from `source` so the body the pipeline matches claim quotes
+// against is never paraphrased by the model. Out-of-range, repeated, non-integer
+// or unknown-kind entries are dropped — the model can emit any of those.
+export function applyStructureSelection(
+  selection: unknown,
+  source: ArticleBlock[],
+): ArticleBlock[] {
+  if (!Array.isArray(selection)) return [];
+  const seen = new Set<number>();
+  const blocks: ArticleBlock[] = [];
+  for (const item of selection) {
+    if (typeof item !== "object" || item === null) continue;
+    const { index, kind } = item as { index?: unknown; kind?: unknown };
+    if (
+      !Number.isInteger(index) ||
+      (index as number) < 0 ||
+      (index as number) >= source.length ||
+      seen.has(index as number)
+    ) {
+      continue;
+    }
+    if (typeof kind !== "string" || !KIND_SET.has(kind)) continue;
+    seen.add(index as number);
+    blocks.push({ kind: kind as BlockKind, text: source[index as number].text });
+  }
+  return blocks;
+}
+
 function looksLikeProse(block: string): boolean {
   if (block.length < MIN_BLOCK_CHARS || block.length > MAX_BLOCK_CHARS) {
     return false;
@@ -225,20 +291,27 @@ export function buildCandidateBlocks(html: string): string[] {
 
 type ExtractorResult = Awaited<ReturnType<typeof extractFromHtml>>;
 
-function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
+// The article as the deterministic path sees it, plus the bounded parsed blocks
+// the AI structurer refines. `content` is the regex-cleaned body — the fallback
+// used when the AI step is absent or returns nothing.
+type NormalizedExtract = { article: ScrapedArticle; rawBlocks: ArticleBlock[] };
+
+function normalize(url: string, data: ExtractorResult): NormalizedExtract | null {
   if (!data?.content || !data.title) {
     return null;
   }
+  const rawBlocks = boundBlocks(htmlToBlocks(data.content));
   return {
-    url,
-    title: data.title,
-    sourceName: data.source ?? hostnameToSource(url),
-    content: dropCommentBlocks(keepArticleBlocks(htmlToBlocks(data.content)))
-      .map(serializeBlock)
-      .join("\n\n"),
-    imageUrl: data.image ?? null,
-    author: data.author ?? null,
-    publishedAt: data.published ? new Date(data.published) : null,
+    article: {
+      url,
+      title: data.title,
+      sourceName: data.source ?? hostnameToSource(url),
+      content: serializeBlocks(dropCommentBlocks(keepArticleBlocks(rawBlocks))),
+      imageUrl: data.image ?? null,
+      author: data.author ?? null,
+      publishedAt: data.published ? new Date(data.published) : null,
+    },
+    rawBlocks,
   };
 }
 
@@ -314,61 +387,109 @@ type Attempt = {
   usedAi: boolean;
   candidateBlocks: number | null;
   aiTriggerReason: string | null;
+  aiStructured: boolean;
 };
 
-// Extracts the best body obtainable from a single HTML document: the generic
-// extractor first, then — if it grabbed a paywall teaser or nav menu while the
-// real body sits elsewhere in the SAME HTML (Le Monde & co.) — the AI picks the
-// article-body blocks out of the page verbatim, so downstream claim quotes
-// still resolve.
+// Extracts the best body obtainable from a single HTML document. The generic
+// extractor runs first; the AI structurer then refines its blocks (correct
+// roles, drop residual chrome and comments) for every article. If the body
+// still fails the quality gate — a paywall teaser or nav menu where the real
+// body sits elsewhere in the SAME HTML (Le Monde & co.) — the AI recovery picks
+// the article-body blocks out of the whole page verbatim. Both AI steps rebuild
+// the body from chosen blocks, so downstream claim quotes still resolve.
 async function attemptFromHtml(
   url: string,
   html: string,
   recoverBody?: BodyRecoverer,
+  structureBody?: BodyStructurer,
 ): Promise<Attempt> {
-  const result = normalize(url, await extractFromHtml(html, url));
-  const quality: ScrapeQuality = result
-    ? assessScrapeQuality(result.content)
-    : { ok: false, reason: "extractor returned no usable content" };
+  const normalized = normalize(url, await extractFromHtml(html, url));
+  if (!normalized) {
+    return {
+      result: null,
+      quality: { ok: false, reason: "extractor returned no usable content" },
+      usedAi: false,
+      candidateBlocks: null,
+      aiTriggerReason: null,
+      aiStructured: false,
+    };
+  }
 
-  if (!result || quality.ok || !recoverBody) {
-    return { result, quality, usedAi: false, candidateBlocks: null, aiTriggerReason: null };
+  let article = normalized.article;
+  let aiStructured = false;
+  if (structureBody) {
+    const structured = await structureBody(normalized.rawBlocks, {
+      title: article.title,
+    });
+    if (structured.length > 0) {
+      article = { ...article, content: serializeBlocks(structured) };
+      aiStructured = true;
+    }
+  }
+
+  const quality = assessScrapeQuality(article.content);
+  if (quality.ok || !recoverBody) {
+    return {
+      result: article,
+      quality,
+      usedAi: false,
+      candidateBlocks: null,
+      aiTriggerReason: null,
+      aiStructured,
+    };
   }
 
   const triggerReason = quality.reason;
   const blocks = buildCandidateBlocks(html);
   if (blocks.length === 0) {
-    return { result, quality, usedAi: false, candidateBlocks: 0, aiTriggerReason: triggerReason };
+    return {
+      result: article,
+      quality,
+      usedAi: false,
+      candidateBlocks: 0,
+      aiTriggerReason: triggerReason,
+      aiStructured,
+    };
   }
 
   const recovered = cleanArticleContent(
-    await recoverBody(blocks, { title: result.title }),
+    await recoverBody(blocks, { title: article.title }),
   );
   const recoveredQuality = assessScrapeQuality(recovered);
   return recoveredQuality.ok
     ? {
-        result: { ...result, content: recovered },
+        result: { ...article, content: recovered },
         quality: recoveredQuality,
         usedAi: true,
         candidateBlocks: blocks.length,
         aiTriggerReason: triggerReason,
+        aiStructured: false,
       }
-    : { result, quality, usedAi: false, candidateBlocks: blocks.length, aiTriggerReason: triggerReason };
+    : {
+        result: article,
+        quality,
+        usedAi: false,
+        candidateBlocks: blocks.length,
+        aiTriggerReason: triggerReason,
+        aiStructured,
+      };
 }
 
 export async function scrapeArticle(
   url: string,
   recoverBody?: BodyRecoverer,
+  structureBody?: BodyStructurer,
 ): Promise<ScrapeResult> {
   const html = await fetchHtml(url);
   let attempt: Attempt = html
-    ? await attemptFromHtml(url, html, recoverBody)
+    ? await attemptFromHtml(url, html, recoverBody, structureBody)
     : {
         result: null,
         quality: { ok: false, reason: "could not fetch the page" },
         usedAi: false,
         candidateBlocks: null,
         aiTriggerReason: null,
+        aiStructured: false,
       };
   let rendered = false;
 
@@ -377,7 +498,12 @@ export async function scrapeArticle(
   if (!attempt.quality.ok) {
     const renderedHtml = await renderHtml(url);
     if (renderedHtml) {
-      const second = await attemptFromHtml(url, renderedHtml, recoverBody);
+      const second = await attemptFromHtml(
+        url,
+        renderedHtml,
+        recoverBody,
+        structureBody,
+      );
       if (second.result && (!attempt.result || second.quality.ok)) {
         attempt = second;
         rendered = true;
@@ -411,6 +537,7 @@ export async function scrapeArticle(
       candidateBlocks: attempt.usedAi ? attempt.candidateBlocks : null,
       contentChars: attempt.result.content.length,
       aiTriggerReason: attempt.usedAi ? attempt.aiTriggerReason : null,
+      aiStructured: attempt.aiStructured,
     },
   };
 }

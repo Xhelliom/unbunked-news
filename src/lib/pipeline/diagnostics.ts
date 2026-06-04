@@ -87,12 +87,16 @@ export function scrapeDiagnostic(
   provenance: ScrapeProvenance | null,
   contentChars: number,
   shortBodyThreshold: number,
+  structureWarnings: string[] = [],
 ): StepDiagnostic {
   const warnings: string[] = [];
   if (contentChars === 0) {
     warnings.push("scraped body is empty");
   } else if (contentChars < shortBodyThreshold) {
     warnings.push(`scraped body is short (${contentChars} chars)`);
+  }
+  for (const warning of structureWarnings) {
+    warnings.push(`AI structuring fell back: ${warning}`);
   }
   return {
     step: "scraping",
@@ -106,6 +110,7 @@ export function scrapeDiagnostic(
       candidateBlocks: provenance?.candidateBlocks ?? null,
       contentChars,
       aiTriggerReason: provenance?.aiTriggerReason ?? null,
+      aiStructured: provenance?.aiStructured ?? null,
     },
     warnings,
   };

@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+import { BLOCK_KINDS } from "@/lib/article-blocks";
 import {
   CONFIDENCE_LEVELS,
   CONTENT_TYPE_VALUES,
@@ -123,6 +124,49 @@ export const selectArticleBodyTool: Anthropic.Tool = {
       },
     },
     required: ["indices"],
+    additionalProperties: false,
+  },
+};
+
+export const structureArticleBodyTool: Anthropic.Tool = {
+  name: "record_article_structure",
+  description:
+    "Record which of the numbered blocks form the article body, in reading " +
+    "order, each tagged with its structural role. Rebuilt verbatim from the " +
+    "chosen blocks — return indices and roles only, never rewrite the text.",
+  input_schema: {
+    type: "object",
+    properties: {
+      blocks: {
+        type: "array",
+        description:
+          "The article-body blocks in reading order. Exclude navigation, ads, " +
+          "related-article lists, author bios, newsletter/subscription prompts, " +
+          "social-share widgets, image credits, cookie/consent banners and the " +
+          "entire reader comment thread (usernames, timestamps, replies).",
+        items: {
+          type: "object",
+          properties: {
+            index: {
+              type: "integer",
+              description: "0-based index of the block in the numbered input.",
+            },
+            kind: {
+              type: "string",
+              enum: [...BLOCK_KINDS],
+              description:
+                "Structural role: 'heading' for a section title, 'subheading' " +
+                "for a lower-level one, 'quote' for a pulled/block quotation, " +
+                "'code' for a code or preformatted block, 'para' for ordinary " +
+                "prose. Correct the guessed tag when it is wrong.",
+            },
+          },
+          required: ["index", "kind"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["blocks"],
     additionalProperties: false,
   },
 };

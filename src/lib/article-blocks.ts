@@ -4,7 +4,15 @@
 // renderers (which parse it back). Keeping the syntax in one place stops the
 // extractor from emitting a marker the renderer doesn't understand.
 
-export type BlockKind = "heading" | "subheading" | "quote" | "code" | "para";
+export const BLOCK_KINDS = [
+  "heading",
+  "subheading",
+  "quote",
+  "code",
+  "para",
+] as const;
+
+export type BlockKind = (typeof BLOCK_KINDS)[number];
 
 export type ArticleBlock = { kind: BlockKind; text: string };
 
