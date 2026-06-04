@@ -41,13 +41,63 @@ export function stripBoilerplate(paragraphs: string[]): string[] {
   return paragraphs.filter((paragraph) => !isBoilerplateLine(paragraph));
 }
 
+// The reader comment thread always trails the article, opening with a heading
+// or CTA ("Commentaires (42)", "Laisser un commentaire", "Réagir", "Show
+// comments"). Extractors sometimes capture it along with the body, dragging in
+// usernames, timestamps and off-topic replies. We detect that opener and cut
+// everything after it.
+//
+// Anchored and mostly standalone on purpose: a prose sentence that merely
+// mentions a comment ("le ministre a refusé de commenter") must not trip it,
+// and an editorial aside titled "Commentaire de la rédaction" must survive — so
+// the bare-word patterns require the line to be essentially just the header.
+const COMMENT_SECTION_PATTERNS: RegExp[] = [
+  /^\d+\s+commentaires?\b/i,
+  /^commentaires?\s*\(?\s*\d*\s*\)?\s*$/i,
+  /^(voir|afficher|lire|masquer|tous? les)\s+(les\s+)?(\d+\s+)?commentaires?/i,
+  /^(laisser|poster|ajouter|[ée]crire|publier|d[ée]poser)\s+un\s+commentaire/i,
+  /^commenter\s+cet\s+article\b/i,
+  /^r[ée]agir\s*(à\s+cet\s+article)?\s*$/i,
+  /^r[ée]agissez\b/i,
+  /^vos\s+r[ée]actions\s*$/i,
+  /^donnez\s+votre\s+avis\b/i,
+  /^(rejoignez|participez)\b.*\b(conversation|discussion|d[ée]bat)\b/i,
+  /^connectez[\s-]?vous\s+pour\s+(commenter|r[ée]agir|poster)/i,
+  /^\d+\s+comments?\b/i,
+  /^comments?\s*\(?\s*\d*\s*\)?\s*$/i,
+  /^(show|view|hide|read)\s+(all\s+)?(\d+\s+)?comments?\b/i,
+  /^(leave|post|add|write)\s+a\s+(comment|reply)\b/i,
+  /^join\s+the\s+(conversation|discussion)\b/i,
+  /^be\s+the\s+first\s+to\s+comment\b/i,
+  /^sign\s+in\s+to\s+comment\b/i,
+];
+
+// A comment-section opener is short; a long paragraph that happens to start with
+// one of these words is prose, not a thread header.
+const MAX_COMMENT_HEADER_CHARS = 80;
+
+export function isCommentSectionHeader(line: string): boolean {
+  const text = line.trim();
+  if (text.length === 0 || text.length > MAX_COMMENT_HEADER_CHARS) return false;
+  return COMMENT_SECTION_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+// Truncates the paragraph list at the first comment-section opener, dropping it
+// and everything after.
+export function dropCommentSection(paragraphs: string[]): string[] {
+  const index = paragraphs.findIndex(isCommentSectionHeader);
+  return index === -1 ? paragraphs : paragraphs.slice(0, index);
+}
+
 // Cleans a stored "\n\n"-joined article body in place.
 export function cleanArticleContent(content: string): string {
-  return stripBoilerplate(
-    content
-      .split(/\n{2,}/)
-      .map((paragraph) => paragraph.trim())
-      .filter((paragraph) => paragraph.length > 0),
+  return dropCommentSection(
+    stripBoilerplate(
+      content
+        .split(/\n{2,}/)
+        .map((paragraph) => paragraph.trim())
+        .filter((paragraph) => paragraph.length > 0),
+    ),
   ).join("\n\n");
 }
 

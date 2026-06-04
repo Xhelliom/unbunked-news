@@ -8,6 +8,7 @@ import {
   assessScrapeQuality,
   cleanArticleContent,
   isBoilerplateLine,
+  isCommentSectionHeader,
   stripBoilerplate,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
@@ -188,6 +189,15 @@ function keepArticleBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
   );
 }
 
+// Cuts the article at the reader comment thread (heading or CTA), dropping the
+// opener and every comment after it. Code blocks can't be a comment opener.
+function dropCommentBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
+  const index = blocks.findIndex(
+    (block) => block.kind !== "code" && isCommentSectionHeader(block.text),
+  );
+  return index === -1 ? blocks : blocks.slice(0, index);
+}
+
 function looksLikeProse(block: string): boolean {
   if (block.length < MIN_BLOCK_CHARS || block.length > MAX_BLOCK_CHARS) {
     return false;
@@ -223,7 +233,7 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
     url,
     title: data.title,
     sourceName: data.source ?? hostnameToSource(url),
-    content: keepArticleBlocks(htmlToBlocks(data.content))
+    content: dropCommentBlocks(keepArticleBlocks(htmlToBlocks(data.content)))
       .map(serializeBlock)
       .join("\n\n"),
     imageUrl: data.image ?? null,
