@@ -58,12 +58,10 @@ export function ArticleReader({
   // on desktop (where the side panel handles verification). Starts false so SSR
   // and first paint match the server output.
   const [isMobile, setIsMobile] = useState(false);
-  const [activeSnapPoint, setActiveSnapPoint] = useState<
-    number | string | null
-  >(PEEK_SNAP);
-  // The claim the reader explicitly expanded; lets the scroll-driven reset
-  // keep it open instead of snapping back to peek under it.
-  const expandedForIndexRef = useRef<number | null>(null);
+  // The claim the reader explicitly expanded. The snap is derived from it (no
+  // effects): the drawer is expanded only while that claim is the one in view,
+  // so scrolling to any other claim falls back to the peek on its own.
+  const [expandedForIndex, setExpandedForIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1023px)");
@@ -76,36 +74,17 @@ export function ArticleReader({
   const mobileActiveIndex = scrollActiveIndex ?? 0;
   const hasMobileClaims = isMobile && claims.length > 0;
   const mobileOpen = hasMobileClaims && isNearClaim;
-  const expanded = activeSnapPoint === EXPANDED_SNAP;
+  const expanded = expandedForIndex === mobileActiveIndex;
+  const activeSnapPoint = expanded ? EXPANDED_SNAP : PEEK_SNAP;
 
-  // Arriving on a new claim by scrolling drops the drawer back to peek, unless
-  // that claim is the one the reader just chose to expand.
-  useEffect(() => {
-    if (
-      scrollActiveIndex !== null &&
-      scrollActiveIndex === expandedForIndexRef.current
-    ) {
-      return;
-    }
-    setActiveSnapPoint(PEEK_SNAP);
-  }, [scrollActiveIndex]);
-
-  // Leaving the body resets the drawer so it re-enters at peek next time.
-  useEffect(() => {
-    if (!mobileOpen) {
-      expandedForIndexRef.current = null;
-      setActiveSnapPoint(PEEK_SNAP);
-    }
-  }, [mobileOpen]);
-
-  const expandActiveClaim = () => {
-    expandedForIndexRef.current = mobileActiveIndex;
-    setActiveSnapPoint(EXPANDED_SNAP);
+  const handleSnapChange = (snap: number | string | null) => {
+    setExpandedForIndex(snap === EXPANDED_SNAP ? mobileActiveIndex : null);
   };
 
+  const expandActiveClaim = () => setExpandedForIndex(mobileActiveIndex);
+
   const scrollToClaim = (index: number) => {
-    expandedForIndexRef.current = index;
-    setActiveSnapPoint(EXPANDED_SNAP);
+    setExpandedForIndex(index);
     containerRef.current
       ?.querySelector(`[data-claim-index="${index}"]`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -170,7 +149,7 @@ export function ArticleReader({
           activeIndex={mobileActiveIndex}
           open={mobileOpen}
           activeSnapPoint={activeSnapPoint}
-          onSnapChange={setActiveSnapPoint}
+          onSnapChange={handleSnapChange}
           onExpand={expandActiveClaim}
           sourcesLabel={sourcesLabel}
           verificationLabel={verificationLabel}
