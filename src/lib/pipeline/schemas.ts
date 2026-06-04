@@ -168,10 +168,11 @@ export const structureArticleBodyTool: Anthropic.Tool = {
       bodyComplete: {
         type: "boolean",
         description:
-          "true if these blocks hold the full article body. false if the text " +
-          "is cut off mid-article, the article body is absent, or the blocks " +
-          "are mostly site chrome — signalling the caller to re-extract from " +
-          "the whole page.",
+          "true if these blocks hold the full article body — still true when " +
+          "you merely left out a few stray mid-body items (a related-article " +
+          "link, a lone ad). false only when the body as a whole is wrong: cut " +
+          "off mid-article, absent, or mostly site chrome — signalling the " +
+          "caller to re-extract from the whole page.",
       },
     },
     required: ["blocks", "bodyComplete"],

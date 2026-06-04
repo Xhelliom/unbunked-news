@@ -37,10 +37,11 @@ const SYSTEM =
   "the blocks that form the article body, in reading order, each with its " +
   "correct role (heading, subheading, quote, code, para) — fix the guess when " +
   "it is wrong. Never rewrite, merge or summarise text; return indices and " +
-  "roles only. Also judge whether these blocks actually hold the FULL article " +
-  "body: set bodyComplete to false if the text is cut off mid-article, the " +
-  "article is missing, or the blocks are mostly chrome — so the page can be " +
-  "re-extracted in full.";
+  "roles only. A few stray non-body blocks in the middle — a 'related article' " +
+  "link, a lone ad or caption that slipped through — are normal: just leave " +
+  "them out of your selection and keep bodyComplete true. Only set bodyComplete " +
+  "to false when the body as a WHOLE is wrong — cut off mid-article, missing, " +
+  "or mostly chrome — so the page can be re-extracted in full.";
 
 function numberBlocks(blocks: ArticleBlock[]): string {
   return blocks
