@@ -151,8 +151,9 @@ export const articles = pgTable(
     // Postgres-maintained full-text index over the headline, summary and body.
     // Generated-column expressions can't reference the table object being
     // defined, so the column names are inlined here as a documented technical
-    // exception to the no-raw-identifiers rule (see CLAUDE.md); the search query
-    // that consumes it has a non-regression test.
+    // exception to the no-raw-identifiers rule (see CLAUDE.md). Prepared here for
+    // the search phase of the rubrics plan (docs/superpowers/plans/2026-06-03-
+    // article-rubriques-plan.md); the consuming query lands in a follow-up PR.
     searchVector: tsvector("search_vector").generatedAlwaysAs(
       sql`to_tsvector('french', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(content, ''))`,
     ),

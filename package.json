@@ -19,9 +19,9 @@
     "db:seed-admin": "tsx src/db/seed-admin.ts",
     "db:seed-articles": "tsx src/db/seed-articles.ts",
     "db:clean-articles": "tsx src/db/clean-articles.ts",
-    "db:rescore-local": "node --conditions=react-server --env-file=.env.local --import tsx src/db/rescore-articles.local.ts",
-    "db:backfill-scoring-local": "node --env-file=.env.local --import tsx src/db/backfill-scoring.local.ts",
-    "db:backfill-rubrics-local": "node --env-file=.env.local --import tsx src/db/backfill-rubrics.local.ts"
+    "db:rescore-local": "node --conditions=react-server --env-file=.env --import tsx src/db/rescore-articles.local.ts",
+    "db:backfill-scoring-local": "node --env-file=.env --import tsx src/db/backfill-scoring.local.ts",
+    "db:backfill-rubrics-local": "node --env-file=.env --import tsx src/db/backfill-rubrics.local.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

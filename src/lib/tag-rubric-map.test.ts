@@ -18,6 +18,14 @@ test("maps the seeded tag slugs to their rubric", () => {
   assert.equal(rubricForTagSlugs(["tech"]), "sciences-sante");
 });
 
+test("maps the French tag spellings too", () => {
+  assert.equal(rubricForTagSlugs(["environnement"]), "ecologie");
+  assert.equal(rubricForTagSlugs(["energie"]), "ecologie");
+  assert.equal(rubricForTagSlugs(["technologie"]), "sciences-sante");
+  assert.equal(rubricForTagSlugs(["intelligence-artificielle"]), "sciences-sante");
+  assert.equal(rubricForTagSlugs(["science"]), "sciences-sante");
+});
+
 test("the first mappable slug wins", () => {
   assert.equal(rubricForTagSlugs(["unknown", "politics"]), "politique");
   assert.equal(rubricForTagSlugs(["environment", "health"]), "ecologie");
