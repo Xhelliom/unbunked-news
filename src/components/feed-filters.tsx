@@ -108,8 +108,8 @@ export function FeedFilters({
   const tr = useTranslations("rubrics");
 
   return (
-    <div className="flex flex-1 flex-col items-end gap-3">
-      <div className="flex flex-wrap items-start justify-end gap-x-4 gap-y-2">
+    <div className="flex flex-1 flex-col gap-3 sm:items-end">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:justify-end">
         <FilterTab
           href={buildHref({ rubric: current.rubric })}
           label={t("all")}
@@ -137,7 +137,7 @@ export function FeedFilters({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-start justify-end gap-x-4 gap-y-2">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:justify-end">
         <FilterTab
           href={buildHref({ verdict: current.verdict })}
           label={t("all")}

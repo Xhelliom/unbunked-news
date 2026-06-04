@@ -94,7 +94,7 @@ export default async function HomePage({
       )}
 
       <section className={cn(hero ? "mt-14" : "mt-0")}>
-        <header className="mb-6 flex flex-wrap items-center gap-6 border-b pb-3.5">
+        <header className="mb-6 flex flex-col gap-4 border-b pb-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
           <h2 className="font-serif text-[22px] font-bold tracking-tight whitespace-nowrap">
             {sectionTitle}
           </h2>
