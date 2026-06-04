@@ -129,9 +129,9 @@
     "body": "Light/dark theme, internationalization and the verdict system are wired up. The article feed lands in the next step."
   },
   "claimStatus": {
-    "supported": "Confirmed",
-    "partly_true": "Partly true",
-    "misleading": "Misleading",
+    "supported": "Reliable",
+    "partly_true": "Imprecise",
+    "misleading": "Disputable",
     "false": "False",
     "unverifiable": "Unverifiable"
   },

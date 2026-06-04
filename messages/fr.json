@@ -129,9 +129,9 @@
     "body": "Thème clair/sombre, internationalisation et système de verdicts sont en place. Le feed d'articles arrive à l'étape suivante."
   },
   "claimStatus": {
-    "supported": "Confirmé",
-    "partly_true": "Partiellement vrai",
-    "misleading": "Trompeur",
+    "supported": "Fiable",
+    "partly_true": "Imprécis",
+    "misleading": "Contestable",
     "false": "Faux",
     "unverifiable": "Non vérifiable"
   },
