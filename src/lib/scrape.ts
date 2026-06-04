@@ -1,8 +1,13 @@
 import { extractFromHtml } from "@extractus/article-extractor";
 
 import {
+  type ArticleBlock,
+  serializeBlock,
+} from "@/lib/article-blocks";
+import {
   assessScrapeQuality,
   cleanArticleContent,
+  isBoilerplateLine,
   stripBoilerplate,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
@@ -86,23 +91,101 @@ function decodeEntities(text: string): string {
     .replace(/&quot;/g, '"');
 }
 
-// Splits article HTML into clean text paragraphs, preserving block boundaries
-// (lost if we collapsed all whitespace). Inner whitespace within a paragraph is
-// normalized to single spaces.
-function htmlToParagraphs(html: string): string[] {
-  return decodeEntities(
-    html
-      .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+// NUL sentinels injected at block-open tags so the kind survives the
+// tag-stripping + whitespace-collapsing pass and can be read back per block.
+// NUL never occurs in real article text, so it can't collide with content.
+const HEADING_SENTINEL = "\u0000H\u0000";
+const SUBHEADING_SENTINEL = "\u0000S\u0000";
+const QUOTE_SENTINEL = "\u0000Q\u0000";
+const CODE_SENTINEL_PREFIX = "\u0000C";
+const CODE_SENTINEL_SUFFIX = "\u0000";
+
+// Splits article HTML into typed blocks, preserving both block boundaries (lost
+// if we collapsed all whitespace) and the *role* of each block — headings,
+// subheadings, blockquotes and code keep their formalism instead of all
+// flattening into prose, so the rewrite can mirror the original structure.
+// Inner whitespace is normalized to single spaces, except inside code where the
+// original line breaks are the whole point.
+function htmlToBlocks(html: string): ArticleBlock[] {
+  const codeBlocks: string[] = [];
+  const withoutCode = html
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_match, inner: string) => {
+      const code = decodeEntities(
+        inner.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, ""),
+      )
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+      const index = codeBlocks.push(code) - 1;
+      return `\n\n${CODE_SENTINEL_PREFIX}${index}${CODE_SENTINEL_SUFFIX}\n\n`;
+    });
+
+  const text = decodeEntities(
+    withoutCode
+      .replace(/<(h1|h2)\b[^>]*>/gi, `\n\n${HEADING_SENTINEL}`)
+      .replace(/<h[3-6]\b[^>]*>/gi, `\n\n${SUBHEADING_SENTINEL}`)
+      .replace(/<blockquote\b[^>]*>/gi, `\n\n${QUOTE_SENTINEL}`)
       .replace(
         /<\/(p|div|h[1-6]|li|blockquote|section|article|figcaption|tr)>/gi,
         "\n\n",
       )
       .replace(/<br\s*\/?>/gi, "\n\n")
       .replace(/<[^>]+>/g, " "),
-  )
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.replace(/\s+/g, " ").trim())
-    .filter((paragraph) => paragraph.length > 0);
+  );
+
+  const blocks: ArticleBlock[] = [];
+  for (const rawBlock of text.split(/\n{2,}/)) {
+    const collapsed = rawBlock.replace(/\s+/g, " ").trim();
+    if (collapsed.length === 0) continue;
+
+    const codeMatch = new RegExp(
+      `^${CODE_SENTINEL_PREFIX}(\\d+)${CODE_SENTINEL_SUFFIX}$`,
+    ).exec(collapsed);
+    if (codeMatch) {
+      blocks.push({ kind: "code", text: codeBlocks[Number(codeMatch[1])] });
+      continue;
+    }
+    if (collapsed.startsWith(HEADING_SENTINEL)) {
+      blocks.push({
+        kind: "heading",
+        text: collapsed.slice(HEADING_SENTINEL.length).trim(),
+      });
+      continue;
+    }
+    if (collapsed.startsWith(SUBHEADING_SENTINEL)) {
+      blocks.push({
+        kind: "subheading",
+        text: collapsed.slice(SUBHEADING_SENTINEL.length).trim(),
+      });
+      continue;
+    }
+    if (collapsed.startsWith(QUOTE_SENTINEL)) {
+      blocks.push({
+        kind: "quote",
+        text: collapsed.slice(QUOTE_SENTINEL.length).trim(),
+      });
+      continue;
+    }
+    blocks.push({ kind: "para", text: collapsed });
+  }
+  return blocks;
+}
+
+// Plain-text view of the article blocks, for the AI body-recovery fallback that
+// needs prose candidates rather than structure.
+function htmlToParagraphs(html: string): string[] {
+  return htmlToBlocks(html)
+    .map((block) => block.text)
+    .filter((text) => text.length > 0);
+}
+
+// Drops boilerplate blocks (ads, share counters, "à lire aussi" …) while keeping
+// structure. Code is never matched against the prose boilerplate patterns.
+function keepArticleBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
+  return blocks.filter(
+    (block) => block.kind === "code" || !isBoilerplateLine(block.text),
+  );
 }
 
 function looksLikeProse(block: string): boolean {
@@ -140,7 +223,9 @@ function normalize(url: string, data: ExtractorResult): ScrapedArticle | null {
     url,
     title: data.title,
     sourceName: data.source ?? hostnameToSource(url),
-    content: stripBoilerplate(htmlToParagraphs(data.content)).join("\n\n"),
+    content: keepArticleBlocks(htmlToBlocks(data.content))
+      .map(serializeBlock)
+      .join("\n\n"),
     imageUrl: data.image ?? null,
     author: data.author ?? null,
     publishedAt: data.published ? new Date(data.published) : null,

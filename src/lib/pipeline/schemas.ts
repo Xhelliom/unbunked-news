@@ -360,7 +360,7 @@ export const recordRewriteTool: Anthropic.Tool = {
       body: {
         type: "string",
         description:
-          "Full rewritten article in markdown, in the requested language. Preserve the tone and structure of the original but write entirely in your own words — never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
+          "Full rewritten article in markdown, in the requested language. Mirror the original structure given in the source markdown — ## headings, ### subheadings, > blockquotes, ``` code blocks — but write entirely in your own words; never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
       },
     },
     required: ["title", "body"],
