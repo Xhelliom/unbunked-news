@@ -20,6 +20,7 @@ import {
   formatArticle,
   getClaude,
   usageOf,
+  withCurrentDate,
   type TokenUsage,
 } from "./client";
 import {
@@ -119,7 +120,7 @@ export async function aggregate(
   const message = await client.messages.create({
     model,
     max_tokens: MAX_TOKENS,
-    system: SYSTEM,
+    system: withCurrentDate(SYSTEM),
     tools: [recordAnalysisTool],
     tool_choice: { type: "tool", name: "record_analysis" },
     messages: [

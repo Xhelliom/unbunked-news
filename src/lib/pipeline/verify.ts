@@ -9,6 +9,7 @@ import {
   formatArticle,
   getClaude,
   usageOf,
+  withCurrentDate,
   ZERO_USAGE,
   type TokenUsage,
 } from "./client";
@@ -96,7 +97,7 @@ export async function verifyClaims(
   let message = await client.messages.create({
     model,
     max_tokens: 8192,
-    system: SYSTEM,
+    system: withCurrentDate(SYSTEM),
     tools: SEARCH_TOOLS,
     messages,
   });
@@ -109,7 +110,7 @@ export async function verifyClaims(
     message = await client.messages.create({
       model,
       max_tokens: 8192,
-      system: SYSTEM,
+      system: withCurrentDate(SYSTEM),
       tools: SEARCH_TOOLS,
       messages,
     });
