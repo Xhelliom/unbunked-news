@@ -40,15 +40,15 @@
       "description": "Solid, well-sourced and consistent with the facts."
     },
     "nuanced": {
-      "label": "Nuanced",
+      "label": "Imprecise",
       "description": "Largely true, but incomplete or context-dependent."
     },
     "fragile": {
-      "label": "Fragile",
+      "label": "Disputable",
       "description": "Fragile reliability: major reservations about the facts or sources."
     },
     "debunked": {
-      "label": "Debunked",
+      "label": "False",
       "description": "False or misleading claim."
     },
     "unverifiable": {

@@ -40,15 +40,15 @@
       "description": "Affirmation solide, bien sourcée et conforme aux faits."
     },
     "nuanced": {
-      "label": "Nuancé",
+      "label": "Imprécis",
       "description": "Globalement vrai, mais incomplet ou dépendant du contexte."
     },
     "fragile": {
-      "label": "Fragile",
+      "label": "Contestable",
       "description": "Fiabilité fragile : réserves importantes sur les faits ou les sources."
     },
     "debunked": {
-      "label": "Débunké",
+      "label": "Faux",
       "description": "Affirmation fausse ou trompeuse."
     },
     "unverifiable": {
