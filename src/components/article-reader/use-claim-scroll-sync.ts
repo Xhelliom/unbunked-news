@@ -4,10 +4,8 @@ import { useEffect, useState, type RefObject } from "react";
 
 import type { ReadingParagraph } from "@/lib/reading";
 import {
-  CLAIM_NEAR_VIEWPORT_FACTOR,
   computeScrollSelection,
   measureClaimAnchors,
-  PROBE_VIEWPORT_RATIO,
   type ClaimAnchor,
 } from "@/components/article-reader/claim-scroll";
 
@@ -15,9 +13,10 @@ type ScrollSyncState = {
   scrollActiveIndex: number | null;
   claimAnchors: ClaimAnchor[];
   indicatorRatio: number;
-  // True only while the reading probe sits close to the active claim — the
-  // mobile drawer keys its open state on this (the active index is always
-  // clamped to a claim, so on its own it can't tell "near a claim" from "far").
+  // True only while some part of the active claim's highlight is on screen —
+  // the mobile drawer keys its open state on this (the active index is always
+  // clamped to a claim, so on its own it can't tell "visible" from "scrolled
+  // past").
   isNearClaim: boolean;
 };
 
@@ -54,15 +53,19 @@ export function useClaimScrollSync(
       setScrollActiveIndex(activeIndex);
       setIndicatorRatio(ratio);
 
-      const active = anchors.find((anchor) => anchor.index === activeIndex);
-      const probe = window.scrollY + window.innerHeight * PROBE_VIEWPORT_RATIO;
-      const claimDistance =
-        active === undefined
-          ? Infinity
-          : Math.abs(probe - (columnTop + active.ratio * root.offsetHeight));
-      setIsNearClaim(
-        claimDistance <= window.innerHeight * CLAIM_NEAR_VIEWPORT_FACTOR,
+      const viewportHeight = window.innerHeight;
+      const marks = root.querySelectorAll<HTMLElement>(
+        `[data-claim-index="${activeIndex}"]`,
       );
+      let claimVisible = false;
+      for (const mark of marks) {
+        const rect = mark.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < viewportHeight) {
+          claimVisible = true;
+          break;
+        }
+      }
+      setIsNearClaim(claimVisible);
     };
 
     const scheduleUpdate = () => {

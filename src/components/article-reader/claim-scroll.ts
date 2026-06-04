@@ -3,10 +3,6 @@ export type ClaimAnchor = { index: number; ratio: number };
 
 // Ligne de lecture : un peu au-dessus du centre pour activer les claims plus tôt.
 export const PROBE_VIEWPORT_RATIO = 0.32;
-// Le drawer mobile reste ouvert tant que le claim actif est à moins de cette
-// fraction de hauteur d'écran de la ligne de lecture ; au-delà (entre deux
-// claims, ou en bas d'article), il se referme entièrement.
-export const CLAIM_NEAR_VIEWPORT_FACTOR = 0.55;
 // Accélère la progression du sélecteur / repère par rapport au scroll réel.
 export const SCROLL_PROGRESS_BOOST = 1.28;
 // En bas de page, on force le dernier claim même si la citation n'atteint pas le centre.
