@@ -30,7 +30,6 @@ import {
   isReasoningModel,
 } from "./models";
 import { extractClaims } from "./extract-claims";
-import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
 import { structureArticleBody } from "./structure-body";
 import { verifyClaims } from "./verify";
@@ -96,22 +95,13 @@ export async function runPipeline(jobId: string): Promise<void> {
       ? job.model
       : DEFAULT_REASONING_MODEL;
 
-    let recoverUsage = ZERO_USAGE;
     let structureUsage = ZERO_USAGE;
-    // The AI structuring step is an enhancement: if it fails (truncation, API
-    // error), we degrade to the deterministic body rather than sink the job.
+    // The AI structuring step drives extraction (refine the body, or re-extract
+    // the whole page when it looks wrong). If it fails (truncation, API error),
+    // we degrade to the deterministic body rather than sink the job.
     const structureWarnings: string[] = [];
     const { article, provenance } = await scrapeArticle(
       job.url,
-      async (blocks, meta) => {
-        const { content, usage } = await recoverArticleBody(
-          blocks,
-          meta,
-          HAIKU_MODEL,
-        );
-        recoverUsage = addUsage(recoverUsage, usage);
-        return content;
-      },
       async (blocks, meta) => {
         try {
           const { blocks: structured, complete, usage } =
@@ -212,7 +202,6 @@ export async function runPipeline(jobId: string): Promise<void> {
     }
 
     const usageByModel = mergeUsageByModel([
-      { model: HAIKU_MODEL, usage: recoverUsage },
       { model: HAIKU_MODEL, usage: structureUsage },
       { model: HAIKU_MODEL, usage: extractUsage },
       { model: reasoningModel, usage: verification.usage },

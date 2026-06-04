@@ -4,46 +4,53 @@ import assert from "node:assert/strict";
 import type { ArticleBlock } from "./article-blocks";
 import {
   applyStructureSelection,
-  buildCandidateBlocks,
+  buildStructureCandidates,
   htmlToBlocks,
 } from "./scrape";
 
 const PROSE =
   "Le Parlement a définitivement adopté mardi un texte transposant dans la loi un accord conclu entre partenaires sociaux au mois de février dernier.";
 
-test("keeps prose paragraphs and drops navigation chrome", () => {
+test("structure candidates keep prose and structure, drop nav chrome", () => {
   const html = `
     <nav><ul><li>Politique</li><li>Société</li><li>Sport</li></ul></nav>
     <article>
+      <h2>Le contexte</h2>
       <p class="article__paragraph">${PROSE}</p>
       <p>Abonnez-vous à la newsletter</p>
     </article>
     <footer>© Le Monde 2026</footer>
   `;
-  const blocks = buildCandidateBlocks(html);
+  const texts = buildStructureCandidates(html).map((block) => block.text);
   assert.ok(
-    blocks.some((block) => block.includes("Le Parlement a définitivement adopté")),
+    texts.some((text) => text.includes("Le Parlement a définitivement adopté")),
     "the article paragraph must survive",
   );
   assert.ok(
-    !blocks.some((block) => /Politique|Société|Sport/.test(block)),
+    buildStructureCandidates(html).some(
+      (block) => block.kind === "heading" && block.text === "Le contexte",
+    ),
+    "a real section heading is kept as a structural candidate",
+  );
+  assert.ok(
+    !texts.some((text) => /Politique|Société|Sport/.test(text)),
     "single nav words are too short to qualify as prose",
   );
   assert.ok(
-    !blocks.some((block) => /Abonnez-vous/.test(block)),
+    !texts.some((text) => /Abonnez-vous/.test(text)),
     "newsletter CTA is boilerplate",
   );
 });
 
-test("strips scripts and deduplicates repeated blocks", () => {
+test("structure candidates strip scripts and deduplicate", () => {
   const html = `
     <script>var x = ${JSON.stringify({ a: 1, b: 2, c: 3 })};</script>
     <p>${PROSE}</p>
     <p>${PROSE}</p>
   `;
-  const blocks = buildCandidateBlocks(html);
+  const blocks = buildStructureCandidates(html);
   assert.equal(blocks.length, 1);
-  assert.ok(!blocks[0].includes("var x"));
+  assert.ok(!blocks[0].text.includes("var x"));
 });
 
 const STRUCTURE_SOURCE: ArticleBlock[] = [

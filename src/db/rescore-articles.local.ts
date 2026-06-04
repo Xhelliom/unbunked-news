@@ -7,7 +7,7 @@ import { aggregate } from "@/lib/pipeline/aggregate";
 import { assessClaims } from "@/lib/pipeline/assess-claims";
 import { extractClaims } from "@/lib/pipeline/extract-claims";
 import { HAIKU_MODEL, SONNET_MODEL } from "@/lib/pipeline/models";
-import { recoverArticleBody } from "@/lib/pipeline/recover-body";
+import { structureArticleBody } from "@/lib/pipeline/structure-body";
 import { verifyClaims } from "@/lib/pipeline/verify";
 
 // Re-scores existing local articles with the v1.2 pipeline IN PLACE (no new
@@ -45,8 +45,14 @@ async function scrapedFor(article: {
   }
   const { article: scraped } = await scrapeArticle(
     article.urlOrigine,
-    async (blocks, meta) =>
-      (await recoverArticleBody(blocks, meta, HAIKU_MODEL)).content,
+    async (blocks, meta) => {
+      const { blocks: structured, complete } = await structureArticleBody(
+        blocks,
+        meta,
+        HAIKU_MODEL,
+      );
+      return { blocks: structured, complete };
+    },
   );
   return scraped;
 }

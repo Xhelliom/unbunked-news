@@ -8,10 +8,8 @@ import {
 } from "@/lib/article-blocks";
 import {
   assessScrapeQuality,
-  cleanArticleContent,
   isBoilerplateLine,
   isCommentSectionHeader,
-  stripBoilerplate,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
 
@@ -75,21 +73,13 @@ const MAX_STRUCTURE_INPUT_CHARS = 60_000;
 
 // Injected so scraping stays decoupled from the AI pipeline (importing the
 // Anthropic client here would create a server-only import cycle). Given the
-// page's candidate text blocks, returns the selected article body verbatim, or
-// an empty string when no block qualifies.
-export type BodyRecoverer = (
-  blocks: string[],
-  meta: { title: string },
-) => Promise<string>;
-
-// Injected for the same decoupling reason as BodyRecoverer. Given the article's
-// parsed blocks (each with its HTML-derived kind guess), reviews them and returns
-// the body blocks in reading order with corrected kinds, dropping chrome and the
-// comment thread — plus a `complete` verdict. `complete: false` means the blocks
-// don't hold the full article (truncated, or mostly chrome), so the caller should
-// re-extract from the whole page. `blocks` empty means nothing usable, so the
-// caller falls back to the deterministic body. Must not throw — failures degrade
-// to the fallback, they don't sink the scrape.
+// article's parsed blocks (each with its HTML-derived kind guess), reviews them
+// and returns the body blocks in reading order with corrected kinds, dropping
+// chrome and the comment thread — plus a `complete` verdict. `complete: false`
+// means the blocks don't hold the full article (truncated, or mostly chrome), so
+// the caller should re-extract from the whole page. `blocks` empty means nothing
+// usable, so the caller falls back to the deterministic body. Must not throw —
+// failures degrade to the fallback, they don't sink the scrape.
 export type StructureOutcome = { blocks: ArticleBlock[]; complete: boolean };
 export type BodyStructurer = (
   blocks: ArticleBlock[],
@@ -195,14 +185,6 @@ export function htmlToBlocks(html: string): ArticleBlock[] {
   return blocks;
 }
 
-// Plain-text view of the article blocks, for the AI body-recovery fallback that
-// needs prose candidates rather than structure.
-function htmlToParagraphs(html: string): string[] {
-  return htmlToBlocks(html)
-    .map((block) => block.text)
-    .filter((text) => text.length > 0);
-}
-
 // Drops boilerplate blocks (ads, share counters, "à lire aussi" …) while keeping
 // structure. Code is never matched against the prose boilerplate patterns.
 function keepArticleBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
@@ -282,20 +264,27 @@ function looksLikeProse(block: string): boolean {
   return letters / block.length > MIN_LETTER_RATIO;
 }
 
-// Prose-shaped, deduplicated text blocks from the whole page, bounded in total
-// size, for the AI fallback to pick the article body out of.
-export function buildCandidateBlocks(html: string): string[] {
+// Body-relevant blocks from the WHOLE page for the AI re-extraction fallback:
+// keep every structural block (heading/subheading/quote/code) and every
+// prose-shaped paragraph, while dropping short nav-style lines and known
+// boilerplate. Deduplicated and bounded in total size. The structurer then picks
+// the article body out of these, preserving roles — so recovery keeps the
+// article's headings and quotes instead of flattening them.
+export function buildStructureCandidates(html: string): ArticleBlock[] {
   const seen = new Set<string>();
-  const blocks: string[] = [];
+  const candidates: ArticleBlock[] = [];
   let total = 0;
-  for (const block of stripBoilerplate(htmlToParagraphs(html))) {
-    if (!looksLikeProse(block) || seen.has(block)) continue;
-    if (total + block.length > MAX_CANDIDATE_CHARS) break;
-    seen.add(block);
-    blocks.push(block);
-    total += block.length;
+  for (const block of htmlToBlocks(html)) {
+    const isBodyShaped = block.kind !== "para" || looksLikeProse(block.text);
+    const isBoilerplate =
+      block.kind !== "code" && isBoilerplateLine(block.text);
+    if (!isBodyShaped || isBoilerplate || seen.has(block.text)) continue;
+    if (total + block.text.length > MAX_CANDIDATE_CHARS) break;
+    seen.add(block.text);
+    candidates.push(block);
+    total += block.text.length;
   }
-  return blocks;
+  return candidates;
 }
 
 type ExtractorResult = Awaited<ReturnType<typeof extractFromHtml>>;
@@ -400,16 +389,16 @@ type Attempt = {
 };
 
 // Extracts the best body obtainable from a single HTML document. The generic
-// extractor runs first; the AI structurer then refines its blocks (correct
+// extractor runs first; the AI structurer then reviews its blocks (correct
 // roles, drop residual chrome and comments) for every article. If the body
 // still fails the quality gate — a paywall teaser or nav menu where the real
-// body sits elsewhere in the SAME HTML (Le Monde & co.) — the AI recovery picks
-// the article-body blocks out of the whole page verbatim. Both AI steps rebuild
-// the body from chosen blocks, so downstream claim quotes still resolve.
+// body sits elsewhere in the SAME HTML (Le Monde & co.) — or the model judged it
+// incomplete, the SAME structurer re-extracts from the whole page, so recovery
+// keeps the article's headings and quotes. Every pass rebuilds the body from
+// chosen blocks, so downstream claim quotes still resolve.
 async function attemptFromHtml(
   url: string,
   html: string,
-  recoverBody?: BodyRecoverer,
   structureBody?: BodyStructurer,
 ): Promise<Attempt> {
   const normalized = normalize(url, await extractFromHtml(html, url));
@@ -444,7 +433,7 @@ async function attemptFromHtml(
   }
 
   const quality = assessScrapeQuality(article.content);
-  if ((quality.ok && !aiFlaggedIncomplete) || !recoverBody) {
+  if ((quality.ok && !aiFlaggedIncomplete) || !structureBody) {
     return {
       result: article,
       quality,
@@ -458,8 +447,8 @@ async function attemptFromHtml(
   const triggerReason = quality.ok
     ? "AI judged the extracted body incomplete or not the article"
     : quality.reason;
-  const blocks = buildCandidateBlocks(html);
-  if (blocks.length === 0) {
+  const candidates = buildStructureCandidates(html);
+  if (candidates.length === 0) {
     return {
       result: article,
       quality,
@@ -470,24 +459,25 @@ async function attemptFromHtml(
     };
   }
 
-  const recovered = cleanArticleContent(
-    await recoverBody(blocks, { title: article.title }),
-  );
+  const { blocks: recoveredBlocks } = await structureBody(candidates, {
+    title: article.title,
+  });
+  const recovered = serializeBlocks(recoveredBlocks);
   const recoveredQuality = assessScrapeQuality(recovered);
   return recoveredQuality.ok
     ? {
         result: { ...article, content: recovered },
         quality: recoveredQuality,
         usedAi: true,
-        candidateBlocks: blocks.length,
+        candidateBlocks: candidates.length,
         aiTriggerReason: triggerReason,
-        aiStructured: false,
+        aiStructured: true,
       }
     : {
         result: article,
         quality,
         usedAi: false,
-        candidateBlocks: blocks.length,
+        candidateBlocks: candidates.length,
         aiTriggerReason: triggerReason,
         aiStructured,
       };
@@ -495,12 +485,11 @@ async function attemptFromHtml(
 
 export async function scrapeArticle(
   url: string,
-  recoverBody?: BodyRecoverer,
   structureBody?: BodyStructurer,
 ): Promise<ScrapeResult> {
   const html = await fetchHtml(url);
   let attempt: Attempt = html
-    ? await attemptFromHtml(url, html, recoverBody, structureBody)
+    ? await attemptFromHtml(url, html, structureBody)
     : {
         result: null,
         quality: { ok: false, reason: "could not fetch the page" },
@@ -516,12 +505,7 @@ export async function scrapeArticle(
   if (!attempt.quality.ok) {
     const renderedHtml = await renderHtml(url);
     if (renderedHtml) {
-      const second = await attemptFromHtml(
-        url,
-        renderedHtml,
-        recoverBody,
-        structureBody,
-      );
+      const second = await attemptFromHtml(url, renderedHtml, structureBody);
       if (second.result && (!attempt.result || second.quality.ok)) {
         attempt = second;
         rendered = true;
