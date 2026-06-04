@@ -114,18 +114,17 @@ export async function runPipeline(jobId: string): Promise<void> {
       },
       async (blocks, meta) => {
         try {
-          const { blocks: structured, usage } = await structureArticleBody(
-            blocks,
-            meta,
-            HAIKU_MODEL,
-          );
+          const { blocks: structured, complete, usage } =
+            await structureArticleBody(blocks, meta, HAIKU_MODEL);
           structureUsage = addUsage(structureUsage, usage);
-          return structured;
+          return { blocks: structured, complete };
         } catch (error) {
           structureWarnings.push(
             error instanceof Error ? error.message : String(error),
           );
-          return [];
+          // Degrade to the deterministic body; don't escalate on a transient
+          // failure, the quality gate still governs whole-page recovery.
+          return { blocks: [], complete: true };
         }
       },
     );

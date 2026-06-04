@@ -11,7 +11,11 @@ import {
 } from "./client";
 import { structureArticleBodyTool } from "./schemas";
 
-export type StructuredBody = { blocks: ArticleBlock[]; usage: TokenUsage };
+export type StructuredBody = {
+  blocks: ArticleBlock[];
+  complete: boolean;
+  usage: TokenUsage;
+};
 
 // Small output: the model returns one {index, kind} per kept block, not prose.
 const MAX_TOKENS = 2048;
@@ -33,7 +37,10 @@ const SYSTEM =
   "the blocks that form the article body, in reading order, each with its " +
   "correct role (heading, subheading, quote, code, para) — fix the guess when " +
   "it is wrong. Never rewrite, merge or summarise text; return indices and " +
-  "roles only.";
+  "roles only. Also judge whether these blocks actually hold the FULL article " +
+  "body: set bodyComplete to false if the text is cut off mid-article, the " +
+  "article is missing, or the blocks are mostly chrome — so the page can be " +
+  "re-extracted in full.";
 
 function numberBlocks(blocks: ArticleBlock[]): string {
   return blocks
@@ -48,7 +55,9 @@ export async function structureArticleBody(
   meta: { title: string },
   model: string,
 ): Promise<StructuredBody> {
-  if (blocks.length === 0) return { blocks: [], usage: ZERO_USAGE };
+  if (blocks.length === 0) {
+    return { blocks: [], complete: true, usage: ZERO_USAGE };
+  }
 
   const client = getClaude();
   const message = await client.messages.create({
@@ -82,8 +91,13 @@ export async function structureArticleBody(
   }
 
   const input = firstToolInput(message, "record_article_structure");
+  // Default to complete when the flag is missing, so a quirk never forces a
+  // spurious (paid) whole-page re-extraction.
+  const complete =
+    typeof input?.bodyComplete === "boolean" ? input.bodyComplete : true;
   return {
     blocks: applyStructureSelection(input?.blocks ?? null, blocks),
+    complete,
     usage: usageOf(message),
   };
 }

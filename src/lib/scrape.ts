@@ -67,6 +67,11 @@ const MAX_BLOCK_CHARS = 3_000;
 const MIN_BLOCK_WORDS = 6;
 const MIN_LETTER_RATIO = 0.5;
 const MAX_CANDIDATE_CHARS = 24_000;
+// The whole article (not a sample) goes to the AI structurer so it can spot ads
+// or chrome embedded mid-body. Generous enough to fit virtually every article;
+// past it we keep the deterministic body rather than feed the model a truncated
+// one. Matches the stored-body ceiling in run.ts.
+const MAX_STRUCTURE_INPUT_CHARS = 60_000;
 
 // Injected so scraping stays decoupled from the AI pipeline (importing the
 // Anthropic client here would create a server-only import cycle). Given the
@@ -78,15 +83,18 @@ export type BodyRecoverer = (
 ) => Promise<string>;
 
 // Injected for the same decoupling reason as BodyRecoverer. Given the article's
-// parsed blocks (each with its HTML-derived kind guess), returns the body blocks
-// in reading order with corrected kinds, dropping chrome and the comment thread.
-// Returns an empty list when the model produced nothing usable, so the caller
-// falls back to the deterministic body. Must not throw — failures degrade to the
-// fallback, they don't sink the scrape.
+// parsed blocks (each with its HTML-derived kind guess), reviews them and returns
+// the body blocks in reading order with corrected kinds, dropping chrome and the
+// comment thread — plus a `complete` verdict. `complete: false` means the blocks
+// don't hold the full article (truncated, or mostly chrome), so the caller should
+// re-extract from the whole page. `blocks` empty means nothing usable, so the
+// caller falls back to the deterministic body. Must not throw — failures degrade
+// to the fallback, they don't sink the scrape.
+export type StructureOutcome = { blocks: ArticleBlock[]; complete: boolean };
 export type BodyStructurer = (
   blocks: ArticleBlock[],
   meta: { title: string },
-) => Promise<ArticleBlock[]>;
+) => Promise<StructureOutcome>;
 
 function hostnameToSource(url: string): string {
   try {
@@ -121,7 +129,7 @@ const CODE_SENTINEL_SUFFIX = "\u0000";
 // flattening into prose, so the rewrite can mirror the original structure.
 // Inner whitespace is normalized to single spaces, except inside code where the
 // original line breaks are the whole point.
-function htmlToBlocks(html: string): ArticleBlock[] {
+export function htmlToBlocks(html: string): ArticleBlock[] {
   const codeBlocks: string[] = [];
   const withoutCode = html
     .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
@@ -216,21 +224,22 @@ function serializeBlocks(blocks: ArticleBlock[]): string {
   return blocks.map(serializeBlock).join("\n\n");
 }
 
-// Deduplicates and size-bounds the parsed blocks before they are handed to the
-// AI structurer, so a single huge page can't blow up token usage and repeated
-// chrome doesn't crowd out the body. Order is preserved.
-function boundBlocks(blocks: ArticleBlock[]): ArticleBlock[] {
+// Prepares the parsed blocks for the AI structurer: drop exact duplicates (the
+// same nav label repeated) while preserving order. Returns null when the whole
+// article wouldn't fit the structurer budget — rather than send a truncated
+// article (the model would then drop the unseen tail), we skip the AI step and
+// keep the full deterministic body.
+function aiInputBlocks(blocks: ArticleBlock[]): ArticleBlock[] | null {
   const seen = new Set<string>();
-  const bounded: ArticleBlock[] = [];
+  const deduped: ArticleBlock[] = [];
   let total = 0;
   for (const block of blocks) {
     if (seen.has(block.text)) continue;
-    if (total + block.text.length > MAX_CANDIDATE_CHARS) break;
     seen.add(block.text);
-    bounded.push(block);
+    deduped.push(block);
     total += block.text.length;
   }
-  return bounded;
+  return total > MAX_STRUCTURE_INPUT_CHARS ? null : deduped;
 }
 
 const KIND_SET = new Set<string>(BLOCK_KINDS);
@@ -300,7 +309,7 @@ function normalize(url: string, data: ExtractorResult): NormalizedExtract | null
   if (!data?.content || !data.title) {
     return null;
   }
-  const rawBlocks = boundBlocks(htmlToBlocks(data.content));
+  const rawBlocks = htmlToBlocks(data.content);
   return {
     article: {
       url,
@@ -417,18 +426,25 @@ async function attemptFromHtml(
 
   let article = normalized.article;
   let aiStructured = false;
-  if (structureBody) {
-    const structured = await structureBody(normalized.rawBlocks, {
+  // Set when the model judged the extracted slice incomplete (truncated or
+  // mostly chrome): we escalate to whole-page recovery even if the deterministic
+  // quality gate would have passed it.
+  let aiFlaggedIncomplete = false;
+  const aiBlocks = structureBody ? aiInputBlocks(normalized.rawBlocks) : null;
+  if (structureBody && aiBlocks) {
+    const { blocks: structured, complete } = await structureBody(aiBlocks, {
       title: article.title,
     });
-    if (structured.length > 0) {
+    if (complete && structured.length > 0) {
       article = { ...article, content: serializeBlocks(structured) };
       aiStructured = true;
+    } else if (!complete) {
+      aiFlaggedIncomplete = true;
     }
   }
 
   const quality = assessScrapeQuality(article.content);
-  if (quality.ok || !recoverBody) {
+  if ((quality.ok && !aiFlaggedIncomplete) || !recoverBody) {
     return {
       result: article,
       quality,
@@ -439,7 +455,9 @@ async function attemptFromHtml(
     };
   }
 
-  const triggerReason = quality.reason;
+  const triggerReason = quality.ok
+    ? "AI judged the extracted body incomplete or not the article"
+    : quality.reason;
   const blocks = buildCandidateBlocks(html);
   if (blocks.length === 0) {
     return {

@@ -165,8 +165,16 @@ export const structureArticleBodyTool: Anthropic.Tool = {
           additionalProperties: false,
         },
       },
+      bodyComplete: {
+        type: "boolean",
+        description:
+          "true if these blocks hold the full article body. false if the text " +
+          "is cut off mid-article, the article body is absent, or the blocks " +
+          "are mostly site chrome — signalling the caller to re-extract from " +
+          "the whole page.",
+      },
     },
-    required: ["blocks"],
+    required: ["blocks", "bodyComplete"],
     additionalProperties: false,
   },
 };
