@@ -6,6 +6,7 @@ import {
   formatArticle,
   getClaude,
   usageOf,
+  withCurrentDate,
   type TokenUsage,
 } from "./client";
 import {
@@ -112,7 +113,7 @@ export async function assessClaims(
   const message = await client.messages.create({
     model,
     max_tokens: MAX_TOKENS,
-    system: SYSTEM,
+    system: withCurrentDate(SYSTEM),
     tools: [recordClaimsAssessmentTool],
     tool_choice: { type: "tool", name: "record_claims_assessment" },
     messages: [

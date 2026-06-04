@@ -1,46 +1,70 @@
 import { Fragment, type ReactNode } from "react";
 
+import { parseBlock } from "@/lib/article-blocks";
+
 type Props = {
   body: string;
   claimCount: number;
 };
 
-// Tiny markdown subset renderer for rewritten articles.
-// Supports: ##/### headings, paragraphs, **bold**, [text](url) links, and
-// our own [[claim:N]] markers — turned into superscript anchors to #claim-N.
+// Tiny markdown subset renderer for rewritten articles. Shares its block
+// vocabulary (headings, subheadings, blockquotes, code) with the original-text
+// extractor via parseBlock, so structure preserved at extraction survives the
+// rewrite instead of flattening into paragraphs. Inline: **bold**, [text](url)
+// links, and our own [[claim:N]] markers — turned into anchors to #claim-N.
 export function RewriteBody({ body, claimCount }: Props) {
-  const blocks = body.replace(/\r\n/g, "\n").split(/\n{2,}/);
+  const rawBlocks = body.replace(/\r\n/g, "\n").split(/\n{2,}/);
 
   return (
     <div className="space-y-4">
-      {blocks.map((raw, idx) => {
-        const block = raw.trim();
-        if (!block) return null;
+      {rawBlocks.map((raw, idx) => {
+        if (!raw.trim()) return null;
+        const block = parseBlock(raw);
 
-        if (block.startsWith("### ")) {
+        if (block.kind === "code") {
           return (
-            <h3
+            <pre
               key={idx}
-              className="mt-6 font-serif text-lg font-semibold tracking-tight"
+              className="bg-muted overflow-x-auto rounded-md p-4 font-mono text-sm"
             >
-              {renderInline(block.slice(4), claimCount)}
-            </h3>
+              {block.text}
+            </pre>
           );
         }
-        if (block.startsWith("## ")) {
+        if (block.kind === "heading") {
           return (
             <h2
               key={idx}
               className="mt-8 font-serif text-xl font-bold tracking-tight"
             >
-              {renderInline(block.slice(3), claimCount)}
+              {renderInline(block.text, claimCount)}
             </h2>
+          );
+        }
+        if (block.kind === "subheading") {
+          return (
+            <h3
+              key={idx}
+              className="mt-6 font-serif text-lg font-semibold tracking-tight"
+            >
+              {renderInline(block.text, claimCount)}
+            </h3>
+          );
+        }
+        if (block.kind === "quote") {
+          return (
+            <blockquote
+              key={idx}
+              className="border-border text-muted-foreground border-l-2 pl-4 font-serif text-lg leading-[1.7] italic"
+            >
+              {renderInline(block.text, claimCount)}
+            </blockquote>
           );
         }
 
         return (
           <p key={idx} className="font-serif text-lg leading-[1.7] text-pretty">
-            {renderInline(block, claimCount)}
+            {renderInline(block.text, claimCount)}
           </p>
         );
       })}

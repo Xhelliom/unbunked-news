@@ -48,14 +48,17 @@ function claimsBrief(claims: AnalysisClaim[]): string {
 const SYSTEM =
   "You are an Unbunked editor producing a 'fiable' (trustworthy) rewrite of a " +
   "fact-checked article. Rules:\n" +
-  "1. Preserve the tone, voice and structure (headings, paragraph flow) of the " +
-  "original, but rewrite EVERYTHING in your own words — never copy sentences " +
-  "from the source.\n" +
+  "1. The ARTICLE is given in markdown that preserves the original structure: " +
+  "## headings, ### subheadings, > blockquotes, ``` code blocks. Mirror that " +
+  "same structure in your rewrite — a heading stays a heading, a quote stays a " +
+  "quote — but rewrite EVERYTHING in your own words; never copy sentences from " +
+  "the source.\n" +
   "2. Correct or nuance every claim whose status is 'false', 'misleading' or " +
   "'partly_true' directly inline (don't just append a disclaimer).\n" +
   "3. Right after any sentence where you correct, nuance or rely on a checked " +
   "claim, append the marker [[claim:N]] (1-based, matching the claim list).\n" +
-  "4. Output markdown. Headings allowed (##, ###). No HTML, no images.\n" +
+  "4. Output markdown using the same subset (##, ###, >, ```). No HTML, no " +
+  "images.\n" +
   "5. Write entirely in the target language requested.";
 
 export async function rewriteArticle(

@@ -30,6 +30,18 @@ export function formatArticle(article: ScrapedArticle): string {
   ].join("\n");
 }
 
+// Without an anchor a model dates "now" to its training cutoff and can misjudge
+// whether an event has happened yet — placing the present in the past or future.
+// Stamp the real current date onto a system prompt so recency and web-search
+// reasoning are anchored to today.
+export function withCurrentDate(system: string): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return (
+    `Today's date is ${today} (UTC). Treat it as the present: anything dated ` +
+    `after it has not happened yet.\n\n${system}`
+  );
+}
+
 export function firstToolInput(
   message: Anthropic.Message,
   toolName: string,

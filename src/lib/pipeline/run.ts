@@ -30,8 +30,8 @@ import {
   isReasoningModel,
 } from "./models";
 import { extractClaims } from "./extract-claims";
-import { recoverArticleBody } from "./recover-body";
 import { rewriteArticle } from "./rewrite";
+import { structureArticleBody } from "./structure-body";
 import { verifyClaims } from "./verify";
 
 // Upper bound on the stored article body to keep rows reasonable.
@@ -95,17 +95,27 @@ export async function runPipeline(jobId: string): Promise<void> {
       ? job.model
       : DEFAULT_REASONING_MODEL;
 
-    let recoverUsage = ZERO_USAGE;
+    let structureUsage = ZERO_USAGE;
+    // The AI structuring step drives extraction (refine the body, or re-extract
+    // the whole page when it looks wrong). If it fails (truncation, API error),
+    // we degrade to the deterministic body rather than sink the job.
+    const structureWarnings: string[] = [];
     const { article, provenance } = await scrapeArticle(
       job.url,
       async (blocks, meta) => {
-        const { content, usage } = await recoverArticleBody(
-          blocks,
-          meta,
-          HAIKU_MODEL,
-        );
-        recoverUsage = addUsage(recoverUsage, usage);
-        return content;
+        try {
+          const { blocks: structured, complete, usage } =
+            await structureArticleBody(blocks, meta, HAIKU_MODEL);
+          structureUsage = addUsage(structureUsage, usage);
+          return { blocks: structured, complete };
+        } catch (error) {
+          structureWarnings.push(
+            error instanceof Error ? error.message : String(error),
+          );
+          // Degrade to the deterministic body; don't escalate on a transient
+          // failure, the quality gate still governs whole-page recovery.
+          return { blocks: [], complete: true };
+        }
       },
     );
 
@@ -114,6 +124,7 @@ export async function runPipeline(jobId: string): Promise<void> {
         provenance,
         article.content.length,
         SHORT_BODY_WARNING_CHARS,
+        structureWarnings,
       ),
     );
 
@@ -191,7 +202,7 @@ export async function runPipeline(jobId: string): Promise<void> {
     }
 
     const usageByModel = mergeUsageByModel([
-      { model: HAIKU_MODEL, usage: recoverUsage },
+      { model: HAIKU_MODEL, usage: structureUsage },
       { model: HAIKU_MODEL, usage: extractUsage },
       { model: reasoningModel, usage: verification.usage },
       { model: reasoningModel, usage: aggregateUsage },

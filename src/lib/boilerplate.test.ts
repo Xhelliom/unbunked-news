@@ -63,3 +63,44 @@ test("cleanArticleContent drops boilerplate lines", () => {
   );
   assert.equal(cleaned, "Le vrai paragraphe de l'article reste en place.");
 });
+
+test("cleanArticleContent cuts the reader comment thread", () => {
+  const cleaned = cleanArticleContent(
+    [
+      "Le corps de l'article se termine ici, après une longue analyse.",
+      "Commentaires (42)",
+      "Jean72 — il y a 2 heures",
+      "Tout à fait d'accord avec cette analyse, merci.",
+      "Répondre",
+    ].join("\n\n"),
+  );
+  assert.equal(
+    cleaned,
+    "Le corps de l'article se termine ici, après une longue analyse.",
+  );
+});
+
+test("cleanArticleContent cuts an English comment thread too", () => {
+  const cleaned = cleanArticleContent(
+    [
+      "The article body ends here after a thorough investigation.",
+      "12 Comments",
+      "user_x: Great piece, thanks.",
+    ].join("\n\n"),
+  );
+  assert.equal(
+    cleaned,
+    "The article body ends here after a thorough investigation.",
+  );
+});
+
+test("comment detection ignores prose and editorial asides", () => {
+  const body = [
+    "Le ministre a refusé de commenter cet article publié par nos confrères.",
+    "Commentaire de la rédaction : cette décision était attendue de longue date.",
+    "L'enquête se poursuit dans les prochaines semaines selon les autorités.",
+  ].join("\n\n");
+  // Nothing is cut: the mention is mid-sentence and the editorial aside is not a
+  // thread header.
+  assert.equal(cleanArticleContent(body), body);
+});
