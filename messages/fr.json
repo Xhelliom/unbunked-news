@@ -62,19 +62,19 @@
     "sectionTitle": "Détail de la note",
     "sectionHint": "La note globale est la moyenne pondérée de ces critères (chacun sur 100). Un critère non évaluable n'est pas affiché.",
     "factuality": {
-      "label": "Factualité",
+      "label": "Exactitude",
       "description": "Les faits avancés sont-ils vrais et vérifiés par les sources ?"
     },
     "corroboration": {
-      "label": "Corroboration",
+      "label": "Recoupement",
       "description": "Les faits centraux sont-ils confirmés par des sources externes indépendantes ?"
     },
     "sourcing": {
-      "label": "Sourçage",
+      "label": "Sources citées",
       "description": "Les sources citées sont-elles solides, indépendantes et vérifiables ?"
     },
     "completeness": {
-      "label": "Complétude",
+      "label": "Contexte",
       "description": "Les faits importants sont-ils présents plutôt qu'omis par sélection ?"
     },
     "transparency": {

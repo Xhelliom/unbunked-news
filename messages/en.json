@@ -62,19 +62,19 @@
     "sectionTitle": "Score breakdown",
     "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
-      "label": "Factuality",
+      "label": "Accuracy",
       "description": "Are the stated facts true and backed by the sources?"
     },
     "corroboration": {
-      "label": "Corroboration",
+      "label": "Cross-checking",
       "description": "Are the central facts confirmed by independent external sources?"
     },
     "sourcing": {
-      "label": "Sourcing",
+      "label": "Cited sources",
       "description": "Are the cited sources solid, independent and verifiable?"
     },
     "completeness": {
-      "label": "Completeness",
+      "label": "Context",
       "description": "Are the important facts present rather than omitted by selection?"
     },
     "transparency": {
