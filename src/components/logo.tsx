@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
 
 // Brand wordmark — "Un" in indigo + "bunked" in ink, underlined by the five
-// verdict colours in their canonical order (Fiable → Nuancé → Orienté →
-// Débunké → Non vérifiable). Built as live text per the brand handoff so it
-// inherits Source Serif 4 and adapts to light/dark through design tokens.
+// verdict colours in canonical enum order: reliable → nuanced → fragile →
+// debunked → unverifiable. The bar binds to the enum keys, not the labels, so
+// rewording a verdict label leaves it untouched. Built as live text per the
+// brand handoff so it inherits Source Serif 4 and adapts to light/dark through
+// design tokens.
 // Size it by passing a font-size class on `className`; the spectrum bar and
 // gaps are em-relative and scale with the text.
 const SPECTRUM = [

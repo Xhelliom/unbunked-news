@@ -8,7 +8,7 @@ import {
   claimStatusHighlightClasses,
   claimStatusToVerdict,
 } from "@/lib/claim-status";
-import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { type ClaimCardData } from "@/components/claim-card";
 import type { BlockKind } from "@/lib/article-blocks";
 import type { ReadingParagraph, ReadingSegment } from "@/lib/reading";
 
@@ -18,9 +18,6 @@ type Props = {
   statusLabels: Record<ClaimStatus, string>;
   displayedIndex: number | null;
   isActiveParagraph: boolean;
-  sourcesLabel: string;
-  verificationLabel: string;
-  mobileLabel: string;
   onHoverClaim: (index: number) => void;
   onLeaveClaim: (event: MouseEvent<HTMLElement>) => void;
 };
@@ -35,9 +32,6 @@ export function ReadingParagraphBlock({
   statusLabels,
   displayedIndex,
   isActiveParagraph,
-  sourcesLabel,
-  verificationLabel,
-  mobileLabel,
   onHoverClaim,
   onLeaveClaim,
 }: Props) {
@@ -89,22 +83,6 @@ export function ReadingParagraphBlock({
           onLeaveClaim={onLeaveClaim}
         />
       </div>
-
-      {annotated && (
-        <aside className="mt-3 flex flex-col gap-2.5 lg:hidden">
-          <span className="text-muted-foreground mb-1 text-[11px] font-semibold tracking-[0.05em] uppercase">
-            ↓ {mobileLabel}
-          </span>
-          {claimIndices.map((index) => (
-            <ClaimCard
-              key={index}
-              claim={claims[index]}
-              sourcesLabel={sourcesLabel}
-              verificationLabel={verificationLabel}
-            />
-          ))}
-        </aside>
-      )}
     </div>
   );
 }

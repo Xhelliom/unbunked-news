@@ -57,6 +57,7 @@ export function VerificationPanel({
     <div className="hidden lg:block">
       <div className="relative sticky top-28 flex gap-2">
         <ClaimScrollRail
+          className="hidden h-[calc(100dvh-9rem)] w-3 shrink-0 lg:block"
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
