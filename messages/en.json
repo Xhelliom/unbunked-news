@@ -63,27 +63,39 @@
     "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
       "label": "Accuracy",
-      "description": "Are the article's figures, dates, quotes and claims correct?"
+      "description": "Are the article's figures, dates, quotes and claims correct?",
+      "why": "This is the heart of reliability. A single false central claim tips the whole article over, which is why it carries the most weight.",
+      "how": "We isolate the main claims and test them against the sources: quotes not truncated, data not distorted, names and dates consistent."
     },
     "corroboration": {
       "label": "Cross-checking",
-      "description": "Are the central facts confirmed by independent external sources?"
+      "description": "Are the central facts confirmed by independent external sources?",
+      "why": "A fact repeated a thousand times is still false if it comes from a single origin. We never rely on the article's text alone: we check elsewhere.",
+      "how": "Web search and fact-checking databases to find the same fact in at least two reliable, genuinely independent sources, never the same wire copy reprinted."
     },
     "sourcing": {
       "label": "Cited sources",
-      "description": "Are the references the article mentions named, verifiable and independent?"
+      "description": "Are the references the article mentions named, verifiable and independent?",
+      "why": "An article leaning on anonymous or untraceable sources asks for blind trust. We prefer what you can trace back and check yourself.",
+      "how": "We examine what the article cites: named sources over anonymous ones, first-hand documents over reprints, links that actually work."
     },
     "completeness": {
       "label": "Context",
-      "description": "Have essential facts been left out in a way that changes how the article reads?"
+      "description": "Have essential facts been left out in a way that changes how the article reads?",
+      "why": "You can mislead without lying, by leaving out what's inconvenient. Note: we judge neither tone nor opinion, only omissions that distort understanding.",
+      "how": "We check whether the essential context is present, whether a known fact is missing, or whether quotes are taken out of context."
     },
     "transparency": {
       "label": "Transparency",
-      "description": "Are the author, date, editorial owner and funding identifiable?"
+      "description": "Are the author, date, editorial owner and funding identifiable?",
+      "why": "Knowing who is speaking, when, and who funds them is part of the information. An outlet that hides doesn't inspire trust: opacity is itself a flaw.",
+      "how": "We look for the author, the publication date, the site's publisher and its funding sources. The clearer it is, the higher the score."
     },
     "recency": {
       "label": "Recency",
-      "description": "Is the information up to date rather than stale?"
+      "description": "Is the information up to date rather than stale?",
+      "why": "Information that was accurate yesterday can mislead today. This criterion only applies to time-sensitive topics; it is set aside for timeless content.",
+      "how": "We look at the date and check whether more recent facts have made the information obsolete."
     }
   },
   "descriptors": {
@@ -112,9 +124,28 @@
   },
   "methodology": {
     "title": "How Unbunked rates the news",
-    "intro": "Every article goes through the same pipeline: we isolate the checkable claims, test them against sources via web search, then derive a verdict and scores. Here is what each one measures.",
+    "intro": "A claim deserves better than a \"true\" or \"false\" tossed off in passing. So we publish a reliability score, built the same way every time. Here, without the jargon, is how it is computed, and why you can trust it.",
+    "principlesTitle": "Where we stand",
+    "principles": {
+      "evidence": {
+        "title": "Evidence first",
+        "body": "Every criterion rests on sources actually consulted, never on a hunch. Anyone can redo the verification."
+      },
+      "rigor": {
+        "title": "Rigour, not opinion",
+        "body": "We assess how sound an article is, never its political side. Orientation is flagged separately and never enters the score: an engaged article can be perfectly reliable."
+      },
+      "doubt": {
+        "title": "We own our doubts",
+        "body": "When the evidence can't settle it, we say so (\"—\", unverifiable) rather than hiding the uncertainty behind a made-up number."
+      }
+    },
     "scoreTitle": "The overall score and its criteria",
-    "scoreBody": "The reliability score (0-100) shown prominently is computed by our code: it is the weighted average of the criteria, each rated out of 100, so it is reproducible and explainable. Reliability measures rigour, not orientation: an article can be engaged and reliable. When evidence is missing, the score becomes \"—\" (unverifiable) rather than an arbitrary number.",
+    "scoreBody": "The reliability score (0 to 100) is the weighted average of six criteria, each rated out of 100. It isn't decided by intuition: our code computes it from the criteria, which makes it reproducible and explainable. Not every criterion weighs the same. Here is which, why we chose them and how we assess them.",
+    "weightLabel": "{weight}% of the score",
+    "weightLabelConditional": "{weight}% of the score, when it applies",
+    "whyLabel": "Why this criterion",
+    "howLabel": "How we assess it",
     "coreTitle": "Always assessed",
     "optionalTitle": "Assessed when relevant",
     "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number."
