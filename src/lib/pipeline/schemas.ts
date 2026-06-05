@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+import { BLOCK_KINDS } from "@/lib/article-blocks";
 import {
   CONFIDENCE_LEVELS,
   CONTENT_TYPE_VALUES,
@@ -105,24 +106,54 @@ export const recordClaimsTool: Anthropic.Tool = {
   },
 };
 
-export const selectArticleBodyTool: Anthropic.Tool = {
-  name: "select_article_body",
+export const structureArticleBodyTool: Anthropic.Tool = {
+  name: "record_article_structure",
   description:
-    "Record which of the numbered text blocks together form the main body of " +
-    "the news article, in reading order.",
+    "Record which of the numbered blocks form the article body, in reading " +
+    "order, each tagged with its structural role. Rebuilt verbatim from the " +
+    "chosen blocks — return indices and roles only, never rewrite the text.",
   input_schema: {
     type: "object",
     properties: {
-      indices: {
+      blocks: {
         type: "array",
         description:
-          "0-based indices of the blocks that are article prose, in reading " +
-          "order. Exclude navigation, teasers, paywall/subscription prompts, " +
-          "ads, related-article lists, author bios and legal footers.",
-        items: { type: "integer" },
+          "The article-body blocks in reading order. Exclude navigation, ads, " +
+          "related-article lists, author bios, newsletter/subscription prompts, " +
+          "social-share widgets, image credits, cookie/consent banners and the " +
+          "entire reader comment thread (usernames, timestamps, replies).",
+        items: {
+          type: "object",
+          properties: {
+            index: {
+              type: "integer",
+              description: "0-based index of the block in the numbered input.",
+            },
+            kind: {
+              type: "string",
+              enum: [...BLOCK_KINDS],
+              description:
+                "Structural role: 'heading' for a section title, 'subheading' " +
+                "for a lower-level one, 'quote' for a pulled/block quotation, " +
+                "'code' for a code or preformatted block, 'para' for ordinary " +
+                "prose. Correct the guessed tag when it is wrong.",
+            },
+          },
+          required: ["index", "kind"],
+          additionalProperties: false,
+        },
+      },
+      bodyComplete: {
+        type: "boolean",
+        description:
+          "true if these blocks hold the full article body — still true when " +
+          "you merely left out a few stray mid-body items (a related-article " +
+          "link, a lone ad). false only when the body as a whole is wrong: cut " +
+          "off mid-article, absent, or mostly site chrome — signalling the " +
+          "caller to re-extract from the whole page.",
       },
     },
-    required: ["indices"],
+    required: ["blocks", "bodyComplete"],
     additionalProperties: false,
   },
 };
@@ -360,7 +391,7 @@ export const recordRewriteTool: Anthropic.Tool = {
       body: {
         type: "string",
         description:
-          "Full rewritten article in markdown, in the requested language. Preserve the tone and structure of the original but write entirely in your own words — never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
+          "Full rewritten article in markdown, in the requested language. Mirror the original structure given in the source markdown — ## headings, ### subheadings, > blockquotes, ``` code blocks — but write entirely in your own words; never copy sentences. Correct any false or misleading statements inline. At every point where you correct, nuance or expand a claim that was fact-checked, insert a marker of the form [[claim:N]] right after the relevant sentence (N is the 1-based claim number).",
       },
     },
     required: ["title", "body"],

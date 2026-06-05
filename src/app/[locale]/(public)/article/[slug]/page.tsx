@@ -271,7 +271,8 @@ export default async function ArticlePage({
                 statusLabels={statusLabels}
                 sourcesLabel={t("sourcesConsulted")}
                 verificationLabel={t("verificationTag")}
-                mobileLabel={t("asideMobileLabel")}
+                peekLabel={t("peekHint")}
+                railLabel={t("railClaimLabel")}
               />
             </section>
           )}

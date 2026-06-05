@@ -10,6 +10,8 @@
 // space inside a word ("l e secteur" ≡ "le secteur") or a space before a full
 // stop ("2026 ." ≡ "2026.").
 
+import { type BlockKind, parseBlock } from "@/lib/article-blocks";
+
 type Stream = { text: string; map: number[] };
 
 const ALNUM = /[\p{L}\p{N}]/u;
@@ -72,7 +74,7 @@ function locate(
 }
 
 export type ReadingSegment = { text: string; claimIndex: number | null };
-export type ReadingParagraph = { segments: ReadingSegment[] };
+export type ReadingParagraph = { kind: BlockKind; segments: ReadingSegment[] };
 export type ReadingModel<T> = {
   paragraphs: ReadingParagraph[];
   claims: T[];
@@ -85,23 +87,26 @@ export function buildReadingModel<T extends { sourceQuote: string | null }>(
   content: string | null,
   claims: T[],
 ): ReadingModel<T> {
-  const paragraphs = (content ?? "")
+  const blocks = (content ?? "")
     .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0);
+    .map((raw) => raw.trim())
+    .filter((raw) => raw.length > 0)
+    .map(parseBlock);
 
-  if (paragraphs.length === 0) {
+  if (blocks.length === 0) {
     return { paragraphs: [], claims: [], orphans: [...claims] };
   }
 
-  const streams = paragraphs.map(buildStream);
+  const streams = blocks.map((block) => buildStream(block.text));
 
-  // Place each claim in the first paragraph whose text contains its quote.
+  // Place each claim in the first block whose text contains its quote. Code is
+  // verbatim and never carries a fact-checked claim, so it's skipped.
   const placed: { claim: T; placement: Placement }[] = [];
   const orphans: T[] = [];
   for (const claim of claims) {
     let placement: Placement | null = null;
-    for (let p = 0; p < paragraphs.length; p += 1) {
+    for (let p = 0; p < blocks.length; p += 1) {
+      if (blocks[p].kind === "code") continue;
       const range = locate(streams[p], claim.sourceQuote);
       if (range) {
         placement = { paragraph: p, start: range.start, end: range.end };
@@ -121,7 +126,8 @@ export function buildReadingModel<T extends { sourceQuote: string | null }>(
 
   const orderedClaims = placed.map((entry) => entry.claim);
 
-  const paragraphsOut: ReadingParagraph[] = paragraphs.map((text, p) => {
+  const paragraphsOut: ReadingParagraph[] = blocks.map((block, p) => {
+    const text = block.text;
     const ranges = placed
       .map((entry, index) => ({ entry, index }))
       .filter(({ entry }) => entry.placement.paragraph === p)
@@ -153,7 +159,7 @@ export function buildReadingModel<T extends { sourceQuote: string | null }>(
     }
     if (segments.length === 0) segments.push({ text, claimIndex: null });
 
-    return { segments };
+    return { kind: block.kind, segments };
   });
 
   return { paragraphs: paragraphsOut, claims: orderedClaims, orphans };
