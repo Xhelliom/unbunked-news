@@ -5,6 +5,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 
 import { routing } from "@/i18n/routing";
 import { getArticleBySlug } from "@/lib/articles";
+import { safeHttpUrl } from "@/lib/safe-url";
 import { getSuggestedArticles } from "@/lib/suggestions";
 import { buildReadingModel } from "@/lib/reading";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,10 @@ export default async function ArticlePage({
     viewParam === "unbunked" && rewrite ? "unbunked" : "analysis";
 
   const suggestions = await getSuggestedArticles(article.id);
+
+  // The original URL is stored from a scraped/proposed source; only link out to
+  // a real http(s) URL.
+  const originalUrl = safeHttpUrl(article.urlOrigine);
 
   const statusCounts = CLAIM_STATUSES.map((status) => ({
     status,
@@ -166,16 +171,14 @@ export default async function ArticlePage({
                 )}
               </div>
             </div>
-            <Button asChild variant="outline" size="sm" className="ml-auto">
-              <a
-                href={article.urlOrigine}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                {t("readOriginal")}
-                <ExternalLink className="size-3.5" />
-              </a>
-            </Button>
+            {originalUrl && (
+              <Button asChild variant="outline" size="sm" className="ml-auto">
+                <a href={originalUrl} target="_blank" rel="noreferrer noopener">
+                  {t("readOriginal")}
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </Button>
+            )}
           </div>
           {article.reliabilityScore !== null && article.verdict && (
             <div className="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">

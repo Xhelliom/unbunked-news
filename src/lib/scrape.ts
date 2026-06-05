@@ -12,6 +12,7 @@ import {
   isCommentSectionHeader,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
+import { assertPublicUrl } from "@/lib/ssrf";
 
 export type ScrapedArticle = {
   url: string;
@@ -54,6 +55,9 @@ const SCRAPE_USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 const FETCH_TIMEOUT_MS = 20_000;
 const RENDER_TIMEOUT_MS = 30_000;
+// Cap the redirect chain we follow manually: each hop is SSRF-revalidated, so a
+// chain that never settles (or loops) is refused rather than followed forever.
+const MAX_REDIRECTS = 5;
 // Enough of the <head> to find a declared charset, read as latin1 so the ASCII
 // meta tag is legible whatever the real encoding.
 const CHARSET_SNIFF_BYTES = 2_048;
@@ -337,17 +341,33 @@ function decodeHtml(buffer: ArrayBuffer, contentType: string | null): string {
   }
 }
 
+// Follows redirects by hand (`redirect: "manual"`) so every hop's target is
+// SSRF-revalidated before we connect to it — `fetch`'s automatic redirect
+// following would happily chase an external URL into an internal one. Returns
+// null on any failure (including a refused private hop) so the caller can fall
+// back to the headless render path, which applies the same guard.
 async function fetchHtml(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { "user-agent": SCRAPE_USER_AGENT },
-    });
-    if (!response.ok) return null;
-    return decodeHtml(
-      await response.arrayBuffer(),
-      response.headers.get("content-type"),
-    );
+    let current = await assertPublicUrl(url);
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const response = await fetch(current, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: { "user-agent": SCRAPE_USER_AGENT },
+        redirect: "manual",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location) return null;
+        current = await assertPublicUrl(new URL(location, current).toString());
+        continue;
+      }
+      if (!response.ok) return null;
+      return decodeHtml(
+        await response.arrayBuffer(),
+        response.headers.get("content-type"),
+      );
+    }
+    return null;
   } catch {
     return null;
   }
@@ -361,6 +381,8 @@ async function renderHtml(url: string): Promise<string | null> {
     process.env.CHROMIUM_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
   if (!executablePath) return null;
 
+  const safeUrl = await assertPublicUrl(url);
+
   const { launch } = await import("puppeteer-core");
   const browser = await launch({
     executablePath,
@@ -369,7 +391,21 @@ async function renderHtml(url: string): Promise<string | null> {
   });
   try {
     const page = await browser.newPage();
-    await page.goto(url, {
+    // Re-validate every navigation (the initial load and any redirect Chromium
+    // would follow internally) against the SSRF guard; non-navigation
+    // subresources are left alone to keep DNS lookups bounded.
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (!request.isNavigationRequest()) {
+        void request.continue();
+        return;
+      }
+      assertPublicUrl(request.url()).then(
+        () => request.continue(),
+        () => request.abort(),
+      );
+    });
+    await page.goto(safeUrl, {
       waitUntil: "networkidle2",
       timeout: RENDER_TIMEOUT_MS,
     });
@@ -487,6 +523,10 @@ export async function scrapeArticle(
   url: string,
   structureBody?: BodyStructurer,
 ): Promise<ScrapeResult> {
+  // Fail loudly and early on a non-public target rather than letting the fetch
+  // silently return null and surface as a misleading "paywalled" message.
+  await assertPublicUrl(url);
+
   const html = await fetchHtml(url);
   let attempt: Attempt = html
     ? await attemptFromHtml(url, html, structureBody)

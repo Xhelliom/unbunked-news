@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { safeHttpUrl } from "@/lib/safe-url";
 import { type ClaimStatus, claimStatusToVerdict } from "@/lib/claim-status";
 import { ClaimStatusBadge } from "@/components/claim-status-badge";
 
@@ -73,19 +74,32 @@ export function ClaimCard({
             {sourcesLabel}
           </p>
           <ul className="flex flex-col gap-1">
-            {claim.sources.map((source) => (
-              <li key={source.id}>
-                <a
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="decoration-foreground/25 hover:text-primary hover:decoration-primary inline-flex items-center gap-1.5 text-[13px] underline underline-offset-2 transition-colors"
-                >
-                  <ArrowUpRight className="text-muted-foreground size-3 shrink-0" />
-                  {source.title ?? source.url}
-                </a>
-              </li>
-            ))}
+            {claim.sources.map((source) => {
+              // Source URLs are produced by the LLM/web search; render a link
+              // only for real http(s) URLs, otherwise show the label as text.
+              const safeUrl = safeHttpUrl(source.url);
+              const label = source.title ?? source.url;
+              return (
+                <li key={source.id}>
+                  {safeUrl ? (
+                    <a
+                      href={safeUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="decoration-foreground/25 hover:text-primary hover:decoration-primary inline-flex items-center gap-1.5 text-[13px] underline underline-offset-2 transition-colors"
+                    >
+                      <ArrowUpRight className="text-muted-foreground size-3 shrink-0" />
+                      {label}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[13px]">
+                      <ArrowUpRight className="size-3 shrink-0" />
+                      {label}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

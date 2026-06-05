@@ -3,6 +3,7 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
 import type { ScrapedArticle } from "@/lib/scrape";
+import { safeHttpUrl } from "@/lib/safe-url";
 import {
   addUsage,
   collectText,
@@ -58,7 +59,10 @@ function collectSources(content: Anthropic.ContentBlock[]): AnalysisSource[] {
     if (!Array.isArray(results)) continue;
     for (const result of results) {
       if (result.type === "web_search_result") {
-        sources.push({ url: result.url, title: result.title ?? result.url });
+        // web_search returns arbitrary URLs; keep only real http(s) ones since
+        // they are persisted and later rendered as public links.
+        const url = safeHttpUrl(result.url);
+        if (url) sources.push({ url, title: result.title ?? url });
       }
     }
   }

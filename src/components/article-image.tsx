@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { safeHttpUrl } from "@/lib/safe-url";
 import type { Verdict } from "@/lib/verdicts";
 
 type ArticleImageProps = {
@@ -18,11 +19,15 @@ export function ArticleImage({
   className,
   labelClassName,
 }: ArticleImageProps) {
-  if (src) {
+  // The image URL comes from the scraped page; only render real http(s) URLs so
+  // a `data:`/`javascript:` payload can never reach the DOM (falls back to the
+  // abstract placeholder otherwise).
+  const safeSrc = safeHttpUrl(src);
+  if (safeSrc) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={safeSrc}
         alt={label}
         className={cn("h-full w-full object-cover", className)}
       />
