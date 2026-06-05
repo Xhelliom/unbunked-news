@@ -63,27 +63,39 @@
     "sectionHint": "La note globale est la moyenne pondérée de ces critères (chacun sur 100). Un critère non évaluable n'est pas affiché.",
     "factuality": {
       "label": "Exactitude",
-      "description": "Les chiffres, dates, citations et affirmations de l'article sont-ils corrects ?"
+      "description": "Les chiffres, dates, citations et affirmations de l'article sont-ils corrects ?",
+      "why": "C'est le cœur de la fiabilité. Une seule affirmation centrale fausse fait basculer tout l'article. C'est pourquoi ce critère pèse le plus lourd.",
+      "how": "On isole les affirmations principales et on les confronte aux sources : citations non tronquées, données non déformées, noms et dates cohérents."
     },
     "corroboration": {
       "label": "Recoupement",
-      "description": "Les faits centraux sont-ils confirmés par des sources externes indépendantes ?"
+      "description": "Les faits centraux sont-ils confirmés par des sources externes indépendantes ?",
+      "why": "Un fait répété mille fois reste faux s'il vient d'une seule origine. On ne se fie jamais au seul texte de l'article : on vérifie ailleurs.",
+      "how": "Recherche web et bases de fact-checking pour retrouver le même fait chez au moins deux sources fiables et réellement indépendantes, jamais la même dépêche recopiée."
     },
     "sourcing": {
       "label": "Sources citées",
-      "description": "Les références que l'article mentionne sont-elles nommées, vérifiables et indépendantes ?"
+      "description": "Les références que l'article mentionne sont-elles nommées, vérifiables et indépendantes ?",
+      "why": "Un article qui s'appuie sur des sources anonymes ou introuvables demande une confiance aveugle. On préfère ce qu'on peut remonter et vérifier soi-même.",
+      "how": "On examine ce que l'article cite : des sources nommées plutôt qu'anonymes, des documents de première main plutôt que des reprises, des liens qui fonctionnent vraiment."
     },
     "completeness": {
       "label": "Contexte",
-      "description": "Des faits essentiels ont-ils été passés sous silence, changeant la lecture de l'article ?"
+      "description": "Des faits essentiels ont-ils été passés sous silence, changeant la lecture de l'article ?",
+      "why": "On peut tromper sans mentir, en omettant ce qui dérange. À noter : on ne juge ni le ton ni l'opinion, seulement les omissions qui faussent la compréhension.",
+      "how": "On vérifie si le contexte indispensable est présent, si un fait connu manque, ou si des citations sont sorties de leur contexte."
     },
     "transparency": {
       "label": "Transparence",
-      "description": "L'auteur, la date, le responsable éditorial et le financement sont-ils identifiables ?"
+      "description": "L'auteur, la date, le responsable éditorial et le financement sont-ils identifiables ?",
+      "why": "Savoir qui parle, quand, et qui finance fait partie de l'information. Un média qui se cache n'inspire pas confiance : l'opacité est en soi un défaut.",
+      "how": "On cherche l'auteur, la date de publication, l'éditeur du site et ses sources de financement. Plus c'est clair, plus la note monte."
     },
     "recency": {
       "label": "Actualité",
-      "description": "L'information est-elle à jour plutôt que périmée ?"
+      "description": "L'information est-elle à jour plutôt que périmée ?",
+      "why": "Une info exacte hier peut tromper aujourd'hui. Ce critère ne s'applique qu'aux sujets sensibles à l'actualité ; il est mis de côté pour les contenus intemporels.",
+      "how": "On regarde la date et on vérifie si des faits plus récents ont rendu l'information caduque."
     }
   },
   "descriptors": {
@@ -112,9 +124,28 @@
   },
   "methodology": {
     "title": "Comment Unbunked note l'information",
-    "intro": "Chaque article suit le même pipeline : on isole les affirmations vérifiables, on les confronte à des sources par recherche web, puis on en tire un verdict et des scores. Voici ce que mesure chacun.",
+    "intro": "Une affirmation mérite mieux qu'un « vrai » ou « faux » lancé à la volée. Nous publions donc une note de fiabilité, construite toujours de la même façon. Voici, sans jargon, comment elle est calculée, et pourquoi vous pouvez lui faire confiance.",
+    "principlesTitle": "Notre posture",
+    "principles": {
+      "evidence": {
+        "title": "La preuve d'abord",
+        "body": "Chaque critère s'appuie sur des sources réellement consultées, jamais sur une simple impression. N'importe qui peut refaire la vérification."
+      },
+      "rigor": {
+        "title": "La rigueur, pas l'opinion",
+        "body": "On évalue le sérieux d'un article, jamais son bord politique. L'orientation est signalée à part et n'entre pas dans la note : un article engagé peut être parfaitement fiable."
+      },
+      "doubt": {
+        "title": "On assume nos doutes",
+        "body": "Quand les preuves ne permettent pas de trancher, on l'affiche (« — », non vérifiable) au lieu de masquer l'incertitude derrière un chiffre inventé."
+      }
+    },
     "scoreTitle": "Le score global et ses critères",
-    "scoreBody": "Le score de fiabilité (0-100) affiché en grand est calculé par notre code : c'est la moyenne pondérée des critères, chacun noté sur 100. Il est donc reproductible et explicable. La fiabilité mesure la rigueur, pas l'orientation : un article peut être engagé et fiable. Quand les preuves manquent, le score devient « — » (non vérifiable) plutôt qu'une note arbitraire.",
+    "scoreBody": "La note de fiabilité (0 à 100) est la moyenne pondérée de six critères, chacun noté sur 100. Elle n'est pas décidée par une intuition : notre code la calcule à partir des critères, ce qui la rend reproductible et explicable. Tous les critères ne pèsent pas pareil. Voici lesquels, pourquoi nous les avons choisis et comment nous les évaluons.",
+    "weightLabel": "{weight} % de la note",
+    "weightLabelConditional": "{weight} % de la note, si applicable",
+    "whyLabel": "Pourquoi ce critère",
+    "howLabel": "Comment on l'évalue",
     "coreTitle": "Critères toujours évalués",
     "optionalTitle": "Critères évalués selon la pertinence",
     "optionalHint": "Ces critères ne sont notés que lorsqu'ils peuvent l'être de façon fiable ; sinon ils sont laissés de côté plutôt que de produire une note arbitraire."
