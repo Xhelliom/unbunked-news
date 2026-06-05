@@ -9,10 +9,13 @@ import { requireAuthSecret } from "@/lib/auth-secret";
 const isProduction = process.env.NODE_ENV === "production";
 const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
-// Login is the only unauthenticated mutation (sign-up is disabled), so cap its
-// rate to blunt credential-stuffing/brute force while leaving room for honest
-// retries.
-const LOGIN_WINDOW_SECONDS = 60;
+// Login is the only unauthenticated mutation (sign-up is disabled). Keep a
+// generous global cap on the auth endpoints and a tight rule on the email
+// sign-in path specifically, to blunt credential-stuffing/brute force without
+// throttling ordinary session traffic. (better-auth also applies its own
+// default special rules on sensitive paths.)
+const AUTH_WINDOW_SECONDS = 60;
+const AUTH_MAX_REQUESTS = 100;
 const LOGIN_MAX_ATTEMPTS = 10;
 
 export const auth = betterAuth({
@@ -39,8 +42,11 @@ export const auth = betterAuth({
   trustedOrigins: process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : [],
   rateLimit: {
     enabled: true,
-    window: LOGIN_WINDOW_SECONDS,
-    max: LOGIN_MAX_ATTEMPTS,
+    window: AUTH_WINDOW_SECONDS,
+    max: AUTH_MAX_REQUESTS,
+    customRules: {
+      "/sign-in/email": { window: AUTH_WINDOW_SECONDS, max: LOGIN_MAX_ATTEMPTS },
+    },
   },
   advanced: {
     // Force the __Secure- cookie prefix + Secure attribute in production.
