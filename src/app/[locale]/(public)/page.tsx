@@ -39,19 +39,29 @@ export default async function HomePage({
   const verdict = asVerdict(verdictParam);
   const rubric = asRubric(rubricParam);
 
-  const items = await getPublishedArticles({ verdict, rubric });
   const t = await getTranslations("feed");
   const tv = await getTranslations("verdicts");
   const trub = await getTranslations("rubrics");
 
   const hasFilter = Boolean(verdict || rubric);
 
-  // The editorial layout (hero + two secondaries) only kicks in on the
-  // unfiltered feed when there are enough stories to fill it.
-  const showHero = !hasFilter && items.length >= 3;
-  const hero = showHero ? items[0] : null;
-  const stack = showHero ? items.slice(1, 3) : [];
-  const grid = showHero ? items.slice(3) : items;
+  // The editorial layout (hero + two secondaries) always reflects the latest
+  // stories, independent of the filters — those only narrow the grid below.
+  const recent = await getPublishedArticles({});
+  const showHero = recent.length >= 3;
+  const hero = showHero ? recent[0] : null;
+  const stack = showHero ? recent.slice(1, 3) : [];
+  const heroIds = new Set(
+    showHero ? recent.slice(0, 3).map((article) => article.id) : [],
+  );
+
+  // The grid honours the active filter; reuse the recent list when nothing is
+  // filtered to avoid a second identical query. Either way, the hero stories
+  // are dropped so they never appear twice.
+  const filtered = hasFilter
+    ? await getPublishedArticles({ verdict, rubric })
+    : recent;
+  const grid = filtered.filter((article) => !heroIds.has(article.id));
 
   const sectionTitle = verdict
     ? tv(`${verdict}.label`)
@@ -62,7 +72,7 @@ export default async function HomePage({
   // Only show the bare empty state when there is genuinely nothing to browse.
   // When a filter is active but matches nothing, we still render the browse bar
   // so the reader can clear it.
-  if (items.length === 0 && !hasFilter) {
+  if (recent.length === 0 && !hasFilter) {
     return (
       <div className="mx-auto max-w-6xl px-4 pt-6 pb-20 sm:px-6">
         <p className="text-muted-foreground py-24 text-center">{t("empty")}</p>
@@ -84,7 +94,7 @@ export default async function HomePage({
       )}
 
       <section className={cn(hero ? "mt-14" : "mt-0")}>
-        <header className="mb-6 flex flex-wrap items-center gap-6 border-b pb-3.5">
+        <header className="mb-6 flex flex-col gap-4 border-b pb-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
           <h2 className="font-serif text-[22px] font-bold tracking-tight whitespace-nowrap">
             {sectionTitle}
           </h2>
