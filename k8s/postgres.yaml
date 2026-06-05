@@ -27,9 +27,17 @@ spec:
       labels:
         app: postgres
     spec:
+      # Conservative hardening only: the official Postgres entrypoint starts as
+      # root and drops to the postgres user via su-exec, needing CHOWN/SETUID/
+      # SETGID during init — so runAsNonRoot and capability-drop would break it.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           image: postgres:16-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 5432
           envFrom:

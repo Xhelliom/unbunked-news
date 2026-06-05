@@ -12,11 +12,28 @@ spec:
     metadata:
       labels:
         app: web
+        db-client: "true"
     spec:
+      # The image runs as the non-root `nextjs` user (uid 1001, Dockerfile:42).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: web
           # Build & push the "runner" target, then set your registry/tag here.
           image: ghcr.io/xhelliom/unbunked-news:latest
+          # Chromium's render fallback navigates attacker-controlled pages, so
+          # drop all ambient capabilities and block privilege escalation. The
+          # root FS stays writable (Next cache, /tmp, Chromium profile).
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 3000
           envFrom:

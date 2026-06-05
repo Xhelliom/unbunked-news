@@ -4,6 +4,7 @@ namespace: unbunked
 
 resources:
   - namespace.yaml
+  - network-policy.yaml
   - postgres.yaml
   - app.yaml
   - worker.yaml
