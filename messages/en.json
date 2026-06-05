@@ -63,7 +63,7 @@
     "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
       "label": "Accuracy",
-      "description": "Are the stated facts true and backed by the sources?"
+      "description": "Are the article's figures, dates, quotes and claims correct?"
     },
     "corroboration": {
       "label": "Cross-checking",
@@ -71,11 +71,11 @@
     },
     "sourcing": {
       "label": "Cited sources",
-      "description": "Are the cited sources solid, independent and verifiable?"
+      "description": "Are the references the article mentions named, verifiable and independent?"
     },
     "completeness": {
       "label": "Context",
-      "description": "Are the important facts present rather than omitted by selection?"
+      "description": "Have essential facts been left out in a way that changes how the article reads?"
     },
     "transparency": {
       "label": "Transparency",

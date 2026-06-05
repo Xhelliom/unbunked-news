@@ -63,7 +63,7 @@
     "sectionHint": "La note globale est la moyenne pondérée de ces critères (chacun sur 100). Un critère non évaluable n'est pas affiché.",
     "factuality": {
       "label": "Exactitude",
-      "description": "Les faits avancés sont-ils vrais et vérifiés par les sources ?"
+      "description": "Les chiffres, dates, citations et affirmations de l'article sont-ils corrects ?"
     },
     "corroboration": {
       "label": "Recoupement",
@@ -71,11 +71,11 @@
     },
     "sourcing": {
       "label": "Sources citées",
-      "description": "Les sources citées sont-elles solides, indépendantes et vérifiables ?"
+      "description": "Les références que l'article mentionne sont-elles nommées, vérifiables et indépendantes ?"
     },
     "completeness": {
       "label": "Contexte",
-      "description": "Les faits importants sont-ils présents plutôt qu'omis par sélection ?"
+      "description": "Des faits essentiels ont-ils été passés sous silence, changeant la lecture de l'article ?"
     },
     "transparency": {
       "label": "Transparence",
