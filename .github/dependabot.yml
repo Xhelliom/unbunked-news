@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Keep GitHub Actions pinned and patched. Combined with SHA-pinning the action
+  # refs, Dependabot raises PRs that bump the pinned commit when a new release
+  # ships, so a re-tagged/compromised tag can't silently change what CI runs.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # JS dependency security/patch updates.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

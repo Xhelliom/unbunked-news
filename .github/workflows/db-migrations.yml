@@ -13,6 +13,10 @@ on:
       - "drizzle.config.ts"
       - ".github/workflows/db-migrations.yml"
 
+# Least privilege: this workflow only reads the repo.
+permissions:
+  contents: read
+
 concurrency:
   group: db-migrations-${{ github.ref }}
   cancel-in-progress: true
