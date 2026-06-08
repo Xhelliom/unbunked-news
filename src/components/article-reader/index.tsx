@@ -139,11 +139,15 @@ export function ArticleReader({
 
   const expandActiveClaim = () => setExpandedForGroupKey(groupKey);
 
-  // Pick a claim and expand its paragraph's drawer (highlight tap or chip tap).
+  // Pick a claim and expand its paragraph's drawer (highlight or rail tap).
   const selectClaim = (index: number) => {
     setTappedClaim(index);
     setExpandedForGroupKey(groupKeyForClaim(index));
   };
+
+  // Switching chips inside the already-open drawer only swaps the card — it must
+  // not change the snap, so the drawer stays where the reader left it.
+  const selectClaimInDrawer = (index: number) => setTappedClaim(index);
 
   const scrollToClaim = (index: number) => {
     selectClaim(index);
@@ -220,7 +224,7 @@ export function ArticleReader({
           claims={claims}
           groupIndices={groupIndices}
           selectedIndex={drawerSelectedIndex}
-          onSelectIndex={selectClaim}
+          onSelectIndex={selectClaimInDrawer}
           statusLabels={statusLabels}
           open={mobileOpen}
           activeSnapPoint={activeSnapPoint}
