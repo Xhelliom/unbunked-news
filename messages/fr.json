@@ -1,11 +1,11 @@
 {
   "metadata": {
     "title": "Unbunked — Le fact-checking de l'actu",
-    "description": "Unbunked vérifie l'information claim par claim et lui attribue un verdict, sources à l'appui."
+    "description": "Unbunked vérifie l'information affirmation par affirmation et lui attribue un verdict, sources à l'appui."
   },
   "common": {
     "brand": "Unbunked",
-    "tagline": "Le fact-checking de l'actu, vérifié claim par claim"
+    "tagline": "Le fact-checking de l'actu, vérifié affirmation par affirmation"
   },
   "nav": {
     "home": "À la une",
@@ -23,7 +23,7 @@
     "en": "English"
   },
   "footer": {
-    "tagline": "Le fact-checking de l'actu, vérifié claim par claim.",
+    "tagline": "Le fact-checking de l'actu, vérifié affirmation par affirmation.",
     "sectionsTitle": "Rubriques",
     "aboutTitle": "À propos",
     "about": "Notre mission",
@@ -180,7 +180,7 @@
     "or": "ou",
     "continueWithGoogle": "Continuer avec Google",
     "editorialConsole": "Console de rédaction",
-    "heroTitle": "Le fact-checking, claim par claim.",
+    "heroTitle": "Le fact-checking, affirmation par affirmation.",
     "heroSubtitle": "Soumettez un lien, l'analyse extrait chaque affirmation, la confronte aux sources, et publie le verdict. Vous gardez la main sur chaque nuance.",
     "weeklyChecks": "articles vérifiés cette semaine",
     "fiveVerdicts": "Cinq verdicts, jamais binaires"
@@ -348,10 +348,10 @@
       },
       "steps": {
         "scraping": "Récupération de l'article",
-        "extracting": "Extraction des claims",
+        "extracting": "Extraction des affirmations",
         "verifying": "Vérification (recherche web)",
         "aggregating": "Agrégation",
-        "assessing-claims": "Évaluation des claims",
+        "assessing-claims": "Évaluation des affirmations",
         "rewriting": "Réécriture multilingue",
         "saving": "Enregistrement",
         "done": "Terminé"
@@ -399,8 +399,8 @@
       "optional": "facultatif",
       "source": "Source d'origine",
       "rubric": "Rubrique",
-      "claims": "Claims analysés",
-      "noClaims": "Aucun claim.",
+      "claims": "Affirmations analysées",
+      "noClaims": "Aucune affirmation.",
       "sources": "Sources",
       "scrapedBody": "Corps scrapé",
       "scrapedBodyChars": "{count, plural, one {# caractère} other {# caractères}}",
@@ -426,7 +426,7 @@
       "deletedBanner": "Cet article est supprimé : invisible côté public. Restaurez-le ou relancez une analyse.",
       "rewrites": {
         "title": "Version Unbunked (réécriture)",
-        "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction au claim N.",
+        "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction à l'affirmation N.",
         "rewriteTitle": "Titre de la version Unbunked",
         "rewriteBody": "Corps de la version Unbunked",
         "missing": "Aucune réécriture pour cette langue."
@@ -518,7 +518,7 @@
     "featured": "À la une",
     "allArticles": "Tous les articles",
     "score": "Score",
-    "claimsCount": "{count} claims",
+    "claimsCount": "{count} affirmations",
     "verdictFilter": "Verdict",
     "rubricFilter": "Rubrique",
     "all": "Tout"
@@ -545,7 +545,7 @@
     "score": "Score de fiabilité",
     "claimsBreakdownTitle": "Affirmations analysées",
     "claimsBreakdownHint": "Statut de chaque affirmation vérifiée de l'article. Détail plus bas.",
-    "claimsTitle": "Vérification claim par claim",
+    "claimsTitle": "Vérification affirmation par affirmation",
     "readingTitle": "L'article, vérifié paragraphe par paragraphe",
     "readingIntroTitle": "L'article, vérifié",
     "readingIntroSubtitle": "Le texte original à gauche, la vérification d'Unbunked à droite.",

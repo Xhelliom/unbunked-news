@@ -4,6 +4,11 @@ import { useEffect } from "react";
 import { Drawer } from "vaul";
 
 import { cn } from "@/lib/utils";
+import {
+  type ClaimStatus,
+  claimStatusDotClasses,
+  claimStatusToVerdict,
+} from "@/lib/claim-status";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 
 // Snap points shared with the reader: a slim peek that reveals the top of the
@@ -12,13 +17,19 @@ import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 // viewport height (h-dvh): vaul computes its snap offsets against the viewport,
 // so a shorter drawer (or an `h-full` capped by `max-h`) lands the peek
 // off-screen.
-export const PEEK_SNAP = "104px";
+export const PEEK_SNAP = "132px";
 export const EXPANDED_SNAP = 0.92;
 const SNAP_POINTS: (number | string)[] = [PEEK_SNAP, EXPANDED_SNAP];
 
 type MobileClaimDrawerProps = {
   claims: ClaimCardData[];
-  activeIndex: number;
+  // The claims of the paragraph in view. When it holds more than one, a chip
+  // selector lets the reader switch between them (scroll alone can't separate
+  // two claims sharing a paragraph).
+  groupIndices: number[];
+  selectedIndex: number;
+  onSelectIndex: (index: number) => void;
+  statusLabels: Record<ClaimStatus, string>;
   open: boolean;
   activeSnapPoint: number | string | null;
   onSnapChange: (snap: number | string | null) => void;
@@ -33,7 +44,10 @@ type MobileClaimDrawerProps = {
 // scrollable derrière.
 export function MobileClaimDrawer({
   claims,
-  activeIndex,
+  groupIndices,
+  selectedIndex,
+  onSelectIndex,
+  statusLabels,
   open,
   activeSnapPoint,
   onSnapChange,
@@ -62,10 +76,25 @@ export function MobileClaimDrawer({
     };
   }, [open]);
 
-  const claim = claims[activeIndex];
+  const claim = claims[selectedIndex];
   if (!claim) return null;
 
   const expanded = activeSnapPoint === EXPANDED_SNAP;
+  const hasMultiple = groupIndices.length > 1;
+
+  // Mirror the paragraph's left bar: one colour per claim, gradient across the
+  // group's distinct verdicts — so the handle echoes the whole paragraph, not
+  // just the selected claim.
+  const handleColors: string[] = [];
+  for (const index of groupIndices) {
+    const color = `var(--verdict-${claimStatusToVerdict[claims[index].status]})`;
+    if (!handleColors.includes(color)) handleColors.push(color);
+  }
+  const handleBackground =
+    handleColors.length <= 1
+      ? handleColors[0]
+      : `linear-gradient(to right, ${handleColors.join(", ")})`;
+
 
   return (
     <Drawer.Root
@@ -83,20 +112,69 @@ export function MobileClaimDrawer({
       setActiveSnapPoint={onSnapChange}
     >
       <Drawer.Portal>
-        <Drawer.Content className="bg-card fixed inset-x-0 bottom-0 z-30 flex h-dvh flex-col rounded-t-2xl border-t shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.45)] outline-none lg:hidden">
-          <Drawer.Title className="sr-only">{peekLabel}</Drawer.Title>
-          <Drawer.Description className="sr-only">
-            {claim.claimText ?? peekLabel}
-          </Drawer.Description>
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-30 h-dvh outline-none lg:hidden">
+          {/* Neon glow: a blurred gradient strip straddling the top edge, behind
+              the opaque card (-z-10) so it only shows above the edge and never
+              paints over the content. Echoes the handle (gradient across the
+              paragraph's claims). */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-7 -translate-y-1/2 opacity-90 blur-lg"
+            style={{ background: handleBackground }}
+          />
 
-          <button
-            type="button"
-            onClick={onExpand}
-            aria-label={peekLabel}
-            className="flex w-full shrink-0 items-center justify-center pt-2.5 pb-1.5"
-          >
-            <span aria-hidden className="bg-border h-1.5 w-10 rounded-full" />
+          <div className="bg-card flex h-full flex-col rounded-t-2xl border-t shadow-[0_-6px_20px_-14px_rgba(0,0,0,0.4)]">
+            <Drawer.Title className="sr-only">{peekLabel}</Drawer.Title>
+            <Drawer.Description className="sr-only">
+              {claim.claimText ?? peekLabel}
+            </Drawer.Description>
+
+            <button
+              type="button"
+              onClick={onExpand}
+              aria-label={peekLabel}
+              className="flex w-full shrink-0 items-center justify-center pt-2.5 pb-1.5"
+            >
+            <span
+              aria-hidden
+              className={cn(
+                "h-1.5 rounded-full transition-all",
+                hasMultiple ? "w-32" : "w-16",
+              )}
+              style={{ background: handleBackground }}
+            />
           </button>
+
+          {hasMultiple && (
+            <div className="flex shrink-0 flex-wrap gap-1.5 px-4 pb-2.5">
+              {groupIndices.map((index) => {
+                const isSelected = index === selectedIndex;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => onSelectIndex(index)}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                      isSelected
+                        ? "bg-secondary border-foreground/20 text-foreground"
+                        : "text-muted-foreground border-transparent",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        claimStatusDotClasses[claims[index].status],
+                      )}
+                    />
+                    {statusLabels[claims[index].status]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div
             className={cn(
@@ -108,7 +186,10 @@ export function MobileClaimDrawer({
               claim={claim}
               sourcesLabel={sourcesLabel}
               verificationLabel={verificationLabel}
+              frameless
+              hideHeader={hasMultiple}
             />
+          </div>
           </div>
         </Drawer.Content>
       </Drawer.Portal>

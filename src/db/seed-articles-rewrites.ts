@@ -165,4 +165,35 @@ export const REWRITES: SeedRewrites = {
         "The problem isn't that these two figures are necessarily wrong, but that they are presented side-by-side with the same degree of certainty even though they do not rest on the same foundations. The study's authors themselves call the AI share \"a provisional order of magnitude\" — a caveat missing from the article's headline.",
     },
   },
+
+  "voiture-electrique-pollue-plus-thermique": {
+    fr: {
+      title: "Voiture électrique : ce qui est vrai, ce qui ne l'est pas",
+      body:
+        "## Un coût carbone de fabrication bien réel\n\n" +
+        "L'article a raison sur son point de départ : fabriquer une batterie de 60 kWh émet de l'ordre de **7 tonnes de CO₂**, un chiffre cohérent avec les analyses de cycle de vie de l'ADEME et de l'ICCT. [[claim:1]] La voiture électrique part donc bien avec une dette carbone dès la sortie d'usine.\n\n" +
+        "## Le point d'équilibre n'est pas une constante\n\n" +
+        "C'est ensuite que le raisonnement glisse. Dire qu'une électrique « compense sa dette carbone dès 15 000 km » n'est vrai que pour un mix électrique très décarboné comme celui de la France ; ailleurs, le seuil grimpe nettement. [[claim:2]] Et l'affirmer « plus propre quelle que soit l'électricité » est faux : sur un réseau dominé par le charbon, l'avantage peut disparaître pendant des dizaines de milliers de kilomètres. [[claim:3]]\n\n" +
+        "## Recyclage : l'inverse de ce qui est affirmé\n\n" +
+        "Non, les batteries ne « finissent » pas en décharge : les filières européennes récupèrent aujourd'hui plus de **90 %** de leurs métaux, et le règlement européen de 2023 impose des taux de collecte et de matière recyclée juridiquement contraignants. [[claim:4]]\n\n" +
+        "## Des impacts miniers réels, mais mal quantifiés\n\n" +
+        "L'article a raison de rappeler que l'extraction du lithium consomme énormément d'eau dans des régions arides. [[claim:5]] En revanche, la « pénurie mondiale de lithium dès 2030 » ne repose sur aucun consensus [[claim:6]], et écrire que « la majorité » du cobalt vient de mines employant des enfants exagère une réalité pourtant préoccupante : la part artisanale reste minoritaire. [[claim:7]]\n\n" +
+        "## Le bilan honnête\n\n" +
+        "Sur la durée de vie, et dans un pays à l'électricité décarbonée, l'électrique émet nettement moins qu'une thermique — mais cet avantage n'est ni instantané, ni universel. « Arnaque » ferme le débat ; les chiffres, eux, l'ouvrent.",
+    },
+    en: {
+      title: "Electric cars: what's true, and what isn't",
+      body:
+        "## A real manufacturing carbon cost\n\n" +
+        "The article is right on its starting point: building a 60 kWh battery emits on the order of **7 tonnes of CO₂**, a figure consistent with the lifecycle analyses of ADEME and the ICCT. [[claim:1]] An electric car does start with a carbon debt the moment it leaves the factory.\n\n" +
+        "## The break-even point is not a constant\n\n" +
+        "The reasoning slips next. Saying an EV \"offsets its carbon debt by 15,000 km\" only holds for a very low-carbon grid like France's; elsewhere the threshold climbs sharply. [[claim:2]] And calling it \"cleaner regardless of the electricity\" is false: on a coal-heavy grid the advantage can vanish for tens of thousands of kilometres. [[claim:3]]\n\n" +
+        "## Recycling: the opposite of the claim\n\n" +
+        "No, batteries do not \"end up\" in landfill: European recyclers now recover more than **90 %** of their metals, and the EU's 2023 battery regulation sets legally binding collection and recycled-content targets. [[claim:4]]\n\n" +
+        "## Real mining impacts, poorly quantified\n\n" +
+        "The article is right to note that lithium extraction consumes vast amounts of water in arid regions. [[claim:5]] But the \"global lithium shortage by 2030\" rests on no consensus [[claim:6]], and writing that \"the majority\" of cobalt comes from mines using child labour overstates a genuinely worrying reality: the artisanal share remains a minority. [[claim:7]]\n\n" +
+        "## The honest bottom line\n\n" +
+        "Over its lifetime, and in a country with low-carbon electricity, an EV emits markedly less than a combustion car — but that advantage is neither instant nor universal. \"Scam\" closes the debate; the numbers open it.",
+    },
+  },
 };
