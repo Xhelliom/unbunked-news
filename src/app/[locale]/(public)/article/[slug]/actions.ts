@@ -57,6 +57,23 @@ export async function submitContribution(
   const body = String(formData.get("body") ?? "").trim();
   const sourceUrlRaw = String(formData.get("sourceUrl") ?? "").trim();
 
+  // Cheap, in-memory validation first, so trivially-invalid spam never costs a
+  // DB round-trip.
+  if (!body) {
+    return { status: "error", code: "empty" };
+  }
+  if (body.length > CONTRIBUTION_BODY_MAX_CHARS) {
+    return { status: "error", code: "tooLong" };
+  }
+
+  let sourceUrl: string | null = null;
+  if (sourceUrlRaw) {
+    sourceUrl = safeHttpUrl(sourceUrlRaw);
+    if (!sourceUrl) {
+      return { status: "error", code: "invalidUrl" };
+    }
+  }
+
   // The article must exist, be published, and have contributions enabled.
   const article = await db.query.articles.findFirst({
     where: and(eq(articles.id, articleId), isNull(articles.deletedAt)),
@@ -77,25 +94,18 @@ export async function submitContribution(
     }
   }
 
-  if (!body) {
-    return { status: "error", code: "empty" };
-  }
-  if (body.length > CONTRIBUTION_BODY_MAX_CHARS) {
-    return { status: "error", code: "tooLong" };
-  }
-
-  let sourceUrl: string | null = null;
-  if (sourceUrlRaw) {
-    sourceUrl = safeHttpUrl(sourceUrlRaw);
-    if (!sourceUrl) {
-      return { status: "error", code: "invalidUrl" };
-    }
-  }
-
-  const headerList = await headers();
   if (isTurnstileEnabled()) {
     const token = String(formData.get("cf-turnstile-response") ?? "");
-    const passed = await verifyTurnstile(token || null, clientIp(headerList));
+    const headerList = await headers();
+    // A Turnstile/Cloudflare outage must not 500 the submission: treat a failed
+    // verification call as a (recoverable) turnstile error, like AI moderation
+    // below degrades gracefully.
+    let passed = false;
+    try {
+      passed = await verifyTurnstile(token || null, clientIp(headerList));
+    } catch (error) {
+      console.error("Turnstile verification call failed:", error);
+    }
     if (!passed) {
       return { status: "error", code: "turnstile" };
     }

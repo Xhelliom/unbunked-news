@@ -4,13 +4,11 @@ import { revalidateTag } from "next/cache";
 
 import { db } from "@/db/client";
 import { appSettings, APP_SETTINGS_SINGLETON_ID } from "@/db/schema";
+import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { requireAdminSession } from "@/lib/session";
 import { SETTINGS_CACHE_TAG } from "@/lib/settings";
 
 export type SettingsActionState = { status: "idle" } | { status: "saved" };
-
-// Next 16's revalidateTag takes a cache profile; "max" clears every entry.
-const REVALIDATE_PROFILE = "max";
 
 export async function updateAppSettings(
   _prev: SettingsActionState,

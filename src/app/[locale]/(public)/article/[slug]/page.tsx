@@ -129,7 +129,11 @@ export default async function ArticlePage({
       (claim.claimText.length > CLAIM_LABEL_MAX ? "…" : ""),
   }));
 
-  const isAuthenticated = (await getSession()) !== null;
+  // Only the contribution form (rendered when contributions are enabled) needs
+  // the session, so skip the per-request auth lookup on the hot path otherwise.
+  const isAuthenticated = article.contributionsEnabled
+    ? (await getSession()) !== null
+    : false;
 
   const statusLabels = Object.fromEntries(
     CLAIM_STATUSES.map((status) => [status, tStatus(status)]),

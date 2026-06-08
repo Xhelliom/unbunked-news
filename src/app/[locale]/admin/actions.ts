@@ -18,6 +18,7 @@ import {
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
+import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
 import { safeHttpUrl } from "@/lib/safe-url";
@@ -73,10 +74,6 @@ function accountErrorHref(code: AccountErrorCode): string {
 
 const CREDENTIAL_PROVIDER_ID = "credential";
 const MIN_PASSWORD_LENGTH = 8;
-
-// Next 16's revalidateTag takes a cache profile as its second argument; "max"
-// fully invalidates every entry carrying the tag.
-const REVALIDATE_PROFILE = "max";
 
 // A blank field (cleared global score, or an optional criterion whose disabled
 // slider is omitted from the form data) means "unscored" -> null.

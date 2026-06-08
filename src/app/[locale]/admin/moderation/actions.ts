@@ -8,11 +8,10 @@ import { db } from "@/db/client";
 import { contributions } from "@/db/contributions-schema";
 import { redirect } from "@/i18n/navigation";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
+import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { requireAdminSession } from "@/lib/session";
 
 const MODERATION_ROUTE = "/admin/moderation";
-// Next 16's revalidateTag takes a cache profile; "max" clears every entry.
-const REVALIDATE_PROFILE = "max";
 
 async function moderate(
   formData: FormData,

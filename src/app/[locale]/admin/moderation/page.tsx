@@ -45,7 +45,10 @@ export default async function AdminModerationPage({
         </Link>
       </div>
 
-      <ModerationList items={items} showActions={!showRejected} />
+      <ModerationList
+        items={items}
+        variant={showRejected ? "rejected" : "pending"}
+      />
     </div>
   );
 }

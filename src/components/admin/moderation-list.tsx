@@ -22,11 +22,13 @@ const VERDICT_VARIANT: Record<
 
 type ModerationListProps = {
   items: ModerationItem[];
-  // When false, the queue is read-only (e.g. the "rejected" tab).
-  showActions: boolean;
+  // Which queue is shown. Pending items can be approved or rejected; rejected
+  // items keep an Approve action so a false-positive (incl. AI auto-reject) can
+  // be recovered — they're never a dead end.
+  variant: "pending" | "rejected";
 };
 
-export function ModerationList({ items, showActions }: ModerationListProps) {
+export function ModerationList({ items, variant }: ModerationListProps) {
   const t = useTranslations("admin.moderation");
 
   if (items.length === 0) {
@@ -83,22 +85,22 @@ export function ModerationList({ items, showActions }: ModerationListProps) {
             </a>
           </p>
 
-          {showActions && (
-            <div className="flex flex-wrap gap-2">
-              <form action={approveContribution}>
-                <input type="hidden" name="id" value={item.id} />
-                <Button type="submit" size="sm">
-                  {t("approve")}
-                </Button>
-              </form>
+          <div className="flex flex-wrap gap-2">
+            <form action={approveContribution}>
+              <input type="hidden" name="id" value={item.id} />
+              <Button type="submit" size="sm">
+                {t("approve")}
+              </Button>
+            </form>
+            {variant === "pending" && (
               <form action={rejectContribution}>
                 <input type="hidden" name="id" value={item.id} />
                 <Button type="submit" size="sm" variant="destructive">
                   {t("reject")}
                 </Button>
               </form>
-            </div>
-          )}
+            )}
+          </div>
         </li>
       ))}
     </ul>

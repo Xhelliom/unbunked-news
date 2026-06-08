@@ -26,22 +26,19 @@ const CLOSED_DEFAULTS: AppSettings = {
   aiModerationEnabled: false,
 };
 
+// A missing row genuinely means "closed" and is safe to cache. A read error is
+// NOT caught here on purpose: it must propagate so unstable_cache doesn't store
+// the failure (see getAppSettings).
 async function loadAppSettings(): Promise<AppSettings> {
-  try {
-    const row = await db.query.appSettings.findFirst({
-      where: eq(appSettings.id, APP_SETTINGS_SINGLETON_ID),
-      columns: { publicSignupEnabled: true, aiModerationEnabled: true },
-    });
-    if (!row) return CLOSED_DEFAULTS;
-    return {
-      publicSignupEnabled: row.publicSignupEnabled,
-      aiModerationEnabled: row.aiModerationEnabled,
-    };
-  } catch (error) {
-    // Surface the failure to the operator's logs, then fail closed.
-    console.error("Failed to read app settings, falling back to closed:", error);
-    return CLOSED_DEFAULTS;
-  }
+  const row = await db.query.appSettings.findFirst({
+    where: eq(appSettings.id, APP_SETTINGS_SINGLETON_ID),
+    columns: { publicSignupEnabled: true, aiModerationEnabled: true },
+  });
+  if (!row) return CLOSED_DEFAULTS;
+  return {
+    publicSignupEnabled: row.publicSignupEnabled,
+    aiModerationEnabled: row.aiModerationEnabled,
+  };
 }
 
 const loadAppSettingsCached = unstable_cache(loadAppSettings, ["app-settings"], {
@@ -50,5 +47,12 @@ const loadAppSettingsCached = unstable_cache(loadAppSettings, ["app-settings"], 
 });
 
 export async function getAppSettings(): Promise<AppSettings> {
-  return loadAppSettingsCached();
+  try {
+    return await loadAppSettingsCached();
+  } catch (error) {
+    // Fail closed on a read error, but don't cache it: a single DB blip must not
+    // disable signup/AI for the whole revalidate window. Next call retries.
+    console.error("Failed to read app settings, failing closed:", error);
+    return CLOSED_DEFAULTS;
+  }
 }
