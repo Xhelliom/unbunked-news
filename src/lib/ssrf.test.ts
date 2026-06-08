@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { assertPublicUrl, BlockedUrlError } from "./ssrf";
+import { assertPublicUrl, BlockedUrlError, resolvePinnedUrl } from "./ssrf";
 
 // IP-literal cases only — no DNS, so these stay hermetic (no network).
 
@@ -38,4 +38,25 @@ test("assertPublicUrl rejects non-http(s) schemes", async () => {
   await assert.rejects(assertPublicUrl("file:///etc/passwd"), BlockedUrlError);
   await assert.rejects(assertPublicUrl("ftp://8.8.8.8/"), BlockedUrlError);
   await assert.rejects(assertPublicUrl("not a url"), BlockedUrlError);
+});
+
+test("resolvePinnedUrl returns the validated URL and a dispatcher", async () => {
+  const target = await resolvePinnedUrl("https://8.8.8.8/");
+  try {
+    assert.equal(target.url, "https://8.8.8.8/");
+    assert.ok(target.dispatcher);
+  } finally {
+    await target.dispatcher.close();
+  }
+});
+
+test("resolvePinnedUrl rejects private and non-http(s) targets", async () => {
+  for (const url of [
+    "http://127.0.0.1:5432/",
+    "http://169.254.169.254/latest/meta-data/",
+    "http://[::1]/",
+    "file:///etc/passwd",
+  ]) {
+    await assert.rejects(resolvePinnedUrl(url), BlockedUrlError, url);
+  }
 });
