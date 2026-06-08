@@ -62,10 +62,17 @@ jobs:
           provenance: true
           sbom: true
 
+      - name: Lowercase the image reference
+        id: image
+        # OCI references must be lowercase. github.repository carries the owner's
+        # original casing (Xhelliom), which trivy and cosign reject — metadata-action
+        # lowercases its own tags, but env.IMAGE_NAME stays raw.
+        run: echo "name=${REGISTRY,,}/${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
+
       - name: Scan image for known vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          image-ref: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
           format: table
           # Report only — don't fail the pipeline on findings in upstream base
           # images (node/chromium/alpine), which would turn main red without an
@@ -81,4 +88,4 @@ jobs:
         env:
           COSIGN_YES: "true"
         run: |
-          cosign sign "${REGISTRY}/${IMAGE_NAME}@${{ steps.build.outputs.digest }}"
+          cosign sign "${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}"
