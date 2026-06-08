@@ -6,8 +6,13 @@ import { headers } from "next/headers";
 import { db } from "@/db/client";
 import { contributions } from "@/db/contributions-schema";
 import { articles, claims } from "@/db/schema";
-import { CONTRIBUTION_BODY_MAX_CHARS } from "@/lib/contributions/constants";
+import {
+  CONTRIBUTION_BODY_MAX_CHARS,
+  type AiModerationVerdict,
+  type ContributionStatus,
+} from "@/lib/contributions/constants";
 import { isRateLimited } from "@/lib/contributions/rate-limit";
+import { isAiModerationEnabled, moderateContribution } from "@/lib/moderation/moderate";
 import { isUnauthorizedError, requireUserId } from "@/lib/session";
 import { isTurnstileEnabled, verifyTurnstile } from "@/lib/turnstile";
 import { parseUrl } from "@/lib/url";
@@ -90,12 +95,38 @@ export async function submitContribution(
     return { status: "error", code: "rateLimited" };
   }
 
+  // Optional, gated AI pre-moderation: pre-classify so the admin queue is
+  // lighter. It never auto-publishes; an obvious-spam verdict auto-rejects.
+  let status: ContributionStatus = "pending";
+  let aiVerdict: AiModerationVerdict | null = null;
+  let aiReason: string | null = null;
+  let aiModel: string | null = null;
+  if (await isAiModerationEnabled()) {
+    try {
+      const result = await moderateContribution({ body, sourceUrl });
+      aiVerdict = result.verdict;
+      aiReason = result.reason;
+      aiModel = result.model;
+      if (result.verdict === "spam") {
+        status = "rejected";
+      }
+    } catch (error) {
+      // Degrade gracefully: a moderation outage must never block the user. The
+      // contribution stays pending for a human to review.
+      console.error("AI moderation failed, leaving contribution pending:", error);
+    }
+  }
+
   await db.insert(contributions).values({
     articleId,
     claimId,
     userId,
     body,
     sourceUrl,
+    status,
+    aiVerdict,
+    aiReason,
+    aiModel,
   });
 
   // No revalidate: contributions are never published until an admin approves.
