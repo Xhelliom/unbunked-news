@@ -21,6 +21,7 @@ import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
 import { requireAdminSession } from "@/lib/session";
+import { parseUrl } from "@/lib/url";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
@@ -81,17 +82,6 @@ const REVALIDATE_PROFILE = "max";
 // slider is omitted from the form data) means "unscored" -> null.
 function parseScore(raw: FormDataEntryValue | null): number | null {
   return raw === null || raw === "" ? null : clampScore(raw);
-}
-
-function parseUrl(raw: string): string | null {
-  try {
-    const url = new URL(raw.trim());
-    return url.protocol === "http:" || url.protocol === "https:"
-      ? url.toString()
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 export async function submitUrl(

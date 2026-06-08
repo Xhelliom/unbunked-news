@@ -1,7 +1,14 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
+import * as contributionsSchema from "./contributions-schema";
 import * as schema from "./schema";
+
+// contributions-schema FKs into articles/claims (schema.ts), so it imports from
+// schema rather than being re-exported by it — merging both module namespaces
+// here keeps that dependency one-directional (no circular import) while still
+// registering the contributions tables and relations for db.query.
+const fullSchema = { ...schema, ...contributionsSchema };
 
 // `next build` evaluates server modules (incl. the auth route) without runtime
 // env. Postgres.js connects lazily, so a placeholder during build is never used
@@ -67,4 +74,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // Node-safe Drizzle instance (usable from scripts and the BetterAuth CLI).
-export const db = drizzle(client, { schema, casing: "snake_case" });
+export const db = drizzle(client, { schema: fullSchema, casing: "snake_case" });

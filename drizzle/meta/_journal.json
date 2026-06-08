@@ -162,6 +162,13 @@
       "when": 1780936657634,
       "tag": "0022_verify_existing_users",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780937337061,
+      "tag": "0023_chunky_raider",
+      "breakpoints": true
     }
   ]
 }

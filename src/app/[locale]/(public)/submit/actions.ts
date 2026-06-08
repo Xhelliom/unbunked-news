@@ -2,19 +2,9 @@
 
 import { db } from "@/db/client";
 import { proposals } from "@/db/schema";
+import { parseUrl } from "@/lib/url";
 
 export type ProposeState = { ok?: boolean; error?: string };
-
-function parseUrl(raw: string): string | null {
-  try {
-    const url = new URL(raw.trim());
-    return url.protocol === "http:" || url.protocol === "https:"
-      ? url.toString()
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 export async function proposeArticle(
   _prev: ProposeState,

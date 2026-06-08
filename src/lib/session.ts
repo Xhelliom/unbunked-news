@@ -45,6 +45,17 @@ function toSessionUserId(session: unknown): string | null {
   return typeof idValue === "string" && idValue.length > 0 ? idValue : null;
 }
 
+// Require any signed-in user and return their id. Used by non-admin boundaries
+// (e.g. submitting a contribution) where the admin flag is irrelevant.
+export async function requireUserId(): Promise<string> {
+  const session = await requireSession();
+  const userId = toSessionUserId(session);
+  if (!userId) {
+    throw new UnauthorizedError();
+  }
+  return userId;
+}
+
 export async function requireAdminSession() {
   const session = await requireSession();
   const userId = toSessionUserId(session);
