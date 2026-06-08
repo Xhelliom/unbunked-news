@@ -12,13 +12,13 @@ import {
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 
 // Snap points shared with the reader: a slim peek that reveals the top of the
-// claim card (badge + claim excerpt), and 0.92 (most of the viewport, leaving
-// a sliver of article visible) for the full card. The Content must be full
+// claim card (badge + claim excerpt), and 0.8 (most of the viewport, leaving
+// a strip of article visible) for the full card. The Content must be full
 // viewport height (h-dvh): vaul computes its snap offsets against the viewport,
 // so a shorter drawer (or an `h-full` capped by `max-h`) lands the peek
 // off-screen.
 export const PEEK_SNAP = "132px";
-export const EXPANDED_SNAP = 0.92;
+export const EXPANDED_SNAP = 0.8;
 const SNAP_POINTS: (number | string)[] = [PEEK_SNAP, EXPANDED_SNAP];
 
 type MobileClaimDrawerProps = {
