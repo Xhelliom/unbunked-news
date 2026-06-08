@@ -40,8 +40,14 @@ export function ArticleReader({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const { scrollActiveIndex, claimAnchors, indicatorRatio, isNearClaim } =
-    useClaimScrollSync(containerRef, paragraphs, claims.length);
+  const {
+    scrollActiveIndex,
+    claimAnchors,
+    indicatorRatio,
+    viewportTopRatio,
+    viewportHeightRatio,
+    isNearClaim,
+  } = useClaimScrollSync(containerRef, paragraphs, claims.length);
 
   const displayedIndex = hoveredIndex ?? scrollActiveIndex;
 
@@ -187,8 +193,9 @@ export function ArticleReader({
           claims={claims}
           claimAnchors={claimAnchors}
           indicatorRatio={indicatorRatio}
+          viewportTopRatio={viewportTopRatio}
+          viewportHeightRatio={viewportHeightRatio}
           displayedIndex={displayedIndex}
-          hoveredIndex={hoveredIndex}
           sourcesLabel={sourcesLabel}
           verificationLabel={verificationLabel}
         />
@@ -200,8 +207,9 @@ export function ArticleReader({
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
+          viewportTopRatio={viewportTopRatio}
+          viewportHeightRatio={viewportHeightRatio}
           displayedIndex={drawerSelectedIndex}
-          hoveredIndex={null}
           onSelect={scrollToClaim}
           selectLabel={railLabel}
         />

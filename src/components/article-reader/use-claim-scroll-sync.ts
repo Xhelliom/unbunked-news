@@ -12,7 +12,12 @@ import {
 type ScrollSyncState = {
   scrollActiveIndex: number | null;
   claimAnchors: ClaimAnchor[];
+  // Reading probe (0–1): drives the active claim and the desktop bead.
   indicatorRatio: number;
+  // The visible window as a fraction of the reading column — the mobile rail
+  // draws a viewport-sized thumb from these so it matches what's on screen.
+  viewportTopRatio: number;
+  viewportHeightRatio: number;
   // True only while some part of the active claim's highlight is on screen —
   // the mobile drawer keys its open state on this (the active index is always
   // clamped to a claim, so on its own it can't tell "visible" from "scrolled
@@ -31,6 +36,8 @@ export function useClaimScrollSync(
   );
   const [claimAnchors, setClaimAnchors] = useState<ClaimAnchor[]>([]);
   const [indicatorRatio, setIndicatorRatio] = useState(0);
+  const [viewportTopRatio, setViewportTopRatio] = useState(0);
+  const [viewportHeightRatio, setViewportHeightRatio] = useState(1);
   const [isNearClaim, setIsNearClaim] = useState(false);
 
   useEffect(() => {
@@ -44,14 +51,13 @@ export function useClaimScrollSync(
       setClaimAnchors(anchors);
 
       const columnTop = root.getBoundingClientRect().top + window.scrollY;
-      const { activeIndex, indicatorRatio: ratio } = computeScrollSelection(
-        anchors,
-        columnTop,
-        root.offsetHeight,
-      );
+      const { activeIndex, indicatorRatio, viewportTopRatio, viewportHeightRatio } =
+        computeScrollSelection(anchors, columnTop, root.offsetHeight);
 
       setScrollActiveIndex(activeIndex);
-      setIndicatorRatio(ratio);
+      setIndicatorRatio(indicatorRatio);
+      setViewportTopRatio(viewportTopRatio);
+      setViewportHeightRatio(viewportHeightRatio);
 
       const viewportHeight = window.innerHeight;
       const marks = root.querySelectorAll<HTMLElement>(
@@ -88,5 +94,12 @@ export function useClaimScrollSync(
     };
   }, [paragraphs, claimCount, containerRef]);
 
-  return { scrollActiveIndex, claimAnchors, indicatorRatio, isNearClaim };
+  return {
+    scrollActiveIndex,
+    claimAnchors,
+    indicatorRatio,
+    viewportTopRatio,
+    viewportHeightRatio,
+    isNearClaim,
+  };
 }
