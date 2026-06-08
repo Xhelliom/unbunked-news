@@ -20,6 +20,9 @@ type Props = {
   isActiveParagraph: boolean;
   onHoverClaim: (index: number) => void;
   onLeaveClaim: (event: MouseEvent<HTMLElement>) => void;
+  // Mobile only: tapping a highlight selects that claim in the bottom drawer.
+  // Undefined on desktop, where hover + the side panel already do the work.
+  onSelectClaim?: (index: number) => void;
 };
 
 function verdictVar(status: ClaimStatus): string {
@@ -34,6 +37,7 @@ export function ReadingParagraphBlock({
   isActiveParagraph,
   onHoverClaim,
   onLeaveClaim,
+  onSelectClaim,
 }: Props) {
   const claimIndices = paragraph.segments
     .map((segment) => segment.claimIndex)
@@ -81,6 +85,7 @@ export function ReadingParagraphBlock({
           displayedIndex={displayedIndex}
           onHoverClaim={onHoverClaim}
           onLeaveClaim={onLeaveClaim}
+          onSelectClaim={onSelectClaim}
         />
       </div>
     </div>
@@ -95,6 +100,7 @@ type ParagraphBodyProps = {
   displayedIndex: number | null;
   onHoverClaim: (index: number) => void;
   onLeaveClaim: (event: MouseEvent<HTMLElement>) => void;
+  onSelectClaim?: (index: number) => void;
 };
 
 // Renders the annotated text in the element that matches its structural role,
@@ -108,6 +114,7 @@ function ParagraphBody({
   displayedIndex,
   onHoverClaim,
   onLeaveClaim,
+  onSelectClaim,
 }: ParagraphBodyProps) {
   if (kind === "code") {
     return (
@@ -131,8 +138,10 @@ function ParagraphBody({
         title={statusLabels[claim.status]}
         onMouseEnter={() => onHoverClaim(claimIndex)}
         onMouseLeave={onLeaveClaim}
+        onClick={onSelectClaim ? () => onSelectClaim(claimIndex) : undefined}
         className={cn(
-          "box-decoration-clone cursor-default rounded-[3px] px-0.5 text-inherit transition-shadow",
+          "box-decoration-clone rounded-[3px] px-0.5 text-inherit transition-shadow",
+          onSelectClaim ? "cursor-pointer" : "cursor-default",
           claimStatusHighlightClasses[claim.status],
           isActive && "ring-1 ring-inset",
         )}

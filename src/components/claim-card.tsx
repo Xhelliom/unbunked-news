@@ -16,28 +16,44 @@ export function ClaimCard({
   sourcesLabel,
   verificationLabel,
   className,
+  // Drops the card chrome (border, rounded corners, padding). The mobile drawer
+  // already recalls the verdict colour on its handle, so the framed card would
+  // just be a box-in-a-box.
+  frameless = false,
+  // Hides the status badge + verification label row. Used when the status is
+  // already shown elsewhere (the drawer's multi-claim chips).
+  hideHeader = false,
 }: {
   claim: ClaimCardData;
   sourcesLabel: string;
   verificationLabel: string;
   className?: string;
+  frameless?: boolean;
+  hideHeader?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "bg-card flex flex-col gap-2 rounded-xl border border-t-[3px] p-4",
+        "flex flex-col gap-2",
+        !frameless && "bg-card rounded-xl border border-t-[3px] p-4",
         className,
       )}
-      style={{
-        borderTopColor: `var(--verdict-${claimStatusToVerdict[claim.status]})`,
-      }}
+      style={
+        frameless
+          ? undefined
+          : {
+              borderTopColor: `var(--verdict-${claimStatusToVerdict[claim.status]})`,
+            }
+      }
     >
-      <div className="flex items-center justify-between gap-2">
-        <ClaimStatusBadge status={claim.status} />
-        <span className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.05em] whitespace-nowrap uppercase">
-          {verificationLabel}
-        </span>
-      </div>
+      {!hideHeader && (
+        <div className="flex items-center justify-between gap-2">
+          <ClaimStatusBadge status={claim.status} />
+          <span className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.05em] whitespace-nowrap uppercase">
+            {verificationLabel}
+          </span>
+        </div>
+      )}
 
       {claim.claimText && (
         <p className="border-border mt-1 border-l-2 pl-2.5 font-serif text-sm leading-[1.45] italic">

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import { type ClaimStatus } from "@/lib/claim-status";
+import { cn } from "@/lib/utils";
 import type { ClaimCardData } from "@/components/claim-card";
 import type { ReadingParagraph } from "@/lib/reading";
 import { ClaimScrollRail } from "@/components/article-reader/claim-scroll-rail";
@@ -58,10 +59,17 @@ export function ArticleReader({
   // on desktop (where the side panel handles verification). Starts false so SSR
   // and first paint match the server output.
   const [isMobile, setIsMobile] = useState(false);
-  // The claim the reader explicitly expanded. The snap is derived from it (no
-  // effects): the drawer is expanded only while that claim is the one in view,
-  // so scrolling to any other claim falls back to the peek on its own.
-  const [expandedForIndex, setExpandedForIndex] = useState<number | null>(null);
+  // The paragraph group the reader explicitly expanded, keyed by its first
+  // claim index. The snap is derived from it (no effects): the drawer is
+  // expanded only while that group is in view, so scrolling to another
+  // paragraph falls back to the peek on its own.
+  const [expandedForGroupKey, setExpandedForGroupKey] = useState<number | null>(
+    null,
+  );
+  // Which claim of the in-view paragraph the reader picked (tap on a highlight,
+  // a chip, or a rail dot). Claim indices are globally unique, so this stays
+  // valid only while its paragraph is the active one — no reset effect needed.
+  const [tappedClaim, setTappedClaim] = useState<number | null>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1023px)");
@@ -71,20 +79,68 @@ export function ArticleReader({
     return () => query.removeEventListener("change", sync);
   }, []);
 
+  // The fixed mobile rail is pinned to the viewport's vertical centre, so it
+  // must only appear once the annotated article reaches that centre — otherwise
+  // it floats over the full-width header (score, criteria). The -45% margins
+  // collapse the observer's root to the central band the rail occupies.
+  const [isReadingInView, setIsReadingInView] = useState(false);
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsReadingInView(entry.isIntersecting),
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   const mobileActiveIndex = scrollActiveIndex ?? 0;
   const hasMobileClaims = isMobile && claims.length > 0;
   const mobileOpen = hasMobileClaims && isNearClaim;
-  const expanded = expandedForIndex === mobileActiveIndex;
+
+  // Every claim index sharing the active claim's paragraph, in reading order.
+  const claimsInParagraphOf = (claimIndex: number): number[] => {
+    const paragraph = paragraphs.find((p) =>
+      p.segments.some((segment) => segment.claimIndex === claimIndex),
+    );
+    if (!paragraph) return [claimIndex];
+    const indices: number[] = [];
+    for (const segment of paragraph.segments) {
+      const index = segment.claimIndex;
+      if (index !== null && !indices.includes(index)) indices.push(index);
+    }
+    return indices.length > 0 ? indices : [claimIndex];
+  };
+
+  const groupIndices = claimsInParagraphOf(mobileActiveIndex);
+  const groupKey = groupIndices[0];
+  const groupKeyForClaim = (index: number) => claimsInParagraphOf(index)[0];
+
+  // The chip the drawer shows: the tapped claim while its paragraph is active,
+  // otherwise the scroll-selected one.
+  const drawerSelectedIndex =
+    tappedClaim !== null && groupIndices.includes(tappedClaim)
+      ? tappedClaim
+      : mobileActiveIndex;
+
+  const expanded = expandedForGroupKey === groupKey;
   const activeSnapPoint = expanded ? EXPANDED_SNAP : PEEK_SNAP;
 
   const handleSnapChange = (snap: number | string | null) => {
-    setExpandedForIndex(snap === EXPANDED_SNAP ? mobileActiveIndex : null);
+    setExpandedForGroupKey(snap === EXPANDED_SNAP ? groupKey : null);
   };
 
-  const expandActiveClaim = () => setExpandedForIndex(mobileActiveIndex);
+  const expandActiveClaim = () => setExpandedForGroupKey(groupKey);
+
+  // Pick a claim and expand its paragraph's drawer (highlight tap or chip tap).
+  const selectClaim = (index: number) => {
+    setTappedClaim(index);
+    setExpandedForGroupKey(groupKeyForClaim(index));
+  };
 
   const scrollToClaim = (index: number) => {
-    setExpandedForIndex(index);
+    selectClaim(index);
     containerRef.current
       ?.querySelector(`[data-claim-index="${index}"]`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -103,7 +159,14 @@ export function ArticleReader({
 
   return (
     <div ref={containerRef} className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
-      <div className="flex flex-col gap-6">
+      <div
+        className={cn(
+          "flex flex-col gap-6",
+          // Reserve a right gutter on mobile so the fixed claim rail never
+          // crops the paragraph text. Cleared once the side panel takes over.
+          claims.length > 0 && "pr-10 lg:pr-0",
+        )}
+      >
         {paragraphs.map((paragraph, paragraphIndex) => (
           <ReadingParagraphBlock
             key={paragraphIndex}
@@ -114,6 +177,7 @@ export function ArticleReader({
             isActiveParagraph={paragraphIndex === activeParagraph}
             onHoverClaim={setHoveredIndex}
             onLeaveClaim={clearHoverUnlessMovingToClaim}
+            onSelectClaim={isMobile ? selectClaim : undefined}
           />
         ))}
       </div>
@@ -130,13 +194,13 @@ export function ArticleReader({
         />
       )}
 
-      {hasMobileClaims && !expanded && (
+      {hasMobileClaims && !expanded && isReadingInView && (
         <ClaimScrollRail
           className="fixed top-1/2 right-1 z-30 h-[60dvh] w-9 -translate-y-1/2 lg:hidden"
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
-          displayedIndex={mobileActiveIndex}
+          displayedIndex={drawerSelectedIndex}
           hoveredIndex={null}
           onSelect={scrollToClaim}
           selectLabel={railLabel}
@@ -146,7 +210,10 @@ export function ArticleReader({
       {hasMobileClaims && (
         <MobileClaimDrawer
           claims={claims}
-          activeIndex={mobileActiveIndex}
+          groupIndices={groupIndices}
+          selectedIndex={drawerSelectedIndex}
+          onSelectIndex={selectClaim}
+          statusLabels={statusLabels}
           open={mobileOpen}
           activeSnapPoint={activeSnapPoint}
           onSnapChange={handleSnapChange}
