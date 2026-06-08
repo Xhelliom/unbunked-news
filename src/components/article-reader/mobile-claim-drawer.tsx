@@ -119,7 +119,7 @@ export function MobileClaimDrawer({
               paragraph's claims). */}
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-7 -translate-y-1/2 opacity-90 blur-lg"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-6 -translate-y-1/2 opacity-60 blur-md"
             style={{ background: handleBackground }}
           />
 
