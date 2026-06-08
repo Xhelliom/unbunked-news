@@ -50,6 +50,7 @@ export default async function AdminLayout({
             analytics: t("nav.analytics"),
             costs: t("nav.costs"),
             members: t("nav.members"),
+            settings: t("nav.settings"),
             account: t("nav.account"),
           }}
           account={{ name: accountName, email: accountEmail }}

@@ -195,7 +195,24 @@
       "analytics": "Statistiques",
       "costs": "Coûts",
       "members": "Membres",
+      "settings": "Réglages",
       "account": "Mon compte"
+    },
+    "settings": {
+      "title": "Réglages",
+      "subtitle": "Activez ou désactivez des fonctionnalités sans redéploiement.",
+      "cardTitle": "Fonctionnalités",
+      "publicSignup": {
+        "label": "Inscription des utilisateurs",
+        "hint": "Autoriser la création de comptes non-admin (Google et email vérifié)."
+      },
+      "aiModeration": {
+        "label": "Pré-modération IA des contributions",
+        "hint": "Pré-classer les contributions avant la file de modération. N'auto-publie jamais."
+      },
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Réglages enregistrés."
     },
     "analytics": {
       "title": "Statistiques",
@@ -397,6 +414,7 @@
       "criteriaTitle": "Scores détaillés",
       "criteriaHint": "Décochez un critère facultatif s'il n'est pas évaluable de façon fiable.",
       "optional": "facultatif",
+      "contributionsEnabled": "Autoriser les contributions des lecteurs (corrections, sources) sur cet article",
       "source": "Source d'origine",
       "rubric": "Rubrique",
       "claims": "Affirmations analysées",

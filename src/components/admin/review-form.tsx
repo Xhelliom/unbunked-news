@@ -31,6 +31,7 @@ type ReviewFormProps = {
   completenessScore: number | null;
   transparencyScore: number | null;
   recencyScore: number | null;
+  contributionsEnabled: boolean;
   published: boolean;
   isDeleted: boolean;
 };
@@ -142,6 +143,16 @@ export function ReviewForm(props: ReviewFormProps) {
           </div>
         </div>
         <CriteriaFieldset initial={props} />
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="contributionsEnabled"
+            value="true"
+            defaultChecked={props.contributionsEnabled}
+            className="mt-1"
+          />
+          <span>{t("contributionsEnabled")}</span>
+        </label>
         <Button type="submit" disabled={pending}>
           {pending ? t("saving") : t("save")}
         </Button>

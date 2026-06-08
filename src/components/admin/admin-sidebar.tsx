@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Send,
+  Settings,
   ShieldCheck,
   UserCircle2,
   Users,
@@ -35,6 +36,7 @@ type AdminSidebarProps = {
     analytics: string;
     costs: string;
     members: string;
+    settings: string;
     account: string;
   };
   account: {
@@ -44,7 +46,7 @@ type AdminSidebarProps = {
 };
 
 type NavItem = {
-  href: "/admin" | "/admin/submit" | "/admin/jobs" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/members" | "/admin/account";
+  href: "/admin" | "/admin/submit" | "/admin/jobs" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/members" | "/admin/settings" | "/admin/account";
   label: string;
   icon: ComponentType<{ className?: string }>;
 };
@@ -74,6 +76,7 @@ export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
     { href: "/admin/analytics", label: labels.analytics, icon: BarChart3 },
     { href: "/admin/costs", label: labels.costs, icon: Coins },
     { href: "/admin/members", label: labels.members, icon: Users },
+    { href: "/admin/settings", label: labels.settings, icon: Settings },
   ];
 
   const normalizedPath = pathname.endsWith("/")

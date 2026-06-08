@@ -195,7 +195,24 @@
       "analytics": "Analytics",
       "costs": "Costs",
       "members": "Members",
+      "settings": "Settings",
       "account": "My account"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Turn features on or off without a redeploy.",
+      "cardTitle": "Features",
+      "publicSignup": {
+        "label": "User sign-up",
+        "hint": "Allow non-admin account creation (Google and verified email)."
+      },
+      "aiModeration": {
+        "label": "AI pre-moderation of contributions",
+        "hint": "Pre-classify contributions before the moderation queue. Never auto-publishes."
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Settings saved."
     },
     "analytics": {
       "title": "Analytics",
@@ -397,6 +414,7 @@
       "criteriaTitle": "Detailed scores",
       "criteriaHint": "Uncheck an optional criterion if it can't be assessed reliably.",
       "optional": "optional",
+      "contributionsEnabled": "Allow reader contributions (corrections, sources) on this article",
       "source": "Original source",
       "rubric": "Section",
       "claims": "Analyzed claims",

@@ -138,6 +138,7 @@ export async function saveArticle(
       summary: String(formData.get("summary") ?? ""),
       originalSummary: String(formData.get("originalSummary") ?? "") || null,
       showOriginal: formData.get("showOriginal") === "true",
+      contributionsEnabled: formData.get("contributionsEnabled") === "true",
       verdict,
       reliabilityScore: parseScore(formData.get("reliabilityScore")),
       ...criterionScores,
