@@ -13,9 +13,9 @@ import {
 } from "@/lib/contributions/constants";
 import { isRateLimited } from "@/lib/contributions/rate-limit";
 import { isAiModerationEnabled, moderateContribution } from "@/lib/moderation/moderate";
+import { safeHttpUrl } from "@/lib/safe-url";
 import { isUnauthorizedError, requireUserId } from "@/lib/session";
 import { isTurnstileEnabled, verifyTurnstile } from "@/lib/turnstile";
-import { parseUrl } from "@/lib/url";
 
 export type ContributionErrorCode =
   | "unauthenticated"
@@ -86,7 +86,7 @@ export async function submitContribution(
 
   let sourceUrl: string | null = null;
   if (sourceUrlRaw) {
-    sourceUrl = parseUrl(sourceUrlRaw);
+    sourceUrl = safeHttpUrl(sourceUrlRaw);
     if (!sourceUrl) {
       return { status: "error", code: "invalidUrl" };
     }

@@ -2,7 +2,7 @@
 
 import { db } from "@/db/client";
 import { proposals } from "@/db/schema";
-import { parseUrl } from "@/lib/url";
+import { safeHttpUrl } from "@/lib/safe-url";
 
 export type ProposeState = { ok?: boolean; error?: string };
 
@@ -10,7 +10,7 @@ export async function proposeArticle(
   _prev: ProposeState,
   formData: FormData,
 ): Promise<ProposeState> {
-  const url = parseUrl(String(formData.get("url") ?? ""));
+  const url = safeHttpUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
   }

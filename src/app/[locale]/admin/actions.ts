@@ -20,8 +20,8 @@ import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
+import { safeHttpUrl } from "@/lib/safe-url";
 import { requireAdminSession } from "@/lib/session";
-import { parseUrl } from "@/lib/url";
 import {
   CRITERION_COLUMN,
   SCORE_CRITERIA,
@@ -89,7 +89,7 @@ export async function submitUrl(
   formData: FormData,
 ): Promise<ActionState> {
   await requireAdminSession();
-  const url = parseUrl(String(formData.get("url") ?? ""));
+  const url = safeHttpUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
   }
