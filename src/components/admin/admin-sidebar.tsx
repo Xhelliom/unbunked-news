@@ -6,6 +6,7 @@ import {
   FileText,
   LayoutDashboard,
   ListChecks,
+  MessageSquare,
   Send,
   Settings,
   ShieldCheck,
@@ -35,6 +36,7 @@ type AdminSidebarProps = {
     proposals: string;
     analytics: string;
     costs: string;
+    moderation: string;
     members: string;
     settings: string;
     account: string;
@@ -46,7 +48,7 @@ type AdminSidebarProps = {
 };
 
 type NavItem = {
-  href: "/admin" | "/admin/submit" | "/admin/jobs" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/members" | "/admin/settings" | "/admin/account";
+  href: "/admin" | "/admin/submit" | "/admin/jobs" | "/admin/proposals" | "/admin/analytics" | "/admin/costs" | "/admin/moderation" | "/admin/members" | "/admin/settings" | "/admin/account";
   label: string;
   icon: ComponentType<{ className?: string }>;
 };
@@ -75,6 +77,7 @@ export function AdminSidebar({ title, labels, account }: AdminSidebarProps) {
     { href: "/admin/proposals", label: labels.proposals, icon: FileText },
     { href: "/admin/analytics", label: labels.analytics, icon: BarChart3 },
     { href: "/admin/costs", label: labels.costs, icon: Coins },
+    { href: "/admin/moderation", label: labels.moderation, icon: MessageSquare },
     { href: "/admin/members", label: labels.members, icon: Users },
     { href: "/admin/settings", label: labels.settings, icon: Settings },
   ];

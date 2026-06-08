@@ -238,9 +238,31 @@
       "proposals": "Propositions",
       "analytics": "Statistiques",
       "costs": "Coûts",
+      "moderation": "Modération",
       "members": "Membres",
       "settings": "Réglages",
       "account": "Mon compte"
+    },
+    "moderation": {
+      "title": "Modération des contributions",
+      "subtitle": "Validez ou rejetez les corrections et sources proposées par les lecteurs.",
+      "pendingTab": "En attente",
+      "rejectedTab": "Rejetées",
+      "emptyQueue": "Aucune contribution ici.",
+      "approve": "Valider",
+      "reject": "Rejeter",
+      "byAuthor": "par {name}",
+      "sourceLink": "Source proposée",
+      "aiReasonLabel": "Note de l'IA",
+      "target": {
+        "article": "Sur l'article",
+        "claim": "Sur l'affirmation {n}"
+      },
+      "aiVerdict": {
+        "clean": "IA : propre",
+        "suspicious": "IA : à vérifier",
+        "spam": "IA : spam"
+      }
     },
     "settings": {
       "title": "Réglages",

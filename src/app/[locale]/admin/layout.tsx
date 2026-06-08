@@ -49,6 +49,7 @@ export default async function AdminLayout({
             proposals: t("nav.proposals"),
             analytics: t("nav.analytics"),
             costs: t("nav.costs"),
+            moderation: t("nav.moderation"),
             members: t("nav.members"),
             settings: t("nav.settings"),
             account: t("nav.account"),

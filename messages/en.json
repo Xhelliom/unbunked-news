@@ -238,9 +238,31 @@
       "proposals": "Proposals",
       "analytics": "Analytics",
       "costs": "Costs",
+      "moderation": "Moderation",
       "members": "Members",
       "settings": "Settings",
       "account": "My account"
+    },
+    "moderation": {
+      "title": "Contribution moderation",
+      "subtitle": "Approve or reject the corrections and sources suggested by readers.",
+      "pendingTab": "Pending",
+      "rejectedTab": "Rejected",
+      "emptyQueue": "No contributions here.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "byAuthor": "by {name}",
+      "sourceLink": "Suggested source",
+      "aiReasonLabel": "AI note",
+      "target": {
+        "article": "On the article",
+        "claim": "On claim {n}"
+      },
+      "aiVerdict": {
+        "clean": "AI: clean",
+        "suspicious": "AI: review",
+        "spam": "AI: spam"
+      }
     },
     "settings": {
       "title": "Settings",
