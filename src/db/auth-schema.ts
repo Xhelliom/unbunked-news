@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 // BetterAuth core tables (v1.6). Property keys match BetterAuth field names;
 // the snake_case DB columns are produced by the Drizzle `casing` option.
@@ -36,7 +36,10 @@ export const session = pgTable("session", {
   userId: text()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-});
+}, (table) => [
+  // Sessions are read and cascade-deleted by userId on every admin boundary.
+  index("session_user_id_idx").on(table.userId),
+]);
 
 export const account = pgTable("account", {
   id: text().primaryKey(),
@@ -59,7 +62,10 @@ export const account = pgTable("account", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => [
+  // BetterAuth looks accounts up by userId (credential lookups, password reset).
+  index("account_user_id_idx").on(table.userId),
+]);
 
 export const verification = pgTable("verification", {
   id: text().primaryKey(),

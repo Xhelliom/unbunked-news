@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 import { parseBlock } from "@/lib/article-blocks";
+import { safeHttpUrl } from "@/lib/safe-url";
 
 type Props = {
   body: string;
@@ -96,16 +97,23 @@ function renderInline(input: string, claimCount: number): ReactNode {
     } else {
       const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token);
       if (linkMatch) {
+        // The rewrite body is LLM-generated markdown; only turn real http(s)
+        // targets into links so `[x](javascript:…)` renders as plain text.
+        const href = safeHttpUrl(linkMatch[2]);
         parts.push(
-          <a
-            key={key++}
-            href={linkMatch[2]}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-primary underline"
-          >
-            {linkMatch[1]}
-          </a>,
+          href ? (
+            <a
+              key={key++}
+              href={href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-primary underline"
+            >
+              {linkMatch[1]}
+            </a>
+          ) : (
+            <Fragment key={key++}>{linkMatch[1]}</Fragment>
+          ),
         );
       }
     }

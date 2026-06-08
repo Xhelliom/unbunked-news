@@ -1,4 +1,5 @@
 import { extractFromHtml } from "@extractus/article-extractor";
+import { type Agent, fetch } from "undici";
 
 import {
   BLOCK_KINDS,
@@ -12,6 +13,7 @@ import {
   isCommentSectionHeader,
   type ScrapeQuality,
 } from "@/lib/boilerplate";
+import { assertPublicUrl, resolvePinnedUrl } from "@/lib/ssrf";
 
 export type ScrapedArticle = {
   url: string;
@@ -54,6 +56,9 @@ const SCRAPE_USER_AGENT =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 const FETCH_TIMEOUT_MS = 20_000;
 const RENDER_TIMEOUT_MS = 30_000;
+// Cap the redirect chain we follow manually: each hop is SSRF-revalidated, so a
+// chain that never settles (or loops) is refused rather than followed forever.
+const MAX_REDIRECTS = 5;
 // Enough of the <head> to find a declared charset, read as latin1 so the ASCII
 // meta tag is legible whatever the real encoding.
 const CHARSET_SNIFF_BYTES = 2_048;
@@ -337,19 +342,49 @@ function decodeHtml(buffer: ArrayBuffer, contentType: string | null): string {
   }
 }
 
+// Follows redirects by hand (`redirect: "manual"`) so every hop's target is
+// SSRF-revalidated before we connect to it — `fetch`'s automatic redirect
+// following would happily chase an external URL into an internal one. Each hop
+// connects through a dispatcher pinned to the address we just validated, so DNS
+// can't rebind to a private host between the check and the socket. Returns null
+// on any failure (including a refused private hop) so the caller can fall back
+// to the headless render path, which applies the same guard.
 async function fetchHtml(url: string): Promise<string | null> {
+  const dispatchers: Agent[] = [];
   try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { "user-agent": SCRAPE_USER_AGENT },
-    });
-    if (!response.ok) return null;
-    return decodeHtml(
-      await response.arrayBuffer(),
-      response.headers.get("content-type"),
-    );
+    let target = await resolvePinnedUrl(url);
+    dispatchers.push(target.dispatcher);
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const response = await fetch(target.url, {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: { "user-agent": SCRAPE_USER_AGENT },
+        redirect: "manual",
+        dispatcher: target.dispatcher,
+      });
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("location");
+        if (!location) return null;
+        target = await resolvePinnedUrl(new URL(location, target.url).toString());
+        dispatchers.push(target.dispatcher);
+        continue;
+      }
+      if (!response.ok) return null;
+      return decodeHtml(
+        await response.arrayBuffer(),
+        response.headers.get("content-type"),
+      );
+    }
+    return null;
   } catch {
     return null;
+  } finally {
+    // destroy, not close: a redirect hop's response body is never read, and
+    // close() would wait on it. The successful body is already fully awaited
+    // before we get here, so tearing the sockets down now is safe. Swallow any
+    // teardown error so a cleanup hiccup can't mask a successful scrape.
+    await Promise.all(
+      dispatchers.map((dispatcher) => dispatcher.destroy().catch(() => undefined)),
+    );
   }
 }
 
@@ -361,6 +396,8 @@ async function renderHtml(url: string): Promise<string | null> {
     process.env.CHROMIUM_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
   if (!executablePath) return null;
 
+  const safeUrl = await assertPublicUrl(url);
+
   const { launch } = await import("puppeteer-core");
   const browser = await launch({
     executablePath,
@@ -369,7 +406,20 @@ async function renderHtml(url: string): Promise<string | null> {
   });
   try {
     const page = await browser.newPage();
-    await page.goto(url, {
+    // Re-validate every request URL (the initial load, internal redirects and
+    // subresources) against the SSRF guard, aborting any that resolves to a
+    // private address. Chromium does its own DNS resolution, so unlike the fetch
+    // path this can't pin the connection — a determined rebinding attacker is
+    // only stopped here by the cluster egress NetworkPolicy. This guard still
+    // rejects outright-internal URLs (e.g. an embedded 169.254.169.254 image).
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      assertPublicUrl(request.url()).then(
+        () => request.continue(),
+        () => request.abort(),
+      );
+    });
+    await page.goto(safeUrl, {
       waitUntil: "networkidle2",
       timeout: RENDER_TIMEOUT_MS,
     });
@@ -487,6 +537,10 @@ export async function scrapeArticle(
   url: string,
   structureBody?: BodyStructurer,
 ): Promise<ScrapeResult> {
+  // Fail loudly and early on a non-public target rather than letting the fetch
+  // silently return null and surface as a misleading "paywalled" message.
+  await assertPublicUrl(url);
+
   const html = await fetchHtml(url);
   let attempt: Attempt = html
     ? await attemptFromHtml(url, html, structureBody)

@@ -15,9 +15,19 @@ import {
 
 // Daily-rotating salt: combining the date with a server secret makes the
 // visitor hash impossible to reverse or correlate across days without the
-// secret, so it is not a persistent identifier.
-const SALT_BASE =
-  process.env.ANALYTICS_SALT ?? process.env.BETTER_AUTH_SECRET ?? "";
+// secret, so it is not a persistent identifier. Resolved lazily (not at import)
+// so `next build` — which evaluates this module without runtime env — doesn't
+// fail; a missing secret throws only when an event is actually recorded, which
+// is correct: hashing with an empty salt would make the IP/UA brute-forceable.
+function saltBase(): string {
+  const salt = process.env.ANALYTICS_SALT ?? process.env.BETTER_AUTH_SECRET;
+  if (!salt) {
+    throw new Error(
+      "ANALYTICS_SALT or BETTER_AUTH_SECRET must be set: refusing to hash visitor data with an empty salt",
+    );
+  }
+  return salt;
+}
 
 const ARTICLE_PATH = /^\/(?:[a-z]{2}\/)?article\/([^/]+)\/?$/;
 
@@ -77,7 +87,7 @@ function deviceTypeFromUserAgent(userAgent: string): DeviceType {
 function dailyVisitorHash(ip: string, userAgent: string): string {
   const day = new Date().toISOString().slice(0, 10);
   return createHash("sha256")
-    .update(`${day}:${SALT_BASE}:${ip}:${userAgent}`)
+    .update(`${day}:${saltBase()}:${ip}:${userAgent}`)
     .digest("hex");
 }
 

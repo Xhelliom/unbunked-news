@@ -26,10 +26,26 @@ spec:
     metadata:
       labels:
         app: worker
+        db-client: "true"
     spec:
+      # The image runs as the non-root `nextjs` user (uid 1001, Dockerfile:42).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: worker
           image: ghcr.io/xhelliom/unbunked-news:latest
+          # The worker runs the Chromium render fallback against hostile pages:
+          # drop all capabilities and block privilege escalation.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 3000
           envFrom:

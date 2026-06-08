@@ -33,17 +33,34 @@ function resolvePoolMax(): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_DB_POOL_MAX;
 }
 
+// Postgres.js TLS mode, set explicitly so the connection isn't silently
+// plaintext when DATABASE_URL omits `sslmode`. Driven by DATABASE_SSL (e.g.
+// `require`, `verify-full`) and left unset by default so local/dev Postgres
+// without TLS keeps working unchanged. A `sslmode` in DATABASE_URL still wins
+// when this is unset.
+type SslOption = "require" | "prefer" | "verify-full" | undefined;
+
+function resolveSslOption(): SslOption {
+  const mode = process.env.DATABASE_SSL?.trim().toLowerCase();
+  if (mode === "require" || mode === "prefer" || mode === "verify-full") {
+    return mode;
+  }
+  return undefined;
+}
+
 // Reuse a single client across hot reloads in dev to avoid exhausting Postgres.
 const globalForDb = globalThis as unknown as {
   client?: ReturnType<typeof postgres>;
 };
 
+const sslOption = resolveSslOption();
 const client =
   globalForDb.client ??
   postgres(connectionString, {
     max: resolvePoolMax(),
     idle_timeout: DB_IDLE_TIMEOUT_SECONDS,
     connect_timeout: DB_CONNECT_TIMEOUT_SECONDS,
+    ...(sslOption ? { ssl: sslOption } : {}),
   });
 if (process.env.NODE_ENV !== "production") {
   globalForDb.client = client;

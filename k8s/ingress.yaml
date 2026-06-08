@@ -6,6 +6,9 @@ metadata:
   annotations:
     # Requires cert-manager for automatic TLS. Adjust to your cluster.
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Force HTTPS: redirect any plaintext request to TLS.
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:

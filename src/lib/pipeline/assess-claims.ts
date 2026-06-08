@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
+import { safeHttpUrl } from "@/lib/safe-url";
 import {
   firstToolInput,
   formatArticle,
@@ -71,7 +72,11 @@ function toSources(value: unknown): AnalysisSource[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
     if (item && typeof item === "object" && typeof item.url === "string") {
-      return [{ url: item.url, title: String(item.title ?? item.url) }];
+      // The model can return any string as a URL; only persist real http(s)
+      // URLs so a `javascript:`/`data:` payload never reaches the DB or render.
+      const url = safeHttpUrl(item.url);
+      if (!url) return [];
+      return [{ url, title: String(item.title ?? url) }];
     }
     return [];
   });

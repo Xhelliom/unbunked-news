@@ -10,13 +10,28 @@ metadata:
 spec:
   backoffLimit: 1
   template:
+    metadata:
+      labels:
+        db-client: "true"
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: seed-admin
           # Reuses the app image (one image for app + migrate + seed); the
           # bundled CJS entrypoint runs without pnpm/tsx.
           image: ghcr.io/xhelliom/unbunked-news:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
           envFrom:
             - secretRef:
                 name: unbunked-secrets

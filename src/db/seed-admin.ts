@@ -7,6 +7,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { hashPassword } from "better-auth/crypto";
 
+import { requireAuthSecret } from "../lib/auth-secret";
 import { db } from "./client";
 import { account, session, user, verification } from "./schema";
 
@@ -48,8 +49,7 @@ async function main() {
       schema: { user, session, account, verification },
     }),
     emailAndPassword: { enabled: true },
-    secret:
-      process.env.BETTER_AUTH_SECRET ?? "unbunked-dev-secret-please-override",
+    secret: requireAuthSecret(),
     baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   });
 

@@ -15,6 +15,11 @@ import { recordClaimsTool } from "./schemas";
 // pathological article producing a long list and getting cut off mid-array.
 const MAX_TOKENS = 4096;
 
+// Hard ceiling on the claim list. The prompt targets 3-8, but a page crafted to
+// induce a long list would otherwise multiply every downstream reasoning call
+// (verify/assess) and the per-claim DB writes — so we truncate after filtering.
+const MAX_CLAIMS = 12;
+
 export type ExtractClaimsResult = {
   claims: string[];
   usage: TokenUsage;
@@ -59,16 +64,19 @@ export async function extractClaims(
 
   const input = firstToolInput(message, "record_claims");
   const rawClaims = Array.isArray(input?.claims) ? input.claims : [];
-  const claims = rawClaims.filter(
+  const filtered = rawClaims.filter(
     (claim): claim is string =>
       typeof claim === "string" && claim.trim().length > 0,
   );
+  const claims = filtered.slice(0, MAX_CLAIMS);
 
-  const dropped = rawClaims.length - claims.length;
+  const dropped = rawClaims.length - filtered.length;
+  const capped = filtered.length - claims.length;
   const warnings: string[] = [];
   if (!input) warnings.push("record_claims tool was not called");
   if (claims.length === 0) warnings.push("no claims extracted");
   if (dropped > 0) warnings.push(`${dropped} malformed/empty claim(s) dropped`);
+  if (capped > 0) warnings.push(`${capped} claim(s) over the ${MAX_CLAIMS} cap dropped`);
 
   const diagnostic = toolCallDiagnostic(
     "extracting",

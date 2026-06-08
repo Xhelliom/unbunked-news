@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 import { after } from "next/server";
 
 import { EVENT_KINDS, type EventKind } from "@/lib/analytics/constants";
@@ -18,12 +20,17 @@ function privacyOptOut(request: Request): boolean {
   );
 }
 
+// Prefer x-real-ip, which the trusted ingress sets to the actual peer, over the
+// client-spoofable left-most x-forwarded-for hop; validate the format either way
+// so a forged header can't widen/split a visitor's analytics buckets. The IP
+// only feeds the daily visitor hash, so an empty value here is acceptable.
 function clientIp(request: Request): string {
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp && isIP(realIp)) return realIp;
+
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() ?? "";
-  }
-  return request.headers.get("x-real-ip")?.trim() ?? "";
+  const firstHop = forwarded?.split(",")[0]?.trim();
+  return firstHop && isIP(firstHop) ? firstHop : "";
 }
 
 export async function POST(request: Request): Promise<Response> {
