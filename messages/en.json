@@ -183,7 +183,51 @@
     "heroTitle": "Fact-checking, claim by claim.",
     "heroSubtitle": "Submit a link, the pipeline extracts each claim, cross-checks it against sources, and publishes a verdict. You stay in control of every nuance.",
     "weeklyChecks": "articles checked this week",
-    "fiveVerdicts": "Five verdicts, never binary"
+    "fiveVerdicts": "Five verdicts, never binary",
+    "noAccount": "No account yet?",
+    "signUpLink": "Create an account",
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Join the community to suggest corrections and sources.",
+      "name": "Display name",
+      "namePlaceholder": "Shown publicly on your contributions",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Create my account",
+      "submitting": "Creating…",
+      "verifyTitle": "Check your inbox",
+      "verifySent": "A verification link was sent to {email}. Click it to activate your account.",
+      "backToLogin": "Back to login",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "errors": {
+        "weakPassword": "Password must be at least 8 characters.",
+        "disabledOrInvalid": "Sign-up failed: it may be disabled, or this email is already in use.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "submit": "Send the link",
+      "submitting": "Sending…",
+      "sentTitle": "Check your inbox",
+      "sent": "If an account exists for this address, a reset link has just been sent.",
+      "backToLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "subtitle": "Choose a new password for your account.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Reset",
+      "submitting": "Resetting…",
+      "backToLogin": "Back to login",
+      "errors": {
+        "invalidToken": "This link is invalid or expired. Please request a new one.",
+        "weakPassword": "Password must be at least 8 characters.",
+        "mismatch": "The two passwords don't match."
+      }
+    }
   },
   "admin": {
     "title": "Administration",

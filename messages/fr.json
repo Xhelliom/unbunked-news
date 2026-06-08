@@ -183,7 +183,51 @@
     "heroTitle": "Le fact-checking, affirmation par affirmation.",
     "heroSubtitle": "Soumettez un lien, l'analyse extrait chaque affirmation, la confronte aux sources, et publie le verdict. Vous gardez la main sur chaque nuance.",
     "weeklyChecks": "articles vérifiés cette semaine",
-    "fiveVerdicts": "Cinq verdicts, jamais binaires"
+    "fiveVerdicts": "Cinq verdicts, jamais binaires",
+    "noAccount": "Pas encore de compte ?",
+    "signUpLink": "Créer un compte",
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez la communauté pour proposer des corrections et des sources.",
+      "name": "Pseudo",
+      "namePlaceholder": "Affiché publiquement sur vos contributions",
+      "passwordHint": "8 caractères minimum.",
+      "submit": "Créer mon compte",
+      "submitting": "Création…",
+      "verifyTitle": "Vérifiez votre boîte mail",
+      "verifySent": "Un lien de vérification a été envoyé à {email}. Cliquez dessus pour activer votre compte.",
+      "backToLogin": "Retour à la connexion",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "loginLink": "Se connecter",
+      "errors": {
+        "weakPassword": "Le mot de passe doit faire au moins 8 caractères.",
+        "disabledOrInvalid": "Inscription impossible : elle est peut-être désactivée, ou cette adresse est déjà utilisée.",
+        "generic": "Une erreur est survenue. Réessayez."
+      }
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre email, nous vous enverrons un lien de réinitialisation.",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi…",
+      "sentTitle": "Vérifiez votre boîte mail",
+      "sent": "Si un compte existe pour cette adresse, un lien de réinitialisation vient d'être envoyé.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Réinitialiser",
+      "submitting": "Réinitialisation…",
+      "backToLogin": "Retour à la connexion",
+      "errors": {
+        "invalidToken": "Ce lien est invalide ou expiré. Refaites une demande.",
+        "weakPassword": "Le mot de passe doit faire au moins 8 caractères.",
+        "mismatch": "Les deux mots de passe ne correspondent pas."
+      }
+    }
   },
   "admin": {
     "title": "Administration",
