@@ -40,8 +40,14 @@ export function ArticleReader({
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const { scrollActiveIndex, claimAnchors, indicatorRatio, isNearClaim } =
-    useClaimScrollSync(containerRef, paragraphs, claims.length);
+  const {
+    scrollActiveIndex,
+    claimAnchors,
+    indicatorRatio,
+    viewportTopRatio,
+    viewportHeightRatio,
+    isNearClaim,
+  } = useClaimScrollSync(containerRef, paragraphs, claims.length);
 
   const displayedIndex = hoveredIndex ?? scrollActiveIndex;
 
@@ -133,11 +139,15 @@ export function ArticleReader({
 
   const expandActiveClaim = () => setExpandedForGroupKey(groupKey);
 
-  // Pick a claim and expand its paragraph's drawer (highlight tap or chip tap).
+  // Pick a claim and expand its paragraph's drawer (highlight or rail tap).
   const selectClaim = (index: number) => {
     setTappedClaim(index);
     setExpandedForGroupKey(groupKeyForClaim(index));
   };
+
+  // Switching chips inside the already-open drawer only swaps the card — it must
+  // not change the snap, so the drawer stays where the reader left it.
+  const selectClaimInDrawer = (index: number) => setTappedClaim(index);
 
   const scrollToClaim = (index: number) => {
     selectClaim(index);
@@ -187,8 +197,9 @@ export function ArticleReader({
           claims={claims}
           claimAnchors={claimAnchors}
           indicatorRatio={indicatorRatio}
+          viewportTopRatio={viewportTopRatio}
+          viewportHeightRatio={viewportHeightRatio}
           displayedIndex={displayedIndex}
-          hoveredIndex={hoveredIndex}
           sourcesLabel={sourcesLabel}
           verificationLabel={verificationLabel}
         />
@@ -200,8 +211,9 @@ export function ArticleReader({
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
+          viewportTopRatio={viewportTopRatio}
+          viewportHeightRatio={viewportHeightRatio}
           displayedIndex={drawerSelectedIndex}
-          hoveredIndex={null}
           onSelect={scrollToClaim}
           selectLabel={railLabel}
         />
@@ -212,7 +224,7 @@ export function ArticleReader({
           claims={claims}
           groupIndices={groupIndices}
           selectedIndex={drawerSelectedIndex}
-          onSelectIndex={selectClaim}
+          onSelectIndex={selectClaimInDrawer}
           statusLabels={statusLabels}
           open={mobileOpen}
           activeSnapPoint={activeSnapPoint}

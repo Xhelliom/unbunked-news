@@ -12,8 +12,9 @@ type Props = {
   claims: ClaimCardData[];
   claimAnchors: ClaimAnchor[];
   indicatorRatio: number;
+  viewportTopRatio: number;
+  viewportHeightRatio: number;
   displayedIndex: number;
-  hoveredIndex: number | null;
   sourcesLabel: string;
   verificationLabel: string;
 };
@@ -22,8 +23,9 @@ export function VerificationPanel({
   claims,
   claimAnchors,
   indicatorRatio,
+  viewportTopRatio,
+  viewportHeightRatio,
   displayedIndex,
-  hoveredIndex,
   sourcesLabel,
   verificationLabel,
 }: Props) {
@@ -61,8 +63,10 @@ export function VerificationPanel({
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
+          viewportTopRatio={viewportTopRatio}
+          viewportHeightRatio={viewportHeightRatio}
           displayedIndex={displayedIndex}
-          hoveredIndex={hoveredIndex}
+          fixedThumbPx={28}
         />
 
         <div className="relative min-w-0 flex-1">
