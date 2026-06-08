@@ -117,8 +117,13 @@ async function main() {
     }
   }
 
-  // We enforce admin=true even if the user already existed beforehand.
-  await db.update(user).set({ isAdmin: true }).where(eq(user.email, email));
+  // Enforce admin=true even if the user already existed. Mark the email as
+  // verified too: the app now requires verification to sign in, and the seeded
+  // operator has no inbox flow to click through.
+  await db
+    .update(user)
+    .set({ isAdmin: true, emailVerified: true })
+    .where(eq(user.email, email));
   console.log(`Admin role granted: ${email}`);
   if (generatedPassword) {
     console.log(`Generated password: ${generatedPassword}`);
