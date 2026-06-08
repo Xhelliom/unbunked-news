@@ -63,7 +63,7 @@ export function ReadingParagraphBlock({
         className={cn(
           "relative transition-transform duration-300 ease-out",
           annotated && "pl-4",
-          isActiveParagraph && "lg:translate-x-1.5",
+          isActiveParagraph && "translate-x-1.5",
         )}
       >
         {annotated && (
@@ -72,7 +72,7 @@ export function ReadingParagraphBlock({
             title={barTitle}
             className={cn(
               "absolute inset-y-0 left-0 w-1 rounded-full transition-[width] duration-300 ease-out",
-              isActiveParagraph && "lg:w-1.5",
+              isActiveParagraph && "w-1.5",
             )}
             style={{ background: barBackground }}
           />
