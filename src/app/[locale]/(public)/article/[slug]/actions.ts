@@ -17,9 +17,19 @@ import { isUnauthorizedError, requireUserId } from "@/lib/session";
 import { isTurnstileEnabled, verifyTurnstile } from "@/lib/turnstile";
 import { parseUrl } from "@/lib/url";
 
+export type ContributionErrorCode =
+  | "unauthenticated"
+  | "contributionsDisabled"
+  | "invalidClaim"
+  | "empty"
+  | "tooLong"
+  | "invalidUrl"
+  | "turnstile"
+  | "rateLimited";
+
 export type SubmitContributionState =
   | { status: "idle" }
-  | { status: "error"; code: string }
+  | { status: "error"; code: ContributionErrorCode }
   | { status: "success" };
 
 function clientIp(headerList: Headers): string | null {

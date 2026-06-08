@@ -10,6 +10,8 @@ import {
   claimStatusToVerdict,
 } from "@/lib/claim-status";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ContributionsDisplay } from "@/components/article-reader/contributions-display";
+import type { PublicContribution } from "@/lib/contributions/queries";
 
 // Snap points shared with the reader: a slim peek that reveals the top of the
 // claim card (badge + claim excerpt), and 0.8 (most of the viewport, leaving
@@ -23,6 +25,7 @@ const SNAP_POINTS: (number | string)[] = [PEEK_SNAP, EXPANDED_SNAP];
 
 type MobileClaimDrawerProps = {
   claims: ClaimCardData[];
+  claimContributions: PublicContribution[][];
   // The claims of the paragraph in view. When it holds more than one, a chip
   // selector lets the reader switch between them (scroll alone can't separate
   // two claims sharing a paragraph).
@@ -44,6 +47,7 @@ type MobileClaimDrawerProps = {
 // scrollable derrière.
 export function MobileClaimDrawer({
   claims,
+  claimContributions,
   groupIndices,
   selectedIndex,
   onSelectIndex,
@@ -188,6 +192,9 @@ export function MobileClaimDrawer({
               verificationLabel={verificationLabel}
               frameless
               hideHeader={hasMultiple}
+            />
+            <ContributionsDisplay
+              contributions={claimContributions[selectedIndex] ?? []}
             />
           </div>
           </div>

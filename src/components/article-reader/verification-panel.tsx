@@ -6,10 +6,13 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ClaimScrollRail } from "@/components/article-reader/claim-scroll-rail";
+import { ContributionsDisplay } from "@/components/article-reader/contributions-display";
 import type { ClaimAnchor } from "@/components/article-reader/claim-scroll";
+import type { PublicContribution } from "@/lib/contributions/queries";
 
 type Props = {
   claims: ClaimCardData[];
+  claimContributions: PublicContribution[][];
   claimAnchors: ClaimAnchor[];
   indicatorRatio: number;
   viewportTopRatio: number;
@@ -21,6 +24,7 @@ type Props = {
 
 export function VerificationPanel({
   claims,
+  claimContributions,
   claimAnchors,
   indicatorRatio,
   viewportTopRatio,
@@ -83,6 +87,9 @@ export function VerificationPanel({
                 claim={claims[displayedIndex]}
                 sourcesLabel={sourcesLabel}
                 verificationLabel={verificationLabel}
+              />
+              <ContributionsDisplay
+                contributions={claimContributions[displayedIndex] ?? []}
               />
             </div>
           </div>

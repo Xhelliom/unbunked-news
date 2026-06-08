@@ -229,6 +229,33 @@
       }
     }
   },
+  "contributions": {
+    "title": "Reader contributions",
+    "byAuthor": "by {name}",
+    "sourceLink": "Suggested source",
+    "sectionTitle": "Contribute",
+    "sectionSubtitle": "Spotted an error or a missing source? Suggest a correction — it will be published after review.",
+    "targetLabel": "About",
+    "targetArticle": "The article in general",
+    "bodyPlaceholder": "Your correction, clarification or remark…",
+    "sourceUrlPlaceholder": "https://… (supporting source, optional)",
+    "submit": "Send my contribution",
+    "submitting": "Sending…",
+    "successPending": "Thanks! Your contribution will be published after the editors review it.",
+    "loginToContribute": "Sign in to suggest a contribution.",
+    "loginLink": "Sign in",
+    "signupLink": "Create an account",
+    "errors": {
+      "unauthenticated": "Sign in to contribute.",
+      "contributionsDisabled": "Contributions are closed on this article.",
+      "invalidClaim": "Claim not found.",
+      "empty": "Your contribution is empty.",
+      "tooLong": "Your contribution is too long.",
+      "invalidUrl": "The source URL is invalid.",
+      "turnstile": "Anti-bot check failed. Please try again.",
+      "rateLimited": "You've sent too many contributions recently. Please try again later."
+    }
+  },
   "admin": {
     "title": "Administration",
     "nav": {

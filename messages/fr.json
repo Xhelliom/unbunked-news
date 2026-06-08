@@ -229,6 +229,33 @@
       }
     }
   },
+  "contributions": {
+    "title": "Contributions des lecteurs",
+    "byAuthor": "par {name}",
+    "sourceLink": "Source proposée",
+    "sectionTitle": "Contribuer",
+    "sectionSubtitle": "Vous repérez une erreur ou une source manquante ? Proposez une correction, elle sera publiée après validation.",
+    "targetLabel": "À propos de",
+    "targetArticle": "L'article en général",
+    "bodyPlaceholder": "Votre correction, précision ou remarque…",
+    "sourceUrlPlaceholder": "https://… (source à l'appui, facultatif)",
+    "submit": "Envoyer ma contribution",
+    "submitting": "Envoi…",
+    "successPending": "Merci ! Votre contribution sera publiée après validation par la rédaction.",
+    "loginToContribute": "Connectez-vous pour proposer une contribution.",
+    "loginLink": "Se connecter",
+    "signupLink": "Créer un compte",
+    "errors": {
+      "unauthenticated": "Connectez-vous pour contribuer.",
+      "contributionsDisabled": "Les contributions sont fermées sur cet article.",
+      "invalidClaim": "Affirmation introuvable.",
+      "empty": "Votre contribution est vide.",
+      "tooLong": "Votre contribution est trop longue.",
+      "invalidUrl": "L'URL de la source est invalide.",
+      "turnstile": "Vérification anti-robot échouée. Réessayez.",
+      "rateLimited": "Vous avez envoyé trop de contributions récemment. Réessayez plus tard."
+    }
+  },
   "admin": {
     "title": "Administration",
     "nav": {
