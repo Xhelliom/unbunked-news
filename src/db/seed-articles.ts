@@ -12,8 +12,11 @@ import {
   tags,
 } from "./schema";
 import { ARTICLES, TAGS } from "./seed-articles-data";
+import { EXTRA_ARTICLES } from "./seed-articles-data-extra";
 import { REWRITES } from "./seed-articles-rewrites";
 import { rubricForTagSlugs } from "@/lib/tag-rubric-map";
+
+const ALL_ARTICLES = [...ARTICLES, ...EXTRA_ARTICLES];
 
 // Inserts the demo articles, their claims, sources, tags and Unbunked
 // rewrites. Re-runnable: it wipes and re-inserts the seeded slugs only.
@@ -21,7 +24,7 @@ import { rubricForTagSlugs } from "@/lib/tag-rubric-map";
 //   pnpm db:seed-articles
 
 async function main() {
-  const slugs = ARTICLES.map((a) => a.slug);
+  const slugs = ALL_ARTICLES.map((a) => a.slug);
 
   // Idempotent: remove our demo rows first. Cascades drop claims, sources,
   // rewrites and article/tag links automatically.
@@ -32,7 +35,7 @@ async function main() {
   const tagRows = await db.select().from(tags);
   const tagIdBySlug = new Map(tagRows.map((row) => [row.slug, row.id]));
 
-  for (const article of ARTICLES) {
+  for (const article of ALL_ARTICLES) {
     const tagId = tagIdBySlug.get(article.tagSlug);
     if (!tagId) {
       throw new Error(`Missing tag for slug "${article.tagSlug}"`);
@@ -123,7 +126,7 @@ async function main() {
     console.log(`Seeded: ${article.slug}`);
   }
 
-  console.log(`\nDone — ${ARTICLES.length} articles published.`);
+  console.log(`\nDone — ${ALL_ARTICLES.length} articles published.`);
 }
 
 main()
