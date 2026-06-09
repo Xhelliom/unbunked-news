@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
-import { AUTH_INPUT_CLASS, AuthShell, BrandLogotype } from "@/components/auth/auth-shell";
+import { AUTH_INPUT_CLASS, AuthShell } from "@/components/auth/auth-shell";
+import { Logo } from "@/components/logo";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -54,7 +55,7 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
       <form onSubmit={onSubmit} className="w-full max-w-[380px]">
         <div className="mb-8">
           <div className="mb-6">
-            <BrandLogotype />
+            <Logo className="text-[25px]" />
           </div>
           <h2 className="mb-2 font-serif text-[1.85rem] leading-[1.12] font-extrabold tracking-[-0.015em] text-balance">
             {t("title")}

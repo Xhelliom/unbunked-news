@@ -16,12 +16,20 @@ const SPECTRUM = [
   "bg-verdict-unverifiable",
 ] as const;
 
-export function Logo({ className }: { className?: string }) {
+// `onIndigo` renders the wordmark in white for use over the indigo brand panel
+// (auth pages). The verdict spectrum bar keeps its colours in both variants.
+export function Logo({
+  className,
+  onIndigo = false,
+}: {
+  className?: string;
+  onIndigo?: boolean;
+}) {
   return (
     <span className={cn("inline-flex flex-col leading-none", className)}>
       <span className="font-serif font-bold tracking-[-0.015em]">
-        <span className="text-primary">Un</span>
-        <span className="text-foreground">bunked</span>
+        <span className={onIndigo ? "text-white" : "text-primary"}>Un</span>
+        <span className={onIndigo ? "text-white" : "text-foreground"}>bunked</span>
       </span>
       <span aria-hidden className="-mt-[0.12em] ml-[0.12em] mr-0 flex h-[0.16em] gap-[0.08em]">
         {SPECTRUM.map((color) => (

@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
-import {
-  AUTH_INPUT_CLASS,
-  AuthShell,
-  BrandLogotype,
-} from "@/components/auth/auth-shell";
+import { AUTH_INPUT_CLASS, AuthShell } from "@/components/auth/auth-shell";
 import { GoogleButton } from "@/components/auth/google-button";
+import { Logo } from "@/components/logo";
+
+const DEFAULT_REDIRECT = "/";
+
+// Only follow a same-origin path; reject protocol-relative ("//host"), absolute
+// URLs, and backslashes (browsers treat "\" as "/" in http(s) URLs, so "/\evil"
+// would resolve to "//evil") so a crafted `?next=` can never become an open
+// redirect.
+function safeRedirect(raw: string | null): string {
+  if (raw && raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\")) {
+    return raw;
+  }
+  return DEFAULT_REDIRECT;
+}
 
 type LoginFormProps = {
   weeklyVerifiedCount: number;
@@ -20,6 +31,7 @@ type LoginFormProps = {
 export function LoginForm({ weeklyVerifiedCount }: LoginFormProps) {
   const t = useTranslations("auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +52,7 @@ export function LoginForm({ weeklyVerifiedCount }: LoginFormProps) {
       setError(true);
       return;
     }
-    router.push("/admin");
+    router.push(safeRedirect(searchParams.get("next")));
     router.refresh();
   }
 
@@ -49,7 +61,7 @@ export function LoginForm({ weeklyVerifiedCount }: LoginFormProps) {
       <form onSubmit={onSubmit} className="w-full max-w-[380px]">
         <div className="mb-8">
           <div className="mb-6">
-            <BrandLogotype />
+            <Logo className="text-[25px]" />
           </div>
           <h2 className="mb-2 font-serif text-[1.85rem] leading-[1.12] font-extrabold tracking-[-0.015em] text-balance">
             {t("loginTitle")}

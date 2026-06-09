@@ -5,32 +5,11 @@ import { Moon, Sun } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { useTheme } from "@/components/theme-provider";
+import { Logo } from "@/components/logo";
 
 // Shared text-input styling across every auth form (login, sign-up, reset…).
 export const AUTH_INPUT_CLASS =
   "h-11 w-full rounded-md border border-input bg-background px-[13px] text-[0.95rem] shadow-xs outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-muted-foreground/70 focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--ring)_45%,transparent)]";
-
-export function BrandLogotype({ onIndigo = false }: { onIndigo?: boolean }) {
-  return (
-    <span className="inline-flex flex-col gap-[0.12em]">
-      <span
-        className={`font-serif text-[25px] leading-none font-bold tracking-[-0.015em] ${onIndigo ? "text-white" : "text-foreground"}`}
-      >
-        <span className={onIndigo ? "text-white" : "text-primary dark:text-indigo-300"}>
-          Un
-        </span>
-        bunked
-      </span>
-      <span className="flex h-[0.095em] gap-[0.08em]" aria-hidden>
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-reliable)]" />
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-nuanced)]" />
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-fragile)]" />
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-debunked)]" />
-        <i className="h-full flex-1 rounded-full bg-[var(--verdict-unverifiable)]" />
-      </span>
-    </span>
-  );
-}
 
 type AuthShellProps = {
   // When provided, the brand panel shows the "verified this week" counter. Auth
@@ -68,7 +47,7 @@ export function AuthShell({ weeklyVerifiedCount, children }: AuthShellProps) {
             <span className="grid h-10 w-10 place-items-center rounded-[0.23em] bg-white font-serif text-xl font-bold tracking-[-0.02em] text-primary">
               Un
             </span>
-            <BrandLogotype onIndigo />
+            <Logo className="text-[25px]" onIndigo />
           </div>
 
           <div className="relative z-10 max-w-[30ch]">

@@ -163,8 +163,8 @@
     "unverifiable": "Unverifiable"
   },
   "auth": {
-    "loginTitle": "Login",
-    "loginSubtitle": "The newsroom saved your seat. Ready to resume fact-checking?",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to suggest corrections, track your contributions, and join the fact-checking.",
     "email": "Email",
     "emailPlaceholder": "you@unbunked.fr",
     "password": "Password",

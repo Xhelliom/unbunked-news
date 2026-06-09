@@ -163,8 +163,8 @@
     "unverifiable": "Non vérifiable"
   },
   "auth": {
-    "loginTitle": "Login",
-    "loginSubtitle": "La rédaction vous a gardé une place. On reprend le fact-checking ?",
+    "loginTitle": "Content de vous revoir",
+    "loginSubtitle": "Connectez-vous pour proposer des corrections, suivre vos contributions et participer au fact-checking.",
     "email": "Email",
     "emailPlaceholder": "vous@unbunked.fr",
     "password": "Mot de passe",
