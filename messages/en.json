@@ -257,6 +257,50 @@
       "rateLimited": "You've sent too many contributions recently. Please try again later."
     }
   },
+  "userMenu": {
+    "label": "Account menu",
+    "login": "Sign in",
+    "profile": "My profile",
+    "signOut": "Sign out"
+  },
+  "profile": {
+    "title": "My profile",
+    "contributionsTitle": "My contributions",
+    "noContributions": "You haven't submitted any contribution yet.",
+    "status": {
+      "pending": "Pending",
+      "approved": "Published",
+      "rejected": "Rejected"
+    },
+    "target": {
+      "article": "On the article",
+      "claim": "On claim {n}"
+    },
+    "displayName": {
+      "title": "Display name",
+      "label": "Public display name",
+      "hint": "Shown publicly on your contributions.",
+      "submit": "Update",
+      "saving": "Updating…",
+      "saved": "Display name updated.",
+      "error": "Update failed. Please try again."
+    },
+    "password": {
+      "title": "Password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Change password",
+      "saving": "Saving…",
+      "saved": "Password changed. Your other sessions have been signed out.",
+      "errors": {
+        "weak": "Password must be at least 8 characters.",
+        "mismatch": "The two passwords don't match.",
+        "wrong": "Current password is incorrect.",
+        "generic": "The change failed. Please try again."
+      }
+    }
+  },
   "admin": {
     "title": "Administration",
     "nav": {

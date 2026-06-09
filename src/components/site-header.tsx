@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SearchBox } from "@/components/search-box";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
@@ -28,6 +29,7 @@ export function SiteHeader() {
           </Button>
           <ThemeToggle />
           <LocaleSwitcher />
+          <UserMenu />
         </div>
       </div>
     </header>

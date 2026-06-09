@@ -21,6 +21,42 @@ export type PublicContribution = {
   authorName: string;
 };
 
+// A user's own contribution, for their profile page (includes the moderation
+// status, which is hidden from the public view).
+export type UserContribution = {
+  id: string;
+  body: string;
+  sourceUrl: string | null;
+  status: ContributionStatus;
+  createdAt: Date;
+  articleTitle: string;
+  articleSlug: string;
+  claimPosition: number | null;
+};
+
+export async function getContributionsByUser(
+  userId: string,
+): Promise<UserContribution[]> {
+  const rows = await db.query.contributions.findMany({
+    where: eq(contributions.userId, userId),
+    orderBy: (contribution, { desc }) => [desc(contribution.createdAt)],
+    with: {
+      article: { columns: { title: true, slug: true } },
+      claim: { columns: { position: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    body: row.body,
+    sourceUrl: row.sourceUrl,
+    status: row.status,
+    createdAt: row.createdAt,
+    articleTitle: row.article.title,
+    articleSlug: row.article.slug,
+    claimPosition: row.claim?.position ?? null,
+  }));
+}
+
 export type ModerationItem = {
   id: string;
   body: string;

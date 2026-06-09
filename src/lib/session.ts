@@ -45,6 +45,29 @@ function toSessionUserId(session: unknown): string | null {
   return typeof idValue === "string" && idValue.length > 0 ? idValue : null;
 }
 
+export type SessionUser = { id: string; name: string; email: string };
+
+// Defensively extract the public user fields from a session. Returns null when
+// there is no signed-in user.
+export function toSessionUser(session: unknown): SessionUser | null {
+  if (!session || typeof session !== "object") {
+    return null;
+  }
+  const userValue = (session as Record<string, unknown>).user;
+  if (!userValue || typeof userValue !== "object") {
+    return null;
+  }
+  const { id, name, email } = userValue as Record<string, unknown>;
+  if (typeof id !== "string" || id.length === 0) {
+    return null;
+  }
+  return {
+    id,
+    name: typeof name === "string" ? name : "",
+    email: typeof email === "string" ? email : "",
+  };
+}
+
 // Require any signed-in user and return their id. Used by non-admin boundaries
 // (e.g. submitting a contribution) where the admin flag is irrelevant.
 export async function requireUserId(): Promise<string> {
