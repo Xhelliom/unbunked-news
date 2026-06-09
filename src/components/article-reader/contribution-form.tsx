@@ -13,18 +13,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TurnstileWidget } from "@/components/article-reader/turnstile-widget";
 
-export type ClaimTarget = { id: string; label: string };
-
-const SELECT_CLASS =
-  "border-input dark:bg-input/30 focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]";
+type ContributionFormProps = {
+  articleId: string;
+  // null → about the whole article; a claim id → about that specific claim.
+  claimId?: string | null;
+  // Compact layout + a Cancel action, for the inline per-claim form.
+  compact?: boolean;
+  onCancel?: () => void;
+};
 
 export function ContributionForm({
   articleId,
-  claimTargets,
-}: {
-  articleId: string;
-  claimTargets: ClaimTarget[];
-}) {
+  claimId = null,
+  compact = false,
+  onCancel,
+}: ContributionFormProps) {
   const t = useTranslations("contributions");
   const [state, action, pending] = useActionState<
     SubmitContributionState,
@@ -42,32 +45,12 @@ export function ContributionForm({
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="articleId" value={articleId} />
-
-      {claimTargets.length > 0 && (
-        <div className="space-y-1.5">
-          <label htmlFor="claimId" className="text-sm font-medium">
-            {t("targetLabel")}
-          </label>
-          <select
-            id="claimId"
-            name="claimId"
-            defaultValue=""
-            className={SELECT_CLASS}
-          >
-            <option value="">{t("targetArticle")}</option>
-            {claimTargets.map((target) => (
-              <option key={target.id} value={target.id}>
-                {target.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      <input type="hidden" name="claimId" value={claimId ?? ""} />
 
       <Textarea
         name="body"
         required
-        rows={4}
+        rows={compact ? 3 : 4}
         maxLength={CONTRIBUTION_BODY_MAX_CHARS}
         placeholder={t("bodyPlaceholder")}
       />
@@ -80,9 +63,16 @@ export function ContributionForm({
         <p className="text-destructive text-sm">{t(`errors.${state.code}`)}</p>
       )}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? t("submitting") : t("submit")}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="submit" size={compact ? "sm" : "default"} disabled={pending}>
+          {pending ? t("submitting") : t("submit")}
+        </Button>
+        {onCancel && (
+          <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+            {t("cancel")}
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

@@ -22,6 +22,10 @@ export type ArticleReaderProps = {
   claims: ClaimCardData[];
   // Approved contributions per claim, aligned by index with `claims`.
   claimContributions: PublicContribution[][];
+  // Claim ids aligned by index with `claims`, for per-claim contribution.
+  claimIds: string[];
+  articleId: string;
+  isAuthenticated: boolean;
   statusLabels: Record<ClaimStatus, string>;
   sourcesLabel: string;
   verificationLabel: string;
@@ -35,6 +39,9 @@ export function ArticleReader({
   paragraphs,
   claims,
   claimContributions,
+  claimIds,
+  articleId,
+  isAuthenticated,
   statusLabels,
   sourcesLabel,
   verificationLabel,
@@ -200,6 +207,9 @@ export function ArticleReader({
         <VerificationPanel
           claims={claims}
           claimContributions={claimContributions}
+          claimIds={claimIds}
+          articleId={articleId}
+          isAuthenticated={isAuthenticated}
           claimAnchors={claimAnchors}
           indicatorRatio={indicatorRatio}
           viewportTopRatio={viewportTopRatio}
@@ -228,6 +238,9 @@ export function ArticleReader({
         <MobileClaimDrawer
           claims={claims}
           claimContributions={claimContributions}
+          claimIds={claimIds}
+          articleId={articleId}
+          isAuthenticated={isAuthenticated}
           groupIndices={groupIndices}
           selectedIndex={drawerSelectedIndex}
           onSelectIndex={selectClaimInDrawer}

@@ -120,14 +120,9 @@ export default async function ArticlePage({
   const claimContributions = locatedClaims.map(
     (claim) => contributionsByClaim.get(claim.id) ?? [],
   );
-
-  const CLAIM_LABEL_MAX = 80;
-  const claimTargets = article.claims.map((claim, index) => ({
-    id: claim.id,
-    label:
-      `${index + 1}. ${claim.claimText.slice(0, CLAIM_LABEL_MAX)}` +
-      (claim.claimText.length > CLAIM_LABEL_MAX ? "…" : ""),
-  }));
+  // Claim ids aligned by index with the reader's claims, so the per-claim
+  // contribution form can target the displayed claim.
+  const claimIds = locatedClaims.map((claim) => claim.id);
 
   // Only the contribution form (rendered when contributions are enabled) needs
   // the session, so skip the per-request auth lookup on the hot path otherwise.
@@ -310,6 +305,9 @@ export default async function ArticlePage({
                 paragraphs={paragraphs}
                 claims={readerClaims}
                 claimContributions={claimContributions}
+                claimIds={claimIds}
+                articleId={article.id}
+                isAuthenticated={isAuthenticated}
                 statusLabels={statusLabels}
                 sourcesLabel={t("sourcesConsulted")}
                 verificationLabel={t("verificationTag")}
@@ -391,7 +389,6 @@ export default async function ArticlePage({
       <ArticleContributions
         articleId={article.id}
         articleContributions={articleContributions}
-        claimTargets={claimTargets}
         contributionsEnabled={article.contributionsEnabled}
         isAuthenticated={isAuthenticated}
       />
