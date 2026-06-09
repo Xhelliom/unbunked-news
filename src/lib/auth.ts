@@ -6,7 +6,7 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db/client";
 import { account, session, user, verification } from "@/db/schema";
 import { requireAuthSecret } from "@/lib/auth-secret";
-import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email/resend";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/email/send";
 import { getAppSettings } from "@/lib/settings";
 
 const isProduction = process.env.NODE_ENV === "production";

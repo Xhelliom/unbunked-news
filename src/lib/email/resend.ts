@@ -2,11 +2,7 @@ import "server-only";
 
 import { Resend } from "resend";
 
-import {
-  renderPasswordResetEmail,
-  renderVerificationEmail,
-  type EmailContent,
-} from "./templates";
+import type { EmailContent } from "./templates";
 
 // Lazy singleton, mirroring getClaude(): the key is only needed when an email is
 // actually sent, so the build (and any env-less context) never touches it.
@@ -29,7 +25,11 @@ function fromAddress(): string {
   return from;
 }
 
-async function send(to: string, content: EmailContent): Promise<void> {
+// Resend transport. Selected by send.ts when EMAIL_PROVIDER=resend (the default).
+export async function sendViaResend(
+  to: string,
+  content: EmailContent,
+): Promise<void> {
   const { error } = await getResend().emails.send({
     from: fromAddress(),
     to,
@@ -42,18 +42,4 @@ async function send(to: string, content: EmailContent): Promise<void> {
   if (error) {
     throw new Error(`Resend failed to send email: ${error.message}`);
   }
-}
-
-export async function sendVerificationEmail(
-  to: string,
-  verifyUrl: string,
-): Promise<void> {
-  await send(to, renderVerificationEmail(verifyUrl));
-}
-
-export async function sendPasswordResetEmail(
-  to: string,
-  resetUrl: string,
-): Promise<void> {
-  await send(to, renderPasswordResetEmail(resetUrl));
 }
