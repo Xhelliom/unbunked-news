@@ -71,6 +71,7 @@ export default async function AdminArticleReviewPage({
         completenessScore={article.completenessScore}
         transparencyScore={article.transparencyScore}
         recencyScore={article.recencyScore}
+        contributionsEnabled={article.contributionsEnabled}
         published={article.published}
         isDeleted={article.deletedAt !== null}
       />

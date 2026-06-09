@@ -5,11 +5,19 @@ import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ClaimContribution } from "@/components/article-reader/claim-contribution";
 import { ClaimScrollRail } from "@/components/article-reader/claim-scroll-rail";
+import { ContributionsDisplay } from "@/components/article-reader/contributions-display";
 import type { ClaimAnchor } from "@/components/article-reader/claim-scroll";
+import type { PublicContribution } from "@/lib/contributions/queries";
 
 type Props = {
   claims: ClaimCardData[];
+  claimContributions: PublicContribution[][];
+  // Claim ids aligned by index with `claims`, for per-claim contribution.
+  claimIds: string[];
+  articleId: string;
+  isAuthenticated: boolean;
   claimAnchors: ClaimAnchor[];
   indicatorRatio: number;
   viewportTopRatio: number;
@@ -21,6 +29,10 @@ type Props = {
 
 export function VerificationPanel({
   claims,
+  claimContributions,
+  claimIds,
+  articleId,
+  isAuthenticated,
   claimAnchors,
   indicatorRatio,
   viewportTopRatio,
@@ -84,7 +96,20 @@ export function VerificationPanel({
                 sourcesLabel={sourcesLabel}
                 verificationLabel={verificationLabel}
               />
+              <ContributionsDisplay
+                contributions={claimContributions[displayedIndex] ?? []}
+              />
             </div>
+            {/* Outside the keyed div so an in-progress correction survives a
+                scroll that changes the displayed claim. */}
+            {claimIds[displayedIndex] && (
+              <ClaimContribution
+                articleId={articleId}
+                claimId={claimIds[displayedIndex]}
+                claimNumber={displayedIndex + 1}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
           </div>
 
           <div

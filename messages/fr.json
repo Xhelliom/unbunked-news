@@ -163,8 +163,8 @@
     "unverifiable": "Non vérifiable"
   },
   "auth": {
-    "loginTitle": "Login",
-    "loginSubtitle": "La rédaction vous a gardé une place. On reprend le fact-checking ?",
+    "loginTitle": "Content de vous revoir",
+    "loginSubtitle": "Connectez-vous pour proposer des corrections, suivre vos contributions et participer au fact-checking.",
     "email": "Email",
     "emailPlaceholder": "vous@unbunked.fr",
     "password": "Mot de passe",
@@ -183,7 +183,123 @@
     "heroTitle": "Le fact-checking, affirmation par affirmation.",
     "heroSubtitle": "Soumettez un lien, l'analyse extrait chaque affirmation, la confronte aux sources, et publie le verdict. Vous gardez la main sur chaque nuance.",
     "weeklyChecks": "articles vérifiés cette semaine",
-    "fiveVerdicts": "Cinq verdicts, jamais binaires"
+    "fiveVerdicts": "Cinq verdicts, jamais binaires",
+    "noAccount": "Pas encore de compte ?",
+    "signUpLink": "Créer un compte",
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez la communauté pour proposer des corrections et des sources.",
+      "name": "Pseudo",
+      "namePlaceholder": "Affiché publiquement sur vos contributions",
+      "passwordHint": "8 caractères minimum.",
+      "submit": "Créer mon compte",
+      "submitting": "Création…",
+      "verifyTitle": "Vérifiez votre boîte mail",
+      "verifySent": "Un lien de vérification a été envoyé à {email}. Cliquez dessus pour activer votre compte.",
+      "backToLogin": "Retour à la connexion",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "loginLink": "Se connecter",
+      "errors": {
+        "weakPassword": "Le mot de passe doit faire au moins 8 caractères.",
+        "disabledOrInvalid": "Inscription impossible : elle est peut-être désactivée, ou cette adresse est déjà utilisée.",
+        "generic": "Une erreur est survenue. Réessayez."
+      }
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Saisissez votre email, nous vous enverrons un lien de réinitialisation.",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi…",
+      "sentTitle": "Vérifiez votre boîte mail",
+      "sent": "Si un compte existe pour cette adresse, un lien de réinitialisation vient d'être envoyé.",
+      "backToLogin": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un nouveau mot de passe pour votre compte.",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Réinitialiser",
+      "submitting": "Réinitialisation…",
+      "backToLogin": "Retour à la connexion",
+      "errors": {
+        "invalidToken": "Ce lien est invalide ou expiré. Refaites une demande.",
+        "weakPassword": "Le mot de passe doit faire au moins 8 caractères.",
+        "mismatch": "Les deux mots de passe ne correspondent pas."
+      }
+    }
+  },
+  "contributions": {
+    "title": "Contributions des lecteurs",
+    "byAuthor": "par {name}",
+    "sourceLink": "Source proposée",
+    "sectionTitle": "Contribuer",
+    "sectionSubtitle": "Vous repérez une erreur ou une source manquante ? Proposez une correction, elle sera publiée après validation.",
+    "addForClaim": "Proposer une correction sur cette affirmation",
+    "formForClaim": "Correction — affirmation {n}",
+    "cancel": "Annuler",
+    "bodyPlaceholder": "Votre correction, précision ou remarque…",
+    "sourceUrlPlaceholder": "https://… (source à l'appui, facultatif)",
+    "submit": "Envoyer ma contribution",
+    "submitting": "Envoi…",
+    "successPending": "Merci ! Votre contribution sera publiée après validation par la rédaction.",
+    "loginToContribute": "Connectez-vous pour proposer une contribution.",
+    "loginLink": "Se connecter",
+    "signupLink": "Créer un compte",
+    "errors": {
+      "unauthenticated": "Connectez-vous pour contribuer.",
+      "contributionsDisabled": "Les contributions sont fermées sur cet article.",
+      "invalidClaim": "Affirmation introuvable.",
+      "empty": "Votre contribution est vide.",
+      "tooLong": "Votre contribution est trop longue.",
+      "invalidUrl": "L'URL de la source est invalide.",
+      "turnstile": "Vérification anti-robot échouée. Réessayez.",
+      "rateLimited": "Vous avez envoyé trop de contributions récemment. Réessayez plus tard."
+    }
+  },
+  "userMenu": {
+    "label": "Menu du compte",
+    "login": "Se connecter",
+    "profile": "Mon profil",
+    "signOut": "Se déconnecter"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "contributionsTitle": "Mes contributions",
+    "noContributions": "Vous n'avez pas encore proposé de contribution.",
+    "status": {
+      "pending": "En attente",
+      "approved": "Publiée",
+      "rejected": "Rejetée"
+    },
+    "target": {
+      "article": "Sur l'article",
+      "claim": "Sur l'affirmation {n}"
+    },
+    "displayName": {
+      "title": "Pseudo",
+      "label": "Pseudo affiché",
+      "hint": "Affiché publiquement sur vos contributions.",
+      "submit": "Mettre à jour",
+      "saving": "Mise à jour…",
+      "saved": "Pseudo mis à jour.",
+      "error": "La mise à jour a échoué. Réessayez."
+    },
+    "password": {
+      "title": "Mot de passe",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer le nouveau mot de passe",
+      "submit": "Changer le mot de passe",
+      "saving": "Modification…",
+      "saved": "Mot de passe modifié. Vos autres sessions ont été déconnectées.",
+      "errors": {
+        "weak": "Le mot de passe doit faire au moins 8 caractères.",
+        "mismatch": "Les deux mots de passe ne correspondent pas.",
+        "wrong": "Mot de passe actuel incorrect.",
+        "generic": "La modification a échoué. Réessayez."
+      }
+    }
   },
   "admin": {
     "title": "Administration",
@@ -194,8 +310,47 @@
       "proposals": "Propositions",
       "analytics": "Statistiques",
       "costs": "Coûts",
+      "moderation": "Modération",
       "members": "Membres",
+      "settings": "Réglages",
       "account": "Mon compte"
+    },
+    "moderation": {
+      "title": "Modération des contributions",
+      "subtitle": "Validez ou rejetez les corrections et sources proposées par les lecteurs.",
+      "pendingTab": "En attente",
+      "rejectedTab": "Rejetées",
+      "emptyQueue": "Aucune contribution ici.",
+      "approve": "Valider",
+      "reject": "Rejeter",
+      "byAuthor": "par {name}",
+      "sourceLink": "Source proposée",
+      "aiReasonLabel": "Note de l'IA",
+      "target": {
+        "article": "Sur l'article",
+        "claim": "Sur l'affirmation {n}"
+      },
+      "aiVerdict": {
+        "clean": "IA : propre",
+        "suspicious": "IA : à vérifier",
+        "spam": "IA : spam"
+      }
+    },
+    "settings": {
+      "title": "Réglages",
+      "subtitle": "Activez ou désactivez des fonctionnalités sans redéploiement.",
+      "cardTitle": "Fonctionnalités",
+      "publicSignup": {
+        "label": "Inscription des utilisateurs",
+        "hint": "Autoriser la création de comptes non-admin (Google et email vérifié)."
+      },
+      "aiModeration": {
+        "label": "Pré-modération IA des contributions",
+        "hint": "Pré-classer les contributions avant la file de modération. N'auto-publie jamais."
+      },
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Réglages enregistrés."
     },
     "analytics": {
       "title": "Statistiques",
@@ -397,6 +552,7 @@
       "criteriaTitle": "Scores détaillés",
       "criteriaHint": "Décochez un critère facultatif s'il n'est pas évaluable de façon fiable.",
       "optional": "facultatif",
+      "contributionsEnabled": "Autoriser les contributions des lecteurs (corrections, sources) sur cet article",
       "source": "Source d'origine",
       "rubric": "Rubrique",
       "claims": "Affirmations analysées",

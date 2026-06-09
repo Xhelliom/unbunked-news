@@ -5,7 +5,12 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 
 import { routing } from "@/i18n/routing";
 import { getArticleBySlug } from "@/lib/articles";
+import {
+  getApprovedContributions,
+  type PublicContribution,
+} from "@/lib/contributions/queries";
 import { safeHttpUrl } from "@/lib/safe-url";
+import { getSession } from "@/lib/session";
 import { getSuggestedArticles } from "@/lib/suggestions";
 import { buildReadingModel } from "@/lib/reading";
 import { cn } from "@/lib/utils";
@@ -22,6 +27,7 @@ import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 import { ScoreCriteria } from "@/components/score-criteria";
 import { ScoreDescriptors } from "@/components/score-descriptors";
 import { ArticleReader } from "@/components/article-reader";
+import { ArticleContributions } from "@/components/article-reader/article-contributions";
 import { ArticleViewSwitcher } from "@/components/article-view-switcher";
 import { ArticleSuggestions } from "@/components/article-suggestions";
 import { RewriteBody } from "@/components/rewrite-body";
@@ -96,6 +102,33 @@ export default async function ArticlePage({
   // Flat list of located claims for the reading view; segments reference these
   // by index.
   const readerClaims = locatedClaims.map(toCardData);
+
+  // Approved contributions, split into article-level and per-claim. The per-claim
+  // array is aligned by index with readerClaims (claim.id maps reader index).
+  const approvedContributions = await getApprovedContributions(article.id);
+  const contributionsByClaim = new Map<string, PublicContribution[]>();
+  const articleContributions: PublicContribution[] = [];
+  for (const contribution of approvedContributions) {
+    if (contribution.claimId === null) {
+      articleContributions.push(contribution);
+      continue;
+    }
+    const list = contributionsByClaim.get(contribution.claimId) ?? [];
+    list.push(contribution);
+    contributionsByClaim.set(contribution.claimId, list);
+  }
+  const claimContributions = locatedClaims.map(
+    (claim) => contributionsByClaim.get(claim.id) ?? [],
+  );
+  // Claim ids aligned by index with the reader's claims, so the per-claim
+  // contribution form can target the displayed claim.
+  const claimIds = locatedClaims.map((claim) => claim.id);
+
+  // Only the contribution form (rendered when contributions are enabled) needs
+  // the session, so skip the per-request auth lookup on the hot path otherwise.
+  const isAuthenticated = article.contributionsEnabled
+    ? (await getSession()) !== null
+    : false;
 
   const statusLabels = Object.fromEntries(
     CLAIM_STATUSES.map((status) => [status, tStatus(status)]),
@@ -271,6 +304,10 @@ export default async function ArticlePage({
               <ArticleReader
                 paragraphs={paragraphs}
                 claims={readerClaims}
+                claimContributions={claimContributions}
+                claimIds={claimIds}
+                articleId={article.id}
+                isAuthenticated={isAuthenticated}
                 statusLabels={statusLabels}
                 sourcesLabel={t("sourcesConsulted")}
                 verificationLabel={t("verificationTag")}
@@ -348,6 +385,13 @@ export default async function ArticlePage({
           )}
         </section>
       )}
+
+      <ArticleContributions
+        articleId={article.id}
+        articleContributions={articleContributions}
+        contributionsEnabled={article.contributionsEnabled}
+        isAuthenticated={isAuthenticated}
+      />
 
       <ArticleSuggestions articles={suggestions} />
 

@@ -10,6 +10,9 @@ import {
   claimStatusToVerdict,
 } from "@/lib/claim-status";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ClaimContribution } from "@/components/article-reader/claim-contribution";
+import { ContributionsDisplay } from "@/components/article-reader/contributions-display";
+import type { PublicContribution } from "@/lib/contributions/queries";
 
 // Snap points shared with the reader: a slim peek that reveals the top of the
 // claim card (badge + claim excerpt), and 0.8 (most of the viewport, leaving
@@ -23,6 +26,10 @@ const SNAP_POINTS: (number | string)[] = [PEEK_SNAP, EXPANDED_SNAP];
 
 type MobileClaimDrawerProps = {
   claims: ClaimCardData[];
+  claimContributions: PublicContribution[][];
+  claimIds: string[];
+  articleId: string;
+  isAuthenticated: boolean;
   // The claims of the paragraph in view. When it holds more than one, a chip
   // selector lets the reader switch between them (scroll alone can't separate
   // two claims sharing a paragraph).
@@ -44,6 +51,10 @@ type MobileClaimDrawerProps = {
 // scrollable derrière.
 export function MobileClaimDrawer({
   claims,
+  claimContributions,
+  claimIds,
+  articleId,
+  isAuthenticated,
   groupIndices,
   selectedIndex,
   onSelectIndex,
@@ -189,6 +200,17 @@ export function MobileClaimDrawer({
               frameless
               hideHeader={hasMultiple}
             />
+            <ContributionsDisplay
+              contributions={claimContributions[selectedIndex] ?? []}
+            />
+            {claimIds[selectedIndex] && (
+              <ClaimContribution
+                articleId={articleId}
+                claimId={claimIds[selectedIndex]}
+                claimNumber={selectedIndex + 1}
+                isAuthenticated={isAuthenticated}
+              />
+            )}
           </div>
           </div>
         </Drawer.Content>

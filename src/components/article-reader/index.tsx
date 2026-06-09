@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { type ClaimStatus } from "@/lib/claim-status";
 import { cn } from "@/lib/utils";
 import type { ClaimCardData } from "@/components/claim-card";
+import type { PublicContribution } from "@/lib/contributions/queries";
 import type { ReadingParagraph } from "@/lib/reading";
 import { ClaimScrollRail } from "@/components/article-reader/claim-scroll-rail";
 import {
@@ -19,6 +20,12 @@ import { VerificationPanel } from "@/components/article-reader/verification-pane
 export type ArticleReaderProps = {
   paragraphs: ReadingParagraph[];
   claims: ClaimCardData[];
+  // Approved contributions per claim, aligned by index with `claims`.
+  claimContributions: PublicContribution[][];
+  // Claim ids aligned by index with `claims`, for per-claim contribution.
+  claimIds: string[];
+  articleId: string;
+  isAuthenticated: boolean;
   statusLabels: Record<ClaimStatus, string>;
   sourcesLabel: string;
   verificationLabel: string;
@@ -31,6 +38,10 @@ export type ArticleReaderProps = {
 export function ArticleReader({
   paragraphs,
   claims,
+  claimContributions,
+  claimIds,
+  articleId,
+  isAuthenticated,
   statusLabels,
   sourcesLabel,
   verificationLabel,
@@ -195,6 +206,10 @@ export function ArticleReader({
       {claims.length > 0 && displayedIndex !== null && (
         <VerificationPanel
           claims={claims}
+          claimContributions={claimContributions}
+          claimIds={claimIds}
+          articleId={articleId}
+          isAuthenticated={isAuthenticated}
           claimAnchors={claimAnchors}
           indicatorRatio={indicatorRatio}
           viewportTopRatio={viewportTopRatio}
@@ -222,6 +237,10 @@ export function ArticleReader({
       {hasMobileClaims && (
         <MobileClaimDrawer
           claims={claims}
+          claimContributions={claimContributions}
+          claimIds={claimIds}
+          articleId={articleId}
+          isAuthenticated={isAuthenticated}
           groupIndices={groupIndices}
           selectedIndex={drawerSelectedIndex}
           onSelectIndex={selectClaimInDrawer}

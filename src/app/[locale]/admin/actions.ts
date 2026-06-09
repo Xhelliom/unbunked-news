@@ -18,8 +18,10 @@ import {
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
+import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
+import { safeHttpUrl } from "@/lib/safe-url";
 import { requireAdminSession } from "@/lib/session";
 import {
   CRITERION_COLUMN,
@@ -73,25 +75,10 @@ function accountErrorHref(code: AccountErrorCode): string {
 const CREDENTIAL_PROVIDER_ID = "credential";
 const MIN_PASSWORD_LENGTH = 8;
 
-// Next 16's revalidateTag takes a cache profile as its second argument; "max"
-// fully invalidates every entry carrying the tag.
-const REVALIDATE_PROFILE = "max";
-
 // A blank field (cleared global score, or an optional criterion whose disabled
 // slider is omitted from the form data) means "unscored" -> null.
 function parseScore(raw: FormDataEntryValue | null): number | null {
   return raw === null || raw === "" ? null : clampScore(raw);
-}
-
-function parseUrl(raw: string): string | null {
-  try {
-    const url = new URL(raw.trim());
-    return url.protocol === "http:" || url.protocol === "https:"
-      ? url.toString()
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 export async function submitUrl(
@@ -99,7 +86,7 @@ export async function submitUrl(
   formData: FormData,
 ): Promise<ActionState> {
   await requireAdminSession();
-  const url = parseUrl(String(formData.get("url") ?? ""));
+  const url = safeHttpUrl(String(formData.get("url") ?? ""));
   if (!url) {
     return { error: "invalidUrl" };
   }
@@ -138,6 +125,7 @@ export async function saveArticle(
       summary: String(formData.get("summary") ?? ""),
       originalSummary: String(formData.get("originalSummary") ?? "") || null,
       showOriginal: formData.get("showOriginal") === "true",
+      contributionsEnabled: formData.get("contributionsEnabled") === "true",
       verdict,
       reliabilityScore: parseScore(formData.get("reliabilityScore")),
       ...criterionScores,

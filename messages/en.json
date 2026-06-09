@@ -163,8 +163,8 @@
     "unverifiable": "Unverifiable"
   },
   "auth": {
-    "loginTitle": "Login",
-    "loginSubtitle": "The newsroom saved your seat. Ready to resume fact-checking?",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to suggest corrections, track your contributions, and join the fact-checking.",
     "email": "Email",
     "emailPlaceholder": "you@unbunked.fr",
     "password": "Password",
@@ -183,7 +183,123 @@
     "heroTitle": "Fact-checking, claim by claim.",
     "heroSubtitle": "Submit a link, the pipeline extracts each claim, cross-checks it against sources, and publishes a verdict. You stay in control of every nuance.",
     "weeklyChecks": "articles checked this week",
-    "fiveVerdicts": "Five verdicts, never binary"
+    "fiveVerdicts": "Five verdicts, never binary",
+    "noAccount": "No account yet?",
+    "signUpLink": "Create an account",
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Join the community to suggest corrections and sources.",
+      "name": "Display name",
+      "namePlaceholder": "Shown publicly on your contributions",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Create my account",
+      "submitting": "Creating…",
+      "verifyTitle": "Check your inbox",
+      "verifySent": "A verification link was sent to {email}. Click it to activate your account.",
+      "backToLogin": "Back to login",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "errors": {
+        "weakPassword": "Password must be at least 8 characters.",
+        "disabledOrInvalid": "Sign-up failed: it may be disabled, or this email is already in use.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "submit": "Send the link",
+      "submitting": "Sending…",
+      "sentTitle": "Check your inbox",
+      "sent": "If an account exists for this address, a reset link has just been sent.",
+      "backToLogin": "Back to login"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "subtitle": "Choose a new password for your account.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Reset",
+      "submitting": "Resetting…",
+      "backToLogin": "Back to login",
+      "errors": {
+        "invalidToken": "This link is invalid or expired. Please request a new one.",
+        "weakPassword": "Password must be at least 8 characters.",
+        "mismatch": "The two passwords don't match."
+      }
+    }
+  },
+  "contributions": {
+    "title": "Reader contributions",
+    "byAuthor": "by {name}",
+    "sourceLink": "Suggested source",
+    "sectionTitle": "Contribute",
+    "sectionSubtitle": "Spotted an error or a missing source? Suggest a correction — it will be published after review.",
+    "addForClaim": "Suggest a correction on this claim",
+    "formForClaim": "Correction — claim {n}",
+    "cancel": "Cancel",
+    "bodyPlaceholder": "Your correction, clarification or remark…",
+    "sourceUrlPlaceholder": "https://… (supporting source, optional)",
+    "submit": "Send my contribution",
+    "submitting": "Sending…",
+    "successPending": "Thanks! Your contribution will be published after the editors review it.",
+    "loginToContribute": "Sign in to suggest a contribution.",
+    "loginLink": "Sign in",
+    "signupLink": "Create an account",
+    "errors": {
+      "unauthenticated": "Sign in to contribute.",
+      "contributionsDisabled": "Contributions are closed on this article.",
+      "invalidClaim": "Claim not found.",
+      "empty": "Your contribution is empty.",
+      "tooLong": "Your contribution is too long.",
+      "invalidUrl": "The source URL is invalid.",
+      "turnstile": "Anti-bot check failed. Please try again.",
+      "rateLimited": "You've sent too many contributions recently. Please try again later."
+    }
+  },
+  "userMenu": {
+    "label": "Account menu",
+    "login": "Sign in",
+    "profile": "My profile",
+    "signOut": "Sign out"
+  },
+  "profile": {
+    "title": "My profile",
+    "contributionsTitle": "My contributions",
+    "noContributions": "You haven't submitted any contribution yet.",
+    "status": {
+      "pending": "Pending",
+      "approved": "Published",
+      "rejected": "Rejected"
+    },
+    "target": {
+      "article": "On the article",
+      "claim": "On claim {n}"
+    },
+    "displayName": {
+      "title": "Display name",
+      "label": "Public display name",
+      "hint": "Shown publicly on your contributions.",
+      "submit": "Update",
+      "saving": "Updating…",
+      "saved": "Display name updated.",
+      "error": "Update failed. Please try again."
+    },
+    "password": {
+      "title": "Password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Change password",
+      "saving": "Saving…",
+      "saved": "Password changed. Your other sessions have been signed out.",
+      "errors": {
+        "weak": "Password must be at least 8 characters.",
+        "mismatch": "The two passwords don't match.",
+        "wrong": "Current password is incorrect.",
+        "generic": "The change failed. Please try again."
+      }
+    }
   },
   "admin": {
     "title": "Administration",
@@ -194,8 +310,47 @@
       "proposals": "Proposals",
       "analytics": "Analytics",
       "costs": "Costs",
+      "moderation": "Moderation",
       "members": "Members",
+      "settings": "Settings",
       "account": "My account"
+    },
+    "moderation": {
+      "title": "Contribution moderation",
+      "subtitle": "Approve or reject the corrections and sources suggested by readers.",
+      "pendingTab": "Pending",
+      "rejectedTab": "Rejected",
+      "emptyQueue": "No contributions here.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "byAuthor": "by {name}",
+      "sourceLink": "Suggested source",
+      "aiReasonLabel": "AI note",
+      "target": {
+        "article": "On the article",
+        "claim": "On claim {n}"
+      },
+      "aiVerdict": {
+        "clean": "AI: clean",
+        "suspicious": "AI: review",
+        "spam": "AI: spam"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Turn features on or off without a redeploy.",
+      "cardTitle": "Features",
+      "publicSignup": {
+        "label": "User sign-up",
+        "hint": "Allow non-admin account creation (Google and verified email)."
+      },
+      "aiModeration": {
+        "label": "AI pre-moderation of contributions",
+        "hint": "Pre-classify contributions before the moderation queue. Never auto-publishes."
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Settings saved."
     },
     "analytics": {
       "title": "Analytics",
@@ -397,6 +552,7 @@
       "criteriaTitle": "Detailed scores",
       "criteriaHint": "Uncheck an optional criterion if it can't be assessed reliably.",
       "optional": "optional",
+      "contributionsEnabled": "Allow reader contributions (corrections, sources) on this article",
       "source": "Original source",
       "rubric": "Section",
       "claims": "Analyzed claims",

@@ -26,7 +26,11 @@ export default async function AdminLayout({
     const session = await requireAdminSession();
     userId = session.userId;
   } catch {
-    redirect({ href: "/login", locale: await getLocale() });
+    // Send unauthenticated visitors to login, then back to admin once signed in.
+    redirect({
+      href: { pathname: "/login", query: { next: "/admin" } },
+      locale: await getLocale(),
+    });
   }
 
   const t = await getTranslations("admin");
@@ -49,7 +53,9 @@ export default async function AdminLayout({
             proposals: t("nav.proposals"),
             analytics: t("nav.analytics"),
             costs: t("nav.costs"),
+            moderation: t("nav.moderation"),
             members: t("nav.members"),
+            settings: t("nav.settings"),
             account: t("nav.account"),
           }}
           account={{ name: accountName, email: accountEmail }}

@@ -34,6 +34,8 @@ import type { ScrapeProvenance } from "@/lib/scrape";
 
 // BetterAuth tables (user, session, account, verification).
 export * from "./auth-schema";
+// Operator-managed runtime settings (admin toggles); references the `user` table.
+export * from "./settings-schema";
 
 // Verdict values are kept in sync with src/lib/verdicts.ts (the UI source).
 export const verdictEnum = pgEnum("verdict", [
@@ -109,6 +111,8 @@ export const articles = pgTable(
     // Editorial toggle: when false, the public page hides the full original
     // body and shows originalSummary instead. Defaults to true.
     showOriginal: boolean().notNull().default(true),
+    // When true, signed-in users may submit contributions on the public page.
+    contributionsEnabled: boolean().notNull().default(false),
     // og:image from the source (with attribution) or null -> abstract fallback.
     imageUrl: text(),
     imageAttribution: text(),
@@ -149,11 +153,8 @@ export const articles = pgTable(
     // to NOT NULL; the pipeline always sets it on new rows.
     rubric: rubricEnum(),
     // Postgres-maintained full-text index over the headline, summary and body.
-    // Generated-column expressions can't reference the table object being
-    // defined, so the column names are inlined here as a documented technical
-    // exception to the no-raw-identifiers rule (see CLAUDE.md). Prepared here for
-    // the search phase of the rubrics plan (docs/superpowers/plans/2026-06-03-
-    // article-rubriques-plan.md); the consuming query lands in a follow-up PR.
+    // Generated-column expressions can't reference the table being defined, so
+    // column names are inlined here (documented exception, see CLAUDE.md).
     searchVector: tsvector("search_vector").generatedAlwaysAs(
       sql`to_tsvector('french', coalesce(title, '') || ' ' || coalesce(summary, '') || ' ' || coalesce(content, ''))`,
     ),
