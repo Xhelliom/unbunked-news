@@ -76,13 +76,15 @@ Chaque phase est indépendante. Chaque claim porte ses propres sources. Le raiso
 
 | Verdict | Score | Signification |
 |:-------:|:-----:|---------------|
-| ![Fiable](https://img.shields.io/badge/Fiable-22c55e?style=flat-square&logoColor=white) | 80 – 100 | Affirmations principales exactes et sourcées |
-| ![Imprécis](https://img.shields.io/badge/Impr%C3%A9cis-eab308?style=flat-square&logoColor=white) | 55 – 79 | Éléments vrais mais simplifiés ou hors contexte |
-| ![Contestable](https://img.shields.io/badge/Contestable-f97316?style=flat-square&logoColor=white) | 35 – 54 | Affirmations importantes sans preuves solides |
-| ![Faux](https://img.shields.io/badge/Faux-ef4444?style=flat-square&logoColor=white) | 0 – 34 | Affirmations centrales contredites par les sources |
-| ![Non vérifiable](https://img.shields.io/badge/Non_v%C3%A9rifiable-6b7280?style=flat-square&logoColor=white) | — | Preuves insuffisantes pour trancher |
+| ![Fiable](https://img.shields.io/badge/Fiable-22c55e?style=flat-square&logoColor=white) | 85 – 100 | Affirmation solide, bien sourcée et conforme aux faits |
+| ![Imprécis](https://img.shields.io/badge/Impr%C3%A9cis-eab308?style=flat-square&logoColor=white) | 60 – 84 | Globalement vrai, mais incomplet ou dépendant du contexte |
+| ![Contestable](https://img.shields.io/badge/Contestable-f97316?style=flat-square&logoColor=white) | 40 – 59 | Fiabilité fragile : réserves importantes sur les faits ou les sources |
+| ![Faux](https://img.shields.io/badge/Faux-ef4444?style=flat-square&logoColor=white) | 0 – 39 | Affirmation fausse ou trompeuse |
+| ![Non vérifiable](https://img.shields.io/badge/Non_v%C3%A9rifiable-6b7280?style=flat-square&logoColor=white) | — | Sources insuffisantes pour trancher |
 
 </div>
+
+> **Verdict automatique "Faux"** — indépendamment du score, quatre situations déclenchent un verdict *Faux* immédiat : fabrication détectée, usurpation de domaine, affirmation centrale contredite par les sources, ou contenu généré par IA avec erreurs non déclarées.
 
 ---
 
@@ -90,23 +92,25 @@ Chaque phase est indépendante. Chaque claim porte ses propres sources. Le raiso
 
 > **Les preuves d'abord.** Chaque évaluation s'appuie sur des sources consultées, jamais sur des intuitions. Le raisonnement complet est visible — n'importe qui peut refaire le chemin.
 
-> **Rigueur, pas opinion.** La plateforme évalue la solidité journalistique, pas l'orientation politique. L'orientation est signalée séparément, jamais dans le score.
+> **Rigueur, pas opinion.** La plateforme évalue la solidité journalistique, pas l'orientation politique. L'orientation éditoriale est signalée séparément (neutre · orienté · militant) et n'entre jamais dans le score.
 
 > **Assumer le doute.** Quand les sources ne permettent pas de conclure, le verdict est *Non vérifiable* — pas un chiffre inventé.
 
 <details>
-<summary>Voir les 6 critères d'évaluation pondérés</summary>
+<summary>Voir les 6 critères d'évaluation et leurs poids</summary>
 
 <br />
 
-| Critère | Ce qui est mesuré |
-|---------|------------------|
-| **Exactitude** | Chiffres, dates, citations — sont-ils corrects ? |
-| **Recoupement** | Les faits sont confirmés par des sources indépendantes ? |
-| **Sources citées** | Les références sont nommées, vérifiables, indépendantes ? |
-| **Contexte** | Des faits essentiels sont omis de façon trompeuse ? |
-| **Transparence** | Auteur, date, éditeur, financements identifiables ? |
-| **Fraîcheur** *(conditionnel)* | L'info est à jour ? *(sujets sensibles au temps uniquement)* |
+| Critère | Poids | Ce qui est mesuré |
+|---------|:-----:|------------------|
+| **Exactitude** | 30 % | Chiffres, dates, citations — sont-ils corrects ? |
+| **Recoupement** | 25 % | Les faits sont confirmés par ≥ 2 sources indépendantes ? |
+| **Sources citées** | 18 % | Les références sont nommées, vérifiables, indépendantes ? |
+| **Contexte** | 12 % | Des faits essentiels sont omis de façon trompeuse ? |
+| **Transparence** | 10 % | Auteur, date, éditeur, financements identifiables ? |
+| **Fraîcheur** *(conditionnel)* | 5 % | L'info est à jour ? *(renormalisé si non applicable)* |
+
+Les poids sont fixes et publics. Le score global est la moyenne pondérée, calculée par le code — jamais par l'IA.
 
 </details>
 
