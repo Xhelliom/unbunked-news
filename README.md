@@ -135,35 +135,39 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
 
 ---
 
-## Galerie
+## Aperçu du produit
 
-<!-- PLACEHOLDER — captures d'écran du site réel
-     Dimensions recommandées : 1200×750 px, format PNG ou WebP
-     Chemins : docs/screenshot-feed.png, docs/screenshot-article.png,
-               docs/screenshot-claim.png, docs/screenshot-admin.png     -->
+<!-- Toutes les cartes ci-dessous sont générées dynamiquement depuis la DB.
+     Elles se mettent à jour automatiquement à chaque publication d'article.
+     Les screenshots réels peuvent remplacer ces cartes une fois le site en production. -->
 
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="docs/screenshot-feed.png" alt="Feed public" /><br />
-      <sub><b>Feed public</b> — les dernières analyses</sub>
+      <a href="https://unbunked.news">
+        <img src="https://unbunked.news/api/readme/latest"
+             alt="Dernières analyses publiées" />
+      </a><br />
+      <sub><b>Feed</b> — les dernières analyses publiées</sub>
     </td>
     <td align="center" width="50%">
-      <img src="docs/screenshot-article.png" alt="Analyse d'article" /><br />
-      <sub><b>Analyse</b> — claims surlignées dans le texte</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/screenshot-claim.png" alt="Fiche claim" /><br />
-      <sub><b>Fiche claim</b> — verdict + sources + raisonnement</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/screenshot-admin.png" alt="Interface admin" /><br />
-      <sub><b>Admin</b> — révision avant publication</sub>
+      <a href="https://unbunked.news">
+        <img src="https://unbunked.news/api/readme/stats"
+             alt="Statistiques Unbunked.news" />
+      </a><br />
+      <sub><b>Stats</b> — articles analysés et répartition des verdicts</sub>
     </td>
   </tr>
 </table>
+
+<div align="center">
+  <a href="https://unbunked.news">
+    <img src="https://unbunked.news/api/readme/sample"
+         alt="Exemple d'analyse — article avec affirmations vérifiées"
+         width="600" />
+  </a><br />
+  <sub><b>Analyse</b> — article réel avec affirmations vérifiées et verdict par claim</sub>
+</div>
 
 ---
 
