@@ -1,11 +1,14 @@
 import { eq } from "drizzle-orm";
+import { Eye } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { db } from "@/db/client";
 import { articles } from "@/db/schema";
 import { routing } from "@/i18n/routing";
+import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
@@ -51,9 +54,21 @@ export default async function AdminArticleReviewPage({
             {t("source")}: {article.sourceName}
           </a>
         </div>
-        <h1 className="font-serif text-2xl font-bold tracking-tight">
-          {t("title")}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-serif text-2xl font-bold tracking-tight">
+            {t("title")}
+          </h1>
+          <Button asChild variant="outline" size="sm" className="ml-auto">
+            <Link
+              href={`/preview/articles/${article.id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Eye className="size-3.5" />
+              {t("preview")}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <ReviewForm

@@ -559,8 +559,14 @@
         "actions": "Actions"
       }
     },
+    "preview": {
+      "title": "Preview — unpublished draft",
+      "subtitle": "You're seeing the article exactly as it will appear once published.",
+      "back": "Back to editing"
+    },
     "review": {
       "title": "Review before publishing",
+      "preview": "Preview",
       "headline": "Title",
       "summary": "Summary",
       "originalSummary": "Original article summary (neutral paraphrase)",

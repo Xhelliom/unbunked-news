@@ -559,8 +559,14 @@
         "actions": "Actions"
       }
     },
+    "preview": {
+      "title": "Aperçu — brouillon non publié",
+      "subtitle": "Vous voyez l'article exactement comme il apparaîtra une fois publié.",
+      "back": "Retour à l'édition"
+    },
     "review": {
       "title": "Révision avant publication",
+      "preview": "Aperçu",
       "headline": "Titre",
       "summary": "Résumé",
       "originalSummary": "Résumé de l'article original (paraphrase neutre)",
