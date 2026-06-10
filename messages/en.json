@@ -612,7 +612,25 @@
         "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",
         "rewriteTitle": "Unbunked version title",
         "rewriteBody": "Unbunked version body",
-        "missing": "No rewrite for this language."
+        "missing": "No rewrite for this language.",
+        "editor": {
+          "bold": "Bold",
+          "link": "Link",
+          "heading": "Heading",
+          "subheading": "Subheading",
+          "quote": "Quote",
+          "code": "Code",
+          "insertClaim": "Insert a claim",
+          "showPreview": "Show preview",
+          "hidePreview": "Hide preview",
+          "previewTitle": "Preview",
+          "previewEmpty": "The preview will appear here.",
+          "words": "{count, plural, one {# word} other {# words}}",
+          "warningsTitle": "To fix",
+          "claimOutOfRange": "Anchor [[claim:{number}]] out of range (1–{max}).",
+          "claimMalformed": "Malformed claim anchor: {raw}",
+          "badLink": "Non-http(s) link ignored: {target}"
+        }
       }
     },
     "proposals": {

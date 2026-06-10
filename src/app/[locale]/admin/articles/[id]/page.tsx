@@ -114,6 +114,7 @@ export default async function AdminArticleReviewPage({
                   locale={loc}
                   title={r?.title ?? article.title}
                   body={r?.body ?? ""}
+                  claims={article.claims.map((claim) => claim.claimText)}
                 />
               </div>
             );

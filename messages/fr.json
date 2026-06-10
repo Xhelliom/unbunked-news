@@ -612,7 +612,25 @@
         "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction à l'affirmation N.",
         "rewriteTitle": "Titre de la version Unbunked",
         "rewriteBody": "Corps de la version Unbunked",
-        "missing": "Aucune réécriture pour cette langue."
+        "missing": "Aucune réécriture pour cette langue.",
+        "editor": {
+          "bold": "Gras",
+          "link": "Lien",
+          "heading": "Titre",
+          "subheading": "Sous-titre",
+          "quote": "Citation",
+          "code": "Code",
+          "insertClaim": "Insérer une affirmation",
+          "showPreview": "Afficher l'aperçu",
+          "hidePreview": "Masquer l'aperçu",
+          "previewTitle": "Aperçu",
+          "previewEmpty": "L'aperçu s'affichera ici.",
+          "words": "{count, plural, one {# mot} other {# mots}}",
+          "warningsTitle": "À corriger",
+          "claimOutOfRange": "Ancre [[claim:{number}]] hors limites (1–{max}).",
+          "claimMalformed": "Ancre d'affirmation mal formée : {raw}",
+          "badLink": "Lien non http(s) ignoré : {target}"
+        }
       }
     },
     "proposals": {
