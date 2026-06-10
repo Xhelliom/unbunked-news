@@ -1,65 +1,182 @@
-# Unbunked.news
+<div align="center">
 
-> Le fact-checking de l'actualité, vérifié affirmation par affirmation.
+<!-- ═══════════════════════════════════════════════════════════════
+     PLACEHOLDER — remplacer par une image 1280×400 px
+     Créer dans Figma : fond sombre (#0f0f0f), logo centré, tagline
+     Exporter en docs/banner-dark.png  et  docs/banner-light.png
+     ═══════════════════════════════════════════════════════════════ -->
+<a href="https://unbunked.news">
+  <img src="docs/banner-dark.png#gh-dark-mode-only"
+       alt="Unbunked.news — Le fact-checking de l'actualité"
+       width="100%" />
+  <img src="docs/banner-light.png#gh-light-mode-only"
+       alt="Unbunked.news — Le fact-checking de l'actualité"
+       width="100%" />
+</a>
+
+<br /><br />
+
+**Le fact-checking de l'actualité, vérifié affirmation par affirmation.**
+
+<br />
+
+<!-- Stack badges -->
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Claude AI](https://img.shields.io/badge/Claude_AI-CC785C?style=flat-square&logo=anthropic&logoColor=white)
+![License](https://img.shields.io/badge/Licence-MIT-22c55e?style=flat-square)
+
+<br />
+
+<!-- CTA button -->
+<a href="https://unbunked.news">
+  <img src="https://img.shields.io/badge/→%20Visiter%20unbunked.news-6366f1?style=for-the-badge&logoColor=white" alt="Visiter unbunked.news" height="36" />
+</a>
+
+<br /><br />
+
+</div>
 
 ---
 
-## Le site
+## Pourquoi Unbunked ?
 
-**[unbunked.news](https://unbunked.news)** est une plateforme de fact-checking indépendante qui analyse les articles d'actualité en profondeur — pas avec un simple vrai/faux, mais affirmation par affirmation, sources à l'appui.
+L'information circule vite. Les vérifications, moins.
 
-### Ce qu'Unbunked fait
+**Unbunked** ne donne pas un simple vrai/faux. Il décompose chaque article en affirmations vérifiables, les confronte une à une à des sources indépendantes via recherche web, puis publie un verdict documenté — avec score, raisonnement, et sources consultées visibles par tous.
 
-Chaque article soumis passe par une pipeline d'analyse rigoureuse :
+Bilingue (FR/EN). Méthodologie publique. Zéro opinion.
 
-1. **Extraction des affirmations** — les 3 à 8 affirmations factuelles les plus importantes de l'article sont isolées.
-2. **Vérification** — chaque affirmation est recoupée avec des sources externes indépendantes via recherche web.
-3. **Scoring** — un score de fiabilité de 0 à 100 est calculé sur six critères pondérés.
-4. **Réécriture** — l'article est réécrit en version neutre et factuelle, disponible en français et en anglais.
+---
 
-Le résultat est publié sur le feed public : verdict clair, score, analyse claim par claim, et sources consultées — tout est transparent.
+## Comment ça marche
 
-### Les verdicts
+```mermaid
+flowchart LR
+    A(["📰 URL\nd'un article"])
+    B["🔍 Extraction\ndes claims"]
+    C["🌐 Vérification\nIA + recherche web"]
+    D["⚖️ Score &\nverdict"]
+    E(["🌍 Publication\nFR · EN"])
 
-| Verdict | Signification |
-|---------|--------------|
-| **Fiable** | Les affirmations principales sont exactes et bien sourcées |
-| **Imprécis** | Des éléments vrais mais simplifiés ou sortis de contexte |
-| **Contestable** | Des affirmations importantes manquent de preuves solides |
-| **Faux** | Des affirmations centrales sont contredites par les sources |
-| **Non vérifiable** | Les sources disponibles ne permettent pas de trancher |
+    A -->|scraping| B
+    B -->|3 – 8 claims| C
+    C -->|sources croisées| D
+    D -->|réécriture neutre| E
+```
 
-### La méthode
+Chaque phase est indépendante. Chaque claim porte ses propres sources. Le raisonnement est entier, pas un résumé.
 
-Unbunked repose sur trois principes :
+---
 
-- **Les preuves d'abord** — chaque évaluation s'appuie sur des sources consultées, jamais sur des intuitions. Le raisonnement est visible.
-- **Rigueur, pas opinion** — la plateforme évalue la solidité journalistique, pas l'orientation politique. L'orientation est signalée séparément.
-- **Assumer le doute** — quand les sources ne permettent pas de conclure, c'est marqué « non vérifiable » plutôt qu'un chiffre inventé.
+## Les verdicts
 
-### Six critères d'évaluation
+<div align="center">
+
+| Verdict | Score | Signification |
+|:-------:|:-----:|---------------|
+| ![Fiable](https://img.shields.io/badge/Fiable-22c55e?style=flat-square&logoColor=white) | 80 – 100 | Affirmations principales exactes et sourcées |
+| ![Imprécis](https://img.shields.io/badge/Impr%C3%A9cis-eab308?style=flat-square&logoColor=white) | 55 – 79 | Éléments vrais mais simplifiés ou hors contexte |
+| ![Contestable](https://img.shields.io/badge/Contestable-f97316?style=flat-square&logoColor=white) | 35 – 54 | Affirmations importantes sans preuves solides |
+| ![Faux](https://img.shields.io/badge/Faux-ef4444?style=flat-square&logoColor=white) | 0 – 34 | Affirmations centrales contredites par les sources |
+| ![Non vérifiable](https://img.shields.io/badge/Non_v%C3%A9rifiable-6b7280?style=flat-square&logoColor=white) | — | Preuves insuffisantes pour trancher |
+
+</div>
+
+---
+
+## La méthode
+
+> **Les preuves d'abord.** Chaque évaluation s'appuie sur des sources consultées, jamais sur des intuitions. Le raisonnement complet est visible — n'importe qui peut refaire le chemin.
+
+> **Rigueur, pas opinion.** La plateforme évalue la solidité journalistique, pas l'orientation politique. L'orientation est signalée séparément, jamais dans le score.
+
+> **Assumer le doute.** Quand les sources ne permettent pas de conclure, le verdict est *Non vérifiable* — pas un chiffre inventé.
+
+<details>
+<summary>Voir les 6 critères d'évaluation pondérés</summary>
+
+<br />
 
 | Critère | Ce qui est mesuré |
 |---------|------------------|
 | **Exactitude** | Chiffres, dates, citations — sont-ils corrects ? |
-| **Recoupement** | Les faits sont-ils confirmés par des sources indépendantes ? |
-| **Sources citées** | Les références sont-elles nommées, vérifiables, et indépendantes ? |
-| **Contexte** | Des faits essentiels sont-ils omis de façon trompeuse ? |
-| **Transparence** | Auteur, date, éditeur, financements — sont-ils identifiables ? |
-| **Fraîcheur** | L'info est-elle à jour ? (critère conditionnel, sujets sensibles au temps) |
+| **Recoupement** | Les faits sont confirmés par des sources indépendantes ? |
+| **Sources citées** | Les références sont nommées, vérifiables, indépendantes ? |
+| **Contexte** | Des faits essentiels sont omis de façon trompeuse ? |
+| **Transparence** | Auteur, date, éditeur, financements identifiables ? |
+| **Fraîcheur** *(conditionnel)* | L'info est à jour ? *(sujets sensibles au temps uniquement)* |
 
-### Participer
+</details>
 
-- **Proposer un article** : soumets l'URL d'un article à vérifier sur [unbunked.news/submit](https://unbunked.news/submit).
+---
+
+## En chiffres
+
+<!-- PLACEHOLDER — mettre à jour avec les vraies métriques -->
+<div align="center">
+
+| 📰 | 🔍 | ⚖️ | 🌍 |
+|:---:|:---:|:---:|:---:|
+| **–** articles analysés | **–** claims vérifiées | **–** sources consultées | **2** langues |
+
+</div>
+
+---
+
+## Galerie
+
+<!-- PLACEHOLDER — captures d'écran du site réel
+     Dimensions recommandées : 1200×750 px, format PNG ou WebP
+     Chemins : docs/screenshot-feed.png, docs/screenshot-article.png,
+               docs/screenshot-claim.png, docs/screenshot-admin.png     -->
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshot-feed.png" alt="Feed public" /><br />
+      <sub><b>Feed public</b> — les dernières analyses</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshot-article.png" alt="Analyse d'article" /><br />
+      <sub><b>Analyse</b> — claims surlignées dans le texte</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshot-claim.png" alt="Fiche claim" /><br />
+      <sub><b>Fiche claim</b> — verdict + sources + raisonnement</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshot-admin.png" alt="Interface admin" /><br />
+      <sub><b>Admin</b> — révision avant publication</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Participer
+
+- **Proposer un article** : [unbunked.news/submit](https://unbunked.news/submit) — coller une URL, c'est tout.
 - **Signaler une erreur** : chaque analyse publiée accepte des suggestions de correction ou de sources complémentaires.
+
+<div align="center">
+<br />
+
+<a href="https://unbunked.news/submit">
+  <img src="https://img.shields.io/badge/Proposer%20un%20article%20à%20vérifier-6366f1?style=for-the-badge" alt="Proposer un article" height="32" />
+</a>
+
+<br /><br />
+</div>
 
 ---
 
 ---
 
 ## Le dépôt
-
-Ce dépôt contient le code source complet de la plateforme unbunked.news.
 
 ### Stack technique
 
@@ -271,7 +388,6 @@ Le manifest déploie deux groupes à partir de la même image :
 - **`worker`** (`k8s/worker.yaml`, `APP_ROLE=worker`) — hors ingress, draine la file de jobs.
 
 ```bash
-# Augmenter la concurrence des jobs
 kubectl scale deployment/worker -n unbunked --replicas=3
 ```
 
