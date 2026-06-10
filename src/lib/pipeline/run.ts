@@ -17,13 +17,25 @@ import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { assessClaims } from "./assess-claims";
-import { addUsage, ZERO_USAGE, type TokenUsage } from "./client";
+import {
+  addUsage,
+  MAX_CONTENT_CHARS,
+  ZERO_USAGE,
+  type TokenUsage,
+} from "./client";
 import {
   rewriteFailureDiagnostic,
   saveDiagnostic,
   scrapeDiagnostic,
   type StepDiagnostic,
 } from "./diagnostics";
+import type { JobLive, PauseInfo } from "./job-live";
+import {
+  DEFAULT_MAX_CLAIMS,
+  DEFAULT_MAX_SEARCH_ROUNDS,
+  LONG_ARTICLE_SUGGESTED_CLAIMS,
+  LONG_ARTICLE_SUGGESTED_SEARCH_ROUNDS,
+} from "./limits";
 import {
   DEFAULT_REASONING_MODEL,
   HAIKU_MODEL,
@@ -56,6 +68,18 @@ async function updateJob(id: string, fields: Partial<NewJob>): Promise<void> {
   await db.update(jobs).set(fields).where(eq(jobs.id, id));
 }
 
+function buildPauseInfo(contentChars: number): PauseInfo {
+  return {
+    reason: "long-article",
+    contentChars,
+    truncateAt: MAX_CONTENT_CHARS,
+    defaultMaxClaims: DEFAULT_MAX_CLAIMS,
+    defaultMaxSearchRounds: DEFAULT_MAX_SEARCH_ROUNDS,
+    suggestedMaxClaims: LONG_ARTICLE_SUGGESTED_CLAIMS,
+    suggestedMaxSearchRounds: LONG_ARTICLE_SUGGESTED_SEARCH_ROUNDS,
+  };
+}
+
 // A tiered run spends tokens on more than one model. Token usage is billed per
 // model, so usage is folded into one entry per model before it is persisted —
 // collapsing to a single row when every phase happened to use the same model.
@@ -76,6 +100,9 @@ export async function runPipeline(jobId: string): Promise<void> {
   // Per-step audit trail, persisted on the job on BOTH the success and the
   // failure path so a degraded or aborted run can be explained after the fact.
   const steps: StepDiagnostic[] = [];
+  // Rolling snapshot of in-flight numbers, persisted alongside the diagnostics
+  // at every phase boundary so the admin progress UI shows live data.
+  const live: JobLive = {};
 
   try {
     await updateJob(jobId, {
@@ -128,24 +155,73 @@ export async function runPipeline(jobId: string): Promise<void> {
       ),
     );
 
-    await updateJob(jobId, { step: "extracting", progress: 25 });
+    const contentChars = article.content.length;
+    live.contentChars = contentChars;
+
+    // Préflight: a body past the model window gets truncated before every
+    // reasoning phase, so a long investigation would be scored on a fraction of
+    // its content. Rather than do that silently, pause once and let the admin
+    // raise the claim/search budget (or accept the suggestions). pauseAck is set
+    // on resume, so the gate is crossed exactly once — a resumed run re-scrapes
+    // then proceeds straight through.
+    if (contentChars > MAX_CONTENT_CHARS && !job.pauseAck) {
+      await updateJob(jobId, {
+        status: "paused",
+        step: "scraping",
+        progress: 5,
+        pauseInfo: buildPauseInfo(contentChars),
+        diagnostics: { steps },
+        live,
+      });
+      return;
+    }
+
+    const maxClaims = job.maxClaims ?? DEFAULT_MAX_CLAIMS;
+    const maxSearchRounds = job.maxSearchRounds ?? DEFAULT_MAX_SEARCH_ROUNDS;
+
+    await updateJob(jobId, {
+      step: "extracting",
+      progress: 25,
+      diagnostics: { steps },
+      live,
+    });
     const {
       claims,
       usage: extractUsage,
       diagnostic: extractDiagnostic,
-    } = await extractClaims(article, HAIKU_MODEL);
+    } = await extractClaims(article, HAIKU_MODEL, maxClaims);
     steps.push(extractDiagnostic);
     if (extractDiagnostic.truncated) {
       throw new Error(
         "Claim extraction hit max_tokens; raise the extract budget or shorten the article",
       );
     }
+    live.claimsExtracted = claims.length;
 
-    await updateJob(jobId, { step: "verifying", progress: 45 });
-    const verification = await verifyClaims(article, claims, reasoningModel);
+    await updateJob(jobId, {
+      step: "verifying",
+      progress: 45,
+      diagnostics: { steps },
+      live,
+    });
+    live.verifyRoundsMax = maxSearchRounds;
+    const verification = await verifyClaims(article, claims, reasoningModel, {
+      maxSearchRounds,
+      onRound: async (round, sources) => {
+        live.verifyRound = round;
+        live.sourcesFound = sources;
+        await updateJob(jobId, { live });
+      },
+    });
     steps.push(verification.diagnostic);
+    live.sourcesFound = verification.sources.length;
 
-    await updateJob(jobId, { step: "aggregating", progress: 60 });
+    await updateJob(jobId, {
+      step: "aggregating",
+      progress: 60,
+      diagnostics: { steps },
+      live,
+    });
     const {
       analysis,
       usage: aggregateUsage,
@@ -157,8 +233,15 @@ export async function runPipeline(jobId: string): Promise<void> {
         "Aggregation hit max_tokens; the criteria tail was truncated. Raise the aggregate budget",
       );
     }
+    live.verdict = analysis.verdict;
+    live.reliabilityScore = analysis.reliabilityScore;
 
-    await updateJob(jobId, { step: "assessing-claims", progress: 72 });
+    await updateJob(jobId, {
+      step: "assessing-claims",
+      progress: 72,
+      diagnostics: { steps },
+      live,
+    });
     const {
       claims: assessedClaims,
       usage: assessUsage,
@@ -170,8 +253,14 @@ export async function runPipeline(jobId: string): Promise<void> {
         "Claim assessment hit max_tokens; the claims tail was truncated. Raise the assess-claims budget",
       );
     }
+    live.claimsAssessed = assessedClaims.length;
 
-    await updateJob(jobId, { step: "rewriting", progress: 80 });
+    await updateJob(jobId, {
+      step: "rewriting",
+      progress: 80,
+      diagnostics: { steps },
+      live,
+    });
     // One locale failing or getting truncated must not sink the whole run: the
     // article is still scored and the other locale(s) still publish. Every
     // outcome (success, truncation or hard failure) is recorded in the
@@ -210,7 +299,13 @@ export async function runPipeline(jobId: string): Promise<void> {
       ...rewriteUsages.map((usage) => ({ model: reasoningModel, usage })),
     ]);
 
-    await updateJob(jobId, { step: "saving", progress: 92 });
+    live.rewriteLocalesDone = rewrites.length;
+    await updateJob(jobId, {
+      step: "saving",
+      progress: 92,
+      diagnostics: { steps },
+      live,
+    });
 
     let keywordsStored = 0;
     const articleId = await db.transaction(async (tx) => {
@@ -336,6 +431,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       articleId,
       finishedAt: new Date(),
       diagnostics: { steps },
+      live,
     });
   } catch (error) {
     await updateJob(jobId, {
@@ -343,6 +439,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       error: error instanceof Error ? error.message : String(error),
       finishedAt: new Date(),
       diagnostics: { steps },
+      live,
     });
   }
 }

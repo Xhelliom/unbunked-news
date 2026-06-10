@@ -94,6 +94,33 @@ const loadArticleBySlugCached = unstable_cache(
   { revalidate: ARTICLES_CACHE_REVALIDATE_SECONDS, tags: [ARTICLES_CACHE_TAG] },
 );
 
+// The article shape (with claims, sources and rewrites) the reader-facing
+// ArticleView renders, derived from the public query so the admin preview and
+// the public page share one contract.
+export type PublicArticle = NonNullable<
+  Awaited<ReturnType<typeof loadArticleBySlug>>
+>;
+
+// Admin-only: load any article by id — published or not, trashed or not — with
+// the same relations the public page reads, so an admin can preview the exact
+// reader view of a draft before publishing. Not cached: it's an authenticated
+// admin read and must reflect unsaved-then-saved edits immediately.
+export async function loadArticleForPreview(
+  id: string,
+): Promise<PublicArticle | null> {
+  const article = await db.query.articles.findFirst({
+    where: eq(articles.id, id),
+    with: {
+      claims: {
+        orderBy: (claim, { asc }) => [asc(claim.position)],
+        with: { sources: true },
+      },
+      rewrites: true,
+    },
+  });
+  return article ?? null;
+}
+
 export async function getArticleBySlug(
   slug: string,
 ): Promise<Awaited<ReturnType<typeof loadArticleBySlug>>> {

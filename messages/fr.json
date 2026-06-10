@@ -498,6 +498,7 @@
       "statuses": {
         "pending": "En attente",
         "running": "En cours",
+        "paused": "En pause",
         "succeeded": "Terminé",
         "failed": "Échec"
       },
@@ -521,6 +522,26 @@
         "warnings": "Avertissements",
         "yes": "Oui",
         "no": "Non"
+      },
+      "live": {
+        "title": "En direct",
+        "contentChars": "Taille de l'article",
+        "chars": "{count, number} caractères",
+        "claimsExtracted": "Affirmations extraites",
+        "verifyRound": "Tour de recherche",
+        "sourcesFound": "Sources trouvées",
+        "verdict": "Verdict",
+        "reliabilityScore": "Score de fiabilité",
+        "claimsAssessed": "Affirmations évaluées",
+        "rewriteLocalesDone": "Réécritures produites"
+      },
+      "pause": {
+        "title": "Analyse en pause — article long",
+        "description": "L'article fait {contentChars, number} caractères et sera tronqué à {truncateAt, number} avant chaque phase de raisonnement. Ajustez les limites puis reprenez, ou conservez les valeurs proposées.",
+        "maxClaims": "Nombre d'affirmations max",
+        "maxSearchRounds": "Tours de recherche web max",
+        "defaultHint": "Défaut : {value, number}",
+        "resume": "Reprendre l'analyse"
       }
     },
     "jobs": {
@@ -538,8 +559,14 @@
         "actions": "Actions"
       }
     },
+    "preview": {
+      "title": "Aperçu — brouillon non publié",
+      "subtitle": "Vous voyez l'article exactement comme il apparaîtra une fois publié.",
+      "back": "Retour à l'édition"
+    },
     "review": {
       "title": "Révision avant publication",
+      "preview": "Aperçu",
       "headline": "Titre",
       "summary": "Résumé",
       "originalSummary": "Résumé de l'article original (paraphrase neutre)",
@@ -585,7 +612,25 @@
         "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction à l'affirmation N.",
         "rewriteTitle": "Titre de la version Unbunked",
         "rewriteBody": "Corps de la version Unbunked",
-        "missing": "Aucune réécriture pour cette langue."
+        "missing": "Aucune réécriture pour cette langue.",
+        "editor": {
+          "bold": "Gras",
+          "link": "Lien",
+          "heading": "Titre",
+          "subheading": "Sous-titre",
+          "quote": "Citation",
+          "code": "Code",
+          "insertClaim": "Insérer une affirmation",
+          "showPreview": "Afficher l'aperçu",
+          "hidePreview": "Masquer l'aperçu",
+          "previewTitle": "Aperçu",
+          "previewEmpty": "L'aperçu s'affichera ici.",
+          "words": "{count, plural, one {# mot} other {# mots}}",
+          "warningsTitle": "À corriger",
+          "claimOutOfRange": "Ancre [[claim:{number}]] hors limites (1–{max}).",
+          "claimMalformed": "Ancre d'affirmation mal formée : {raw}",
+          "badLink": "Lien non http(s) ignoré : {target}"
+        }
       }
     },
     "proposals": {
