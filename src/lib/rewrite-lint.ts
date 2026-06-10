@@ -1,8 +1,10 @@
 import { safeHttpUrl } from "@/lib/safe-url";
 
-// Editor-side warnings for a rewrite body, mirroring what RewriteBody silently
-// drops at render time so the editor can surface it before save: claim anchors
-// outside the claim range or malformed, and links the renderer won't linkify.
+// Editor-side warnings for a rewrite body, surfacing before save the cases
+// RewriteBody mishandles at render time: claim anchors outside the claim range
+// (dropped, so the reference silently vanishes), malformed anchors like
+// [[claim:x]] (rendered verbatim as literal text to readers), and links the
+// renderer won't linkify (rendered as plain text).
 export type RewriteWarning =
   | { kind: "claimOutOfRange"; number: number }
   | { kind: "claimMalformed"; raw: string }

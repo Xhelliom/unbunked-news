@@ -260,6 +260,9 @@ export async function resumeJob(formData: FormData): Promise<void> {
       progress: 0,
       error: null,
       startedAt: null,
+      // A resume is a deliberate fresh start; reset the claim counter so the
+      // re-run gets the full stall-retry budget a first-time job has.
+      attempts: 0,
     })
     .where(eq(jobs.id, id));
   redirect({ href: `/admin/jobs/${id}`, locale: await getLocale() });

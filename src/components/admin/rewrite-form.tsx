@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RewriteBody } from "@/components/rewrite-body";
+import {
+  CODE_FENCE,
+  HEADING_PREFIX,
+  LINE_BLOCK_PREFIXES,
+  QUOTE_PREFIX,
+  SUBHEADING_PREFIX,
+} from "@/lib/article-blocks";
 import { lintRewriteBody } from "@/lib/rewrite-lint";
 
 type Props = {
@@ -20,9 +27,13 @@ type Props = {
 };
 
 const CLAIM_OPTION_MAX_CHARS = 60;
-const HEADING_PREFIX = "## ";
-const SUBHEADING_PREFIX = "### ";
-const QUOTE_PREFIX = "> ";
+
+function stripBlockPrefix(line: string): string {
+  for (const prefix of LINE_BLOCK_PREFIXES) {
+    if (line.startsWith(prefix)) return line.slice(prefix.length);
+  }
+  return line;
+}
 
 export function RewriteForm({ articleId, locale, title, body, claims }: Props) {
   const t = useTranslations("admin.review");
@@ -65,7 +76,7 @@ export function RewriteForm({ articleId, locale, title, body, claims }: Props) {
     const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
     const lineEnd = value.indexOf("\n", pos) === -1 ? value.length : value.indexOf("\n", pos);
     const line = value.slice(lineStart, lineEnd);
-    const stripped = line.replace(/^(#{2,3} |> )/, "");
+    const stripped = stripBlockPrefix(line);
     // Toggle the marker off when it's already applied, else (re)apply it.
     const nextLine = line.startsWith(prefix) ? stripped : prefix + stripped;
     setValue(value.slice(0, lineStart) + nextLine + value.slice(lineEnd));
@@ -137,7 +148,10 @@ export function RewriteForm({ articleId, locale, title, body, claims }: Props) {
           <ToolbarButton onClick={() => setBlockPrefix(QUOTE_PREFIX)} title={te("quote")}>
             &ldquo;&rdquo;
           </ToolbarButton>
-          <ToolbarButton onClick={() => surround("```\n", "\n```", "code")} title={te("code")}>
+          <ToolbarButton
+            onClick={() => surround(`${CODE_FENCE}\n`, `\n${CODE_FENCE}`, "code")}
+            title={te("code")}
+          >
             &lt;/&gt;
           </ToolbarButton>
 
