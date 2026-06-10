@@ -12,6 +12,7 @@ import {
   account,
   articleRewrites,
   articles,
+  jobs,
   proposals,
   user,
 } from "@/db/schema";
@@ -20,6 +21,7 @@ import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
+import { clampMaxClaims, clampMaxSearchRounds } from "@/lib/pipeline/limits";
 import { DEFAULT_REASONING_MODEL, isReasoningModel } from "@/lib/pipeline/models";
 import { safeHttpUrl } from "@/lib/safe-url";
 import { requireAdminSession } from "@/lib/session";
@@ -79,6 +81,12 @@ const MIN_PASSWORD_LENGTH = 8;
 // slider is omitted from the form data) means "unscored" -> null.
 function parseScore(raw: FormDataEntryValue | null): number | null {
   return raw === null || raw === "" ? null : clampScore(raw);
+}
+
+// A blank/absent numeric field becomes NaN so the clamp helpers fall back to
+// their default rather than coercing "" to 0.
+function numericField(raw: FormDataEntryValue | null): number {
+  return raw === null || raw === "" ? Number.NaN : Number(raw);
 }
 
 export async function submitUrl(
@@ -219,6 +227,42 @@ export async function relaunchArticle(formData: FormData): Promise<void> {
   }
   const jobId = await createAnalysisJob(article.urlOrigine);
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
+}
+
+// Resumes a run paused by the long-article preflight gate. The chosen limits are
+// clamped and stored on the job, pauseAck is set so the gate is crossed once,
+// and the job is re-queued (status -> pending) for the worker to pick up. The
+// resumed run re-scrapes from the URL, then proceeds straight through.
+export async function resumeJob(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const id = String(formData.get("id") ?? "");
+  const job = await getJob(id);
+  if (!job || job.status !== "paused") {
+    redirect({
+      href: id ? `/admin/jobs/${id}` : "/admin/jobs",
+      locale: await getLocale(),
+    });
+    return;
+  }
+  const maxClaims = clampMaxClaims(numericField(formData.get("maxClaims")));
+  const maxSearchRounds = clampMaxSearchRounds(
+    numericField(formData.get("maxSearchRounds")),
+  );
+  await db
+    .update(jobs)
+    .set({
+      status: "pending",
+      pauseAck: true,
+      maxClaims,
+      maxSearchRounds,
+      pauseInfo: null,
+      step: null,
+      progress: 0,
+      error: null,
+      startedAt: null,
+    })
+    .where(eq(jobs.id, id));
+  redirect({ href: `/admin/jobs/${id}`, locale: await getLocale() });
 }
 
 // Re-queues a job's URL as a fresh analysis. Used from the runs table to retry

@@ -29,6 +29,7 @@ const tsvector = customType<{ data: string }>({
   },
 });
 import type { RunDiagnostics } from "@/lib/pipeline/diagnostics";
+import type { JobLive, PauseInfo } from "@/lib/pipeline/job-live";
 import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
 import type { ScrapeProvenance } from "@/lib/scrape";
 
@@ -73,6 +74,7 @@ export const proposalStatusEnum = pgEnum("proposal_status", [
 export const jobStatusEnum = pgEnum("job_status", [
   "pending",
   "running",
+  "paused",
   "succeeded",
   "failed",
 ]);
@@ -323,6 +325,19 @@ export const jobs = pgTable(
     // captured during the run, for admin diagnosis. Null for jobs run before
     // this existed or that never started.
     diagnostics: jsonb().$type<RunDiagnostics>(),
+    // Admin-tunable limits applied to a resumed run (see the long-article
+    // preflight pause in run.ts). Null means "use the pipeline default".
+    maxClaims: integer(),
+    maxSearchRounds: integer(),
+    // Set true when an admin resumes a paused run, so the preflight gate is
+    // crossed exactly once instead of re-pausing on the resume re-scrape.
+    pauseAck: boolean().notNull().default(false),
+    // Why the run paused + the suggested limits shown to the admin. Null unless
+    // the job is (or was) paused for review.
+    pauseInfo: jsonb().$type<PauseInfo>(),
+    // Rolling snapshot of in-flight metrics (claims found, search round, emerging
+    // verdict) polled by the admin progress UI. Null before the run starts.
+    live: jsonb().$type<JobLive>(),
     startedAt: timestamp({ withTimezone: true, mode: "date" }),
     finishedAt: timestamp({ withTimezone: true, mode: "date" }),
     createdAt: timestamp({ withTimezone: true, mode: "date" })

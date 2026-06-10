@@ -27,5 +27,10 @@ export async function GET(
     progress: job.progress,
     error: job.error,
     articleId: job.articleId,
+    diagnostics: job.diagnostics,
+    live: job.live,
+    pauseInfo: job.pauseInfo,
+    maxClaims: job.maxClaims,
+    maxSearchRounds: job.maxSearchRounds,
   });
 }

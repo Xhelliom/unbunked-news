@@ -9,16 +9,12 @@ import {
   type TokenUsage,
 } from "./client";
 import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
+import { clampMaxClaims, DEFAULT_MAX_CLAIMS } from "./limits";
 import { recordClaimsTool } from "./schemas";
 
 // 3-8 short claim sentences fit easily; the headroom only guards against a
 // pathological article producing a long list and getting cut off mid-array.
 const MAX_TOKENS = 4096;
-
-// Hard ceiling on the claim list. The prompt targets 3-8, but a page crafted to
-// induce a long list would otherwise multiply every downstream reasoning call
-// (verify/assess) and the per-claim DB writes — so we truncate after filtering.
-const MAX_CLAIMS = 12;
 
 export type ExtractClaimsResult = {
   claims: string[];
@@ -36,7 +32,13 @@ const SYSTEM =
 export async function extractClaims(
   article: ScrapedArticle,
   model: string,
+  maxClaims: number = DEFAULT_MAX_CLAIMS,
 ): Promise<ExtractClaimsResult> {
+  // A page crafted to induce a long list would otherwise multiply every
+  // downstream reasoning call (verify/assess) and the per-claim DB writes, so
+  // the list is truncated after filtering. The cap is admin-tunable for a long
+  // article (see the preflight pause) but stays bounded by clampMaxClaims.
+  const cap = clampMaxClaims(maxClaims);
   const client = getClaude();
   const message = await client.messages.create({
     model,
@@ -68,7 +70,7 @@ export async function extractClaims(
     (claim): claim is string =>
       typeof claim === "string" && claim.trim().length > 0,
   );
-  const claims = filtered.slice(0, MAX_CLAIMS);
+  const claims = filtered.slice(0, cap);
 
   const dropped = rawClaims.length - filtered.length;
   const capped = filtered.length - claims.length;
@@ -76,7 +78,7 @@ export async function extractClaims(
   if (!input) warnings.push("record_claims tool was not called");
   if (claims.length === 0) warnings.push("no claims extracted");
   if (dropped > 0) warnings.push(`${dropped} malformed/empty claim(s) dropped`);
-  if (capped > 0) warnings.push(`${capped} claim(s) over the ${MAX_CLAIMS} cap dropped`);
+  if (capped > 0) warnings.push(`${capped} claim(s) over the ${cap} cap dropped`);
 
   const diagnostic = toolCallDiagnostic(
     "extracting",

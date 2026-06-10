@@ -7,7 +7,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { ScrapedArticle } from "@/lib/scrape";
 
 // Bound the article body so a single very long page can't blow up token usage.
-const MAX_CONTENT_CHARS = 16_000;
+// Exported so run.ts can flag (and pause on) an article that will be truncated.
+export const MAX_CONTENT_CHARS = 16_000;
 
 // Random per-process delimiter wrapping the untrusted article body. An attacker
 // who controls the scraped body can't guess it, so it can't forge the fence to

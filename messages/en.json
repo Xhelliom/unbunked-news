@@ -498,6 +498,7 @@
       "statuses": {
         "pending": "Pending",
         "running": "Running",
+        "paused": "Paused",
         "succeeded": "Done",
         "failed": "Failed"
       },
@@ -521,6 +522,26 @@
         "warnings": "Warnings",
         "yes": "Yes",
         "no": "No"
+      },
+      "live": {
+        "title": "Live",
+        "contentChars": "Article size",
+        "chars": "{count, number} characters",
+        "claimsExtracted": "Claims extracted",
+        "verifyRound": "Search round",
+        "sourcesFound": "Sources found",
+        "verdict": "Verdict",
+        "reliabilityScore": "Reliability score",
+        "claimsAssessed": "Claims assessed",
+        "rewriteLocalesDone": "Rewrites produced"
+      },
+      "pause": {
+        "title": "Analysis paused — long article",
+        "description": "The article is {contentChars, number} characters and will be truncated at {truncateAt, number} before every reasoning phase. Adjust the limits and resume, or keep the suggested values.",
+        "maxClaims": "Max claims",
+        "maxSearchRounds": "Max web search rounds",
+        "defaultHint": "Default: {value, number}",
+        "resume": "Resume analysis"
       }
     },
     "jobs": {

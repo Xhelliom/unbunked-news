@@ -498,6 +498,7 @@
       "statuses": {
         "pending": "En attente",
         "running": "En cours",
+        "paused": "En pause",
         "succeeded": "Terminé",
         "failed": "Échec"
       },
@@ -521,6 +522,26 @@
         "warnings": "Avertissements",
         "yes": "Oui",
         "no": "Non"
+      },
+      "live": {
+        "title": "En direct",
+        "contentChars": "Taille de l'article",
+        "chars": "{count, number} caractères",
+        "claimsExtracted": "Affirmations extraites",
+        "verifyRound": "Tour de recherche",
+        "sourcesFound": "Sources trouvées",
+        "verdict": "Verdict",
+        "reliabilityScore": "Score de fiabilité",
+        "claimsAssessed": "Affirmations évaluées",
+        "rewriteLocalesDone": "Réécritures produites"
+      },
+      "pause": {
+        "title": "Analyse en pause — article long",
+        "description": "L'article fait {contentChars, number} caractères et sera tronqué à {truncateAt, number} avant chaque phase de raisonnement. Ajustez les limites puis reprenez, ou conservez les valeurs proposées.",
+        "maxClaims": "Nombre d'affirmations max",
+        "maxSearchRounds": "Tours de recherche web max",
+        "defaultHint": "Défaut : {value, number}",
+        "resume": "Reprendre l'analyse"
       }
     },
     "jobs": {

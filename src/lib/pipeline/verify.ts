@@ -15,26 +15,18 @@ import {
   type TokenUsage,
 } from "./client";
 import { type StepDiagnostic } from "./diagnostics";
+import { DEFAULT_MAX_SEARCH_ROUNDS } from "./limits";
 import {
   DEFAULT_SEARCH_PROVIDER,
   type AnalysisSource,
   type SearchProvider,
 } from "./schemas";
 
-// Bounds the pause_turn continuation loop: web search can ask to resume many
-// times, but a runaway loop would burn tokens, so it stops after this many
-// rounds and the diagnostics flag the truncation.
-const MAX_SEARCH_ROUNDS = 5;
-
 const SYSTEM =
   "You are a fact-checking researcher. For each claim, use web search to find " +
   "what reputable, independent sources say. Be skeptical of the original " +
   "article. Summarize the evidence for and against each claim and always note " +
   "the source URLs you relied on.";
-
-const SEARCH_TOOLS: Anthropic.Messages.ToolUnion[] = [
-  { type: "web_search_20250305", name: "web_search", max_uses: 5 },
-];
 
 export type VerificationFindings = {
   findings: string;
@@ -43,6 +35,18 @@ export type VerificationFindings = {
   searchRequests: number;
   searchProvider: SearchProvider;
   diagnostic: StepDiagnostic;
+};
+
+export type VerifyOptions = {
+  // Bounds the pause_turn continuation loop: web search can ask to resume many
+  // times, but a runaway loop would burn tokens, so it stops after this many
+  // rounds and the diagnostics flag the truncation. Admin-tunable for a long
+  // article (see the preflight pause).
+  maxSearchRounds?: number;
+  // Called after each web-search round with the round number and the unique
+  // sources gathered so far, so the admin progress UI can show the slowest phase
+  // advancing live instead of stalling on a single bar.
+  onRound?: (round: number, sources: number) => void | Promise<void>;
 };
 
 // Web search is billed per request, separately from tokens. The count is
@@ -73,7 +77,12 @@ export async function verifyClaims(
   article: ScrapedArticle,
   claims: string[],
   model: string,
+  options: VerifyOptions = {},
 ): Promise<VerificationFindings> {
+  const maxRounds = options.maxSearchRounds ?? DEFAULT_MAX_SEARCH_ROUNDS;
+  const searchTools: Anthropic.Messages.ToolUnion[] = [
+    { type: "web_search_20250305", name: "web_search", max_uses: maxRounds },
+  ];
   const client = getClaude();
   const messages: Anthropic.MessageParam[] = [
     {
@@ -95,33 +104,41 @@ export async function verifyClaims(
   ];
 
   const allContent: Anthropic.ContentBlock[] = [];
+  // Unique sources gathered so far, for the live per-round callback.
+  const liveSourceCount = (): number =>
+    new Map(collectSources(allContent).map((s) => [s.url, s])).size;
+
   let guard = 0;
+  let round = 1;
   let usage = ZERO_USAGE;
   let searchRequests = 0;
   let message = await client.messages.create({
     model,
     max_tokens: 8192,
     system: withCurrentDate(SYSTEM),
-    tools: SEARCH_TOOLS,
+    tools: searchTools,
     messages,
   });
   allContent.push(...message.content);
   usage = addUsage(usage, usageOf(message));
   searchRequests += searchRequestsOf(message);
+  await options.onRound?.(round, liveSourceCount());
 
-  while (message.stop_reason === "pause_turn" && guard < MAX_SEARCH_ROUNDS) {
+  while (message.stop_reason === "pause_turn" && guard < maxRounds) {
     messages.push({ role: "assistant", content: message.content });
     message = await client.messages.create({
       model,
       max_tokens: 8192,
       system: withCurrentDate(SYSTEM),
-      tools: SEARCH_TOOLS,
+      tools: searchTools,
       messages,
     });
     allContent.push(...message.content);
     usage = addUsage(usage, usageOf(message));
     searchRequests += searchRequestsOf(message);
     guard += 1;
+    round += 1;
+    await options.onRound?.(round, liveSourceCount());
   }
 
   const sources = collectSources(allContent);
@@ -133,7 +150,7 @@ export async function verifyClaims(
   const warnings: string[] = [];
   if (guardExhausted) {
     warnings.push(
-      `web search stopped after ${MAX_SEARCH_ROUNDS} rounds; findings may be incomplete`,
+      `web search stopped after ${maxRounds} rounds; findings may be incomplete`,
     );
   }
   if (findings.trim().length === 0) warnings.push("no textual findings returned");

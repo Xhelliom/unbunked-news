@@ -16,7 +16,7 @@ import {
 
 const JOBS_LIMIT = 100;
 
-type JobStatus = "pending" | "running" | "succeeded" | "failed";
+type JobStatus = "pending" | "running" | "paused" | "succeeded" | "failed";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -28,6 +28,10 @@ const STATUS_BADGE: Record<
 > = {
   pending: { variant: "secondary" },
   running: { variant: "default" },
+  paused: {
+    variant: "outline",
+    className: "border-transparent bg-amber-500 text-white",
+  },
   succeeded: {
     variant: "outline",
     className: "border-transparent bg-green-600 text-white",
