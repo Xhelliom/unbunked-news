@@ -8,43 +8,11 @@ import { articles, claims } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import type { ClaimStatus } from "@/lib/claim-status";
 import type { Verdict } from "@/lib/verdicts";
+import { CLAIM_COLORS, CLAIM_FR, VERDICT_COLORS, VERDICT_FR, WEEK_S, esc, truncate } from "../_shared";
 
 export const dynamic = "force-dynamic";
 
-const WEEK_S = 7 * 24 * 60 * 60;
 const W = 600;
-
-const VERDICT_COLORS: Record<Verdict, string> = {
-  reliable: "#059669",
-  nuanced: "#f59e0b",
-  fragile: "#ea580c",
-  debunked: "#dc2626",
-  unverifiable: "#71717a",
-};
-
-const VERDICT_FR: Record<Verdict, string> = {
-  reliable: "Fiable",
-  nuanced: "Imprécis",
-  fragile: "Contestable",
-  debunked: "Faux",
-  unverifiable: "Non vérifiable",
-};
-
-const CLAIM_COLORS: Record<ClaimStatus, string> = {
-  supported: "#059669",
-  partly_true: "#f59e0b",
-  misleading: "#ea580c",
-  false: "#dc2626",
-  unverifiable: "#71717a",
-};
-
-const CLAIM_FR: Record<ClaimStatus, string> = {
-  supported: "Vrai",
-  partly_true: "Nuancé",
-  misleading: "Trompeur",
-  false: "Faux",
-  unverifiable: "Non vérifié",
-};
 
 type SampleClaim = { claimText: string; status: ClaimStatus | null; position: number };
 type SampleData = {
@@ -64,6 +32,7 @@ const loadSample = unstable_cache(
         claims: {
           columns: { claimText: true, status: true, position: true },
           orderBy: [asc(claims.position)],
+          limit: 3,
         },
       },
     });
@@ -72,20 +41,12 @@ const loadSample = unstable_cache(
       title: article.title,
       verdict: article.verdict,
       reliabilityScore: article.reliabilityScore,
-      claims: (article.claims as SampleClaim[]).slice(0, 3),
+      claims: article.claims as SampleClaim[],
     };
   },
   ["readme-sample"],
   { revalidate: WEEK_S, tags: [ARTICLES_CACHE_TAG] },
 );
-
-function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function truncate(s: string, max: number): string {
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
-}
 
 const HEADER_H = 64;
 const ARTICLE_ROW_H = 50;

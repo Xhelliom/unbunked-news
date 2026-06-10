@@ -7,24 +7,9 @@ import { db } from "@/db/client";
 import { articles } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { HOUR_S, VERDICT_COLORS, VERDICT_FR, esc } from "../_shared";
 
 export const dynamic = "force-dynamic";
-
-const VERDICT_COLORS: Record<Verdict, string> = {
-  reliable: "#059669",
-  nuanced: "#f59e0b",
-  fragile: "#ea580c",
-  debunked: "#dc2626",
-  unverifiable: "#71717a",
-};
-
-const VERDICT_FR: Record<Verdict, string> = {
-  reliable: "Fiable",
-  nuanced: "Imprécis",
-  fragile: "Contestable",
-  debunked: "Faux",
-  unverifiable: "N/V",
-};
 
 const loadStats = unstable_cache(
   async () =>
@@ -34,15 +19,8 @@ const loadStats = unstable_cache(
       .where(and(eq(articles.published, true), isNull(articles.deletedAt)))
       .groupBy(articles.verdict),
   ["readme-stats"],
-  { revalidate: 3600, tags: [ARTICLES_CACHE_TAG] },
+  { revalidate: HOUR_S, tags: [ARTICLES_CACHE_TAG] },
 );
-
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 const W = 600;
 const H = 160;
@@ -50,6 +28,7 @@ const BAR_X = 20;
 const BAR_W = W - BAR_X * 2;
 const BAR_Y = 120;
 const BAR_H = 8;
+const BAR_GAP = 2;
 
 export async function GET(): Promise<Response> {
   try {
@@ -63,22 +42,27 @@ export async function GET(): Promise<Response> {
       total += Number(row.total);
     }
 
-    // Verdict distribution bar segments
+    // Verdict distribution bar — last segment fills to the right edge exactly.
     const barSegments: string[] = [];
-    let cx = BAR_X;
-    for (const v of VERDICTS) {
-      const n = counts[v] ?? 0;
-      if (n === 0 || total === 0) continue;
-      const segW = Math.max(4, Math.round((n / total) * BAR_W));
-      barSegments.push(
-        `<rect x="${cx}" y="${BAR_Y}" width="${segW}" height="${BAR_H}" rx="2" fill="${VERDICT_COLORS[v]}"/>`,
-      );
-      cx += segW + 2;
-    }
     if (total === 0) {
       barSegments.push(
         `<rect x="${BAR_X}" y="${BAR_Y}" width="${BAR_W}" height="${BAR_H}" rx="4" fill="#2d3748"/>`,
       );
+    } else {
+      const activeVerdicts = VERDICTS.filter((v) => (counts[v] ?? 0) > 0);
+      let cx = BAR_X;
+      for (let idx = 0; idx < activeVerdicts.length; idx++) {
+        const v = activeVerdicts[idx];
+        const n = counts[v] ?? 0;
+        const isLast = idx === activeVerdicts.length - 1;
+        const segW = isLast
+          ? Math.max(BAR_GAP, BAR_X + BAR_W - cx)
+          : Math.max(4, Math.round((n / total) * BAR_W));
+        barSegments.push(
+          `<rect x="${cx}" y="${BAR_Y}" width="${segW}" height="${BAR_H}" rx="2" fill="${VERDICT_COLORS[v]}"/>`,
+        );
+        cx += segW + BAR_GAP;
+      }
     }
 
     // Legend — 5 items spread across the full width

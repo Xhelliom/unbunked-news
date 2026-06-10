@@ -6,25 +6,10 @@ import { unstable_cache } from "next/cache";
 import { db } from "@/db/client";
 import { articles } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
-import type { Verdict } from "@/lib/verdicts";
+import { type Verdict } from "@/lib/verdicts";
+import { HOUR_S, VERDICT_COLORS, VERDICT_FR, esc, truncate } from "../_shared";
 
 export const dynamic = "force-dynamic";
-
-const VERDICT_COLORS: Record<Verdict, string> = {
-  reliable: "#059669",
-  nuanced: "#f59e0b",
-  fragile: "#ea580c",
-  debunked: "#dc2626",
-  unverifiable: "#71717a",
-};
-
-const VERDICT_FR: Record<Verdict, string> = {
-  reliable: "Fiable",
-  nuanced: "Imprécis",
-  fragile: "Contestable",
-  debunked: "Faux",
-  unverifiable: "Non vérifiable",
-};
 
 type LatestRow = {
   title: string;
@@ -47,19 +32,8 @@ const loadLatest = unstable_cache(
       .orderBy(desc(articles.publishedAt))
       .limit(3),
   ["readme-latest"],
-  { revalidate: 3600, tags: [ARTICLES_CACHE_TAG] },
+  { revalidate: HOUR_S, tags: [ARTICLES_CACHE_TAG] },
 );
-
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function truncate(s: string, max: number): string {
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
-}
 
 const W = 600;
 const HEADER_H = 64;
