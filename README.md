@@ -1,17 +1,15 @@
 <div align="center">
 
-<!-- ═══════════════════════════════════════════════════════════════
-     PLACEHOLDER — remplacer par une image 1280×400 px
-     Créer dans Figma : fond sombre (#0f0f0f), logo centré, tagline
-     Exporter en docs/banner-dark.png  et  docs/banner-light.png
-     ═══════════════════════════════════════════════════════════════ -->
+<!-- Logo SVG depuis le dépôt — dark/light mode automatique.
+     Remplacer par docs/banner-dark.png + docs/banner-light.png
+     quand un banner Figma 1280×400 px est prêt. -->
 <a href="https://unbunked.news">
-  <img src="docs/banner-dark.png#gh-dark-mode-only"
-       alt="Unbunked.news — Le fact-checking de l'actualité"
-       width="100%" />
-  <img src="docs/banner-light.png#gh-light-mode-only"
-       alt="Unbunked.news — Le fact-checking de l'actualité"
-       width="100%" />
+  <img src="public/logo-wordmark-dark.svg#gh-dark-mode-only"
+       alt="Unbunked.news"
+       width="260" /><br />
+  <img src="public/logo-wordmark.svg#gh-light-mode-only"
+       alt="Unbunked.news"
+       width="260" />
 </a>
 
 <br /><br />
@@ -118,13 +116,26 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
 
 ## En chiffres
 
-<!-- PLACEHOLDER — mettre à jour avec les vraies métriques -->
+<!-- Carte stats dynamique — générée depuis la DB via /api/readme/stats -->
 <div align="center">
+  <a href="https://unbunked.news">
+    <img src="https://unbunked.news/api/readme/stats"
+         alt="Stats Unbunked.news — articles analysés et répartition des verdicts"
+         width="600" />
+  </a>
+</div>
 
-| 📰 | 🔍 | ⚖️ | 🌍 |
-|:---:|:---:|:---:|:---:|
-| **–** articles analysés | **–** claims vérifiées | **–** sources consultées | **2** langues |
+---
 
+## Dernières analyses
+
+<!-- Carte dynamique — mise à jour automatique depuis la DB via /api/readme/latest -->
+<div align="center">
+  <a href="https://unbunked.news">
+    <img src="https://unbunked.news/api/readme/latest"
+         alt="Dernières analyses Unbunked.news"
+         width="600" />
+  </a>
 </div>
 
 ---
