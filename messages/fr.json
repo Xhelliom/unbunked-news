@@ -755,6 +755,8 @@
     "verificationTag": "Vérification d'Unbunked",
     "peekHint": "Vérification — appuyez pour développer",
     "railClaimLabel": "Aller au passage vérifié",
+    "claimNavPrev": "Vérification précédente dans ce paragraphe",
+    "claimNavNext": "Vérification suivante dans ce paragraphe",
     "sourcesConsulted": "Sources consultées",
     "backToArticles": "Tous les articles",
     "originalTitle": "Titre original",

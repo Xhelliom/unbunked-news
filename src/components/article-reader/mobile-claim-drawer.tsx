@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { cn } from "@/lib/utils";
-import {
-  type ClaimStatus,
-  claimStatusDotClasses,
-  claimStatusToVerdict,
-} from "@/lib/claim-status";
+import { claimStatusToVerdict } from "@/lib/claim-status";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
+import { ClaimStatusBadge } from "@/components/claim-status-badge";
 import { ClaimContribution } from "@/components/article-reader/claim-contribution";
 import { ContributionsDisplay } from "@/components/article-reader/contributions-display";
 import type { PublicContribution } from "@/lib/contributions/queries";
@@ -30,13 +28,12 @@ type MobileClaimDrawerProps = {
   claimIds: string[];
   articleId: string;
   isAuthenticated: boolean;
-  // The claims of the paragraph in view. When it holds more than one, a chip
-  // selector lets the reader switch between them (scroll alone can't separate
+  // The claims of the paragraph in view. When it holds more than one, a prev/
+  // next control lets the reader step through them (scroll alone can't separate
   // two claims sharing a paragraph).
   groupIndices: number[];
   selectedIndex: number;
-  onSelectIndex: (index: number) => void;
-  statusLabels: Record<ClaimStatus, string>;
+  onNavigate: (index: number) => void;
   open: boolean;
   activeSnapPoint: number | string | null;
   onSnapChange: (snap: number | string | null) => void;
@@ -44,6 +41,8 @@ type MobileClaimDrawerProps = {
   sourcesLabel: string;
   verificationLabel: string;
   peekLabel: string;
+  prevClaimLabel: string;
+  nextClaimLabel: string;
 };
 
 // Vérification en drawer bas (mobile) : peek = haut de la carte (badge +
@@ -57,8 +56,7 @@ export function MobileClaimDrawer({
   isAuthenticated,
   groupIndices,
   selectedIndex,
-  onSelectIndex,
-  statusLabels,
+  onNavigate,
   open,
   activeSnapPoint,
   onSnapChange,
@@ -66,6 +64,8 @@ export function MobileClaimDrawer({
   sourcesLabel,
   verificationLabel,
   peekLabel,
+  prevClaimLabel,
+  nextClaimLabel,
 }: MobileClaimDrawerProps) {
   // `noBodyStyles` + `modal={false}` should leave the page interactive, but
   // vaul 1.1.2 still pins `pointer-events: none` on <body> while open (it would
@@ -93,19 +93,15 @@ export function MobileClaimDrawer({
   const expanded = activeSnapPoint === EXPANDED_SNAP;
   const hasMultiple = groupIndices.length > 1;
 
-  // Mirror the paragraph's left bar: one colour per claim, gradient across the
-  // group's distinct verdicts — so the handle echoes the whole paragraph, not
-  // just the selected claim.
-  const handleColors: string[] = [];
-  for (const index of groupIndices) {
-    const color = `var(--verdict-${claimStatusToVerdict[claims[index].status]})`;
-    if (!handleColors.includes(color)) handleColors.push(color);
-  }
-  const handleBackground =
-    handleColors.length <= 1
-      ? handleColors[0]
-      : `linear-gradient(to right, ${handleColors.join(", ")})`;
+  // One verification at a time: the handle takes the colour of the verdict on
+  // screen and changes as the reader steps through the paragraph's claims. The
+  // position counter carries the "several verdicts here" signal instead.
+  const handleBackground = `var(--verdict-${claimStatusToVerdict[claim.status]})`;
 
+  const position = groupIndices.indexOf(selectedIndex);
+  const prevIndex = position > 0 ? groupIndices[position - 1] : null;
+  const nextIndex =
+    position < groupIndices.length - 1 ? groupIndices[position + 1] : null;
 
   return (
     <Drawer.Root
@@ -124,10 +120,10 @@ export function MobileClaimDrawer({
     >
       <Drawer.Portal>
         <Drawer.Content className="fixed inset-x-0 bottom-0 z-30 h-dvh outline-none lg:hidden">
-          {/* Neon glow: a blurred gradient strip straddling the top edge, behind
-              the opaque card (-z-10) so it only shows above the edge and never
-              paints over the content. Echoes the handle (gradient across the
-              paragraph's claims). */}
+          {/* Neon glow: a blurred strip straddling the top edge, behind the
+              opaque card (-z-10) so it only shows above the edge and never
+              paints over the content. Echoes the handle (the active verdict's
+              colour). */}
           <span
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-6 -translate-y-1/2 opacity-60 blur-md"
@@ -148,44 +144,43 @@ export function MobileClaimDrawer({
             >
             <span
               aria-hidden
-              className={cn(
-                "h-1.5 rounded-full transition-all",
-                hasMultiple ? "w-32" : "w-16",
-              )}
+              className="h-1.5 w-16 rounded-full transition-colors"
               style={{ background: handleBackground }}
             />
           </button>
 
-          {hasMultiple && (
-            <div className="flex shrink-0 flex-wrap gap-1.5 px-4 pb-2.5">
-              {groupIndices.map((index) => {
-                const isSelected = index === selectedIndex;
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => onSelectIndex(index)}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                      isSelected
-                        ? "bg-secondary border-foreground/20 text-foreground"
-                        : "text-muted-foreground border-transparent",
-                    )}
-                  >
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "size-1.5 rounded-full",
-                        claimStatusDotClasses[claims[index].status],
-                      )}
-                    />
-                    {statusLabels[claims[index].status]}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="flex shrink-0 items-center justify-between gap-2 px-4 pb-2.5">
+            <ClaimStatusBadge status={claim.status} />
+            {hasMultiple ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => prevIndex !== null && onNavigate(prevIndex)}
+                  disabled={prevIndex === null}
+                  aria-label={prevClaimLabel}
+                  className="text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full border transition-colors disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <span className="text-muted-foreground text-xs font-medium tabular-nums">
+                  {position + 1}/{groupIndices.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => nextIndex !== null && onNavigate(nextIndex)}
+                  disabled={nextIndex === null}
+                  aria-label={nextClaimLabel}
+                  className="text-muted-foreground hover:text-foreground flex size-7 items-center justify-center rounded-full border transition-colors disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <span className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.05em] whitespace-nowrap uppercase">
+                {verificationLabel}
+              </span>
+            )}
+          </div>
 
           <div
             className={cn(
@@ -198,7 +193,7 @@ export function MobileClaimDrawer({
               sourcesLabel={sourcesLabel}
               verificationLabel={verificationLabel}
               frameless
-              hideHeader={hasMultiple}
+              hideHeader
             />
             <ContributionsDisplay
               contributions={claimContributions[selectedIndex] ?? []}

@@ -31,6 +31,8 @@ export type ArticleReaderProps = {
   verificationLabel: string;
   peekLabel: string;
   railLabel: string;
+  prevClaimLabel: string;
+  nextClaimLabel: string;
 };
 
 // Vue lecture : texte annoté à gauche, vérification synchrone (scroll + hover) à droite.
@@ -47,6 +49,8 @@ export function ArticleReader({
   verificationLabel,
   peekLabel,
   railLabel,
+  prevClaimLabel,
+  nextClaimLabel,
 }: ArticleReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -156,9 +160,15 @@ export function ArticleReader({
     setExpandedForGroupKey(groupKeyForClaim(index));
   };
 
-  // Switching chips inside the already-open drawer only swaps the card — it must
-  // not change the snap, so the drawer stays where the reader left it.
-  const selectClaimInDrawer = (index: number) => setTappedClaim(index);
+  // Stepping through the paragraph's claims inside the open drawer swaps the
+  // card and scrolls its highlight into view (article, rail and drawer stay in
+  // sync), without touching the snap — the drawer stays where the reader left it.
+  const navigateToClaimInGroup = (index: number) => {
+    setTappedClaim(index);
+    containerRef.current
+      ?.querySelector(`[data-claim-index="${index}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const scrollToClaim = (index: number) => {
     selectClaim(index);
@@ -243,8 +253,7 @@ export function ArticleReader({
           isAuthenticated={isAuthenticated}
           groupIndices={groupIndices}
           selectedIndex={drawerSelectedIndex}
-          onSelectIndex={selectClaimInDrawer}
-          statusLabels={statusLabels}
+          onNavigate={navigateToClaimInGroup}
           open={mobileOpen}
           activeSnapPoint={activeSnapPoint}
           onSnapChange={handleSnapChange}
@@ -252,6 +261,8 @@ export function ArticleReader({
           sourcesLabel={sourcesLabel}
           verificationLabel={verificationLabel}
           peekLabel={peekLabel}
+          prevClaimLabel={prevClaimLabel}
+          nextClaimLabel={nextClaimLabel}
         />
       )}
     </div>

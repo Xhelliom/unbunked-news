@@ -755,6 +755,8 @@
     "verificationTag": "Unbunked's verification",
     "peekHint": "Verification — tap to expand",
     "railClaimLabel": "Go to checked claim",
+    "claimNavPrev": "Previous verification in this paragraph",
+    "claimNavNext": "Next verification in this paragraph",
     "sourcesConsulted": "Sources consulted",
     "backToArticles": "All articles",
     "originalTitle": "Original headline",
