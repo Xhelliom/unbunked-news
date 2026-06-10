@@ -1,33 +1,89 @@
-# Unbunked News
+# Unbunked.news
 
-Plateforme de fact-checking : on soumet l'URL d'un article, une pipeline IA
-(Claude + recherche web) extrait les affirmations vérifiables, les vérifie une
-à une avec de vraies sources, puis produit un verdict, un score de fiabilité,
-une analyse claim par claim, et une **réécriture multilingue** de l'article.
-Le tout est publié sur un front public façon site d'actualité, bilingue
-(FR/EN) avec thème clair/sombre.
+> Le fact-checking de l'actualité, vérifié affirmation par affirmation.
 
-## Stack
+---
 
-- **Next.js 16** (App Router, Turbopack) · React 19 · TypeScript
-- **Tailwind CSS v4** + shadcn/ui · thème clair/sombre
-- **next-intl** — internationalisation FR/EN
-- **Drizzle ORM** + **PostgreSQL 16**
-- **BetterAuth** — authentification admin (email/mot de passe)
-- **Anthropic SDK** (Claude) + web search tool
-- Scraping : `@extractus/article-extractor` avec repli Puppeteer
-- Conteneurisation **Docker Compose** / manifests **Kubernetes**
+## Le site
 
-## Prérequis
+**[unbunked.news](https://unbunked.news)** est une plateforme de fact-checking indépendante qui analyse les articles d'actualité en profondeur — pas avec un simple vrai/faux, mais affirmation par affirmation, sources à l'appui.
+
+### Ce qu'Unbunked fait
+
+Chaque article soumis passe par une pipeline d'analyse rigoureuse :
+
+1. **Extraction des affirmations** — les 3 à 8 affirmations factuelles les plus importantes de l'article sont isolées.
+2. **Vérification** — chaque affirmation est recoupée avec des sources externes indépendantes via recherche web.
+3. **Scoring** — un score de fiabilité de 0 à 100 est calculé sur six critères pondérés.
+4. **Réécriture** — l'article est réécrit en version neutre et factuelle, disponible en français et en anglais.
+
+Le résultat est publié sur le feed public : verdict clair, score, analyse claim par claim, et sources consultées — tout est transparent.
+
+### Les verdicts
+
+| Verdict | Signification |
+|---------|--------------|
+| **Fiable** | Les affirmations principales sont exactes et bien sourcées |
+| **Imprécis** | Des éléments vrais mais simplifiés ou sortis de contexte |
+| **Contestable** | Des affirmations importantes manquent de preuves solides |
+| **Faux** | Des affirmations centrales sont contredites par les sources |
+| **Non vérifiable** | Les sources disponibles ne permettent pas de trancher |
+
+### La méthode
+
+Unbunked repose sur trois principes :
+
+- **Les preuves d'abord** — chaque évaluation s'appuie sur des sources consultées, jamais sur des intuitions. Le raisonnement est visible.
+- **Rigueur, pas opinion** — la plateforme évalue la solidité journalistique, pas l'orientation politique. L'orientation est signalée séparément.
+- **Assumer le doute** — quand les sources ne permettent pas de conclure, c'est marqué « non vérifiable » plutôt qu'un chiffre inventé.
+
+### Six critères d'évaluation
+
+| Critère | Ce qui est mesuré |
+|---------|------------------|
+| **Exactitude** | Chiffres, dates, citations — sont-ils corrects ? |
+| **Recoupement** | Les faits sont-ils confirmés par des sources indépendantes ? |
+| **Sources citées** | Les références sont-elles nommées, vérifiables, et indépendantes ? |
+| **Contexte** | Des faits essentiels sont-ils omis de façon trompeuse ? |
+| **Transparence** | Auteur, date, éditeur, financements — sont-ils identifiables ? |
+| **Fraîcheur** | L'info est-elle à jour ? (critère conditionnel, sujets sensibles au temps) |
+
+### Participer
+
+- **Proposer un article** : soumets l'URL d'un article à vérifier sur [unbunked.news/submit](https://unbunked.news/submit).
+- **Signaler une erreur** : chaque analyse publiée accepte des suggestions de correction ou de sources complémentaires.
+
+---
+
+---
+
+## Le dépôt
+
+Ce dépôt contient le code source complet de la plateforme unbunked.news.
+
+### Stack technique
+
+| Couche | Technologie |
+|--------|-------------|
+| **Framework** | Next.js 16 (App Router, Turbopack) · React 19 · TypeScript |
+| **Frontend** | Tailwind CSS v4 · shadcn/ui · thème clair/sombre |
+| **Internationalisation** | next-intl (FR/EN) |
+| **Base de données** | PostgreSQL 16 · Drizzle ORM |
+| **Authentification** | BetterAuth (email/mot de passe, admin uniquement) |
+| **IA** | Anthropic SDK (Claude) · web search tool |
+| **Scraping** | `@extractus/article-extractor` · Puppeteer (repli) |
+| **Infra** | Docker Compose (local) · Kubernetes (production) |
+| **Emails** | Resend · Nodemailer |
+| **Package manager** | pnpm |
+
+### Prérequis
 
 - Node.js 20+
 - pnpm
 - Docker (pour PostgreSQL en local)
 - Une clé API Anthropic (`ANTHROPIC_API_KEY`)
 
----
-
-## Démarrage rapide (développement local)
+### Démarrage rapide (développement local)
 
 ```bash
 # 1. Dépendances
@@ -51,30 +107,25 @@ pnpm db:migrate
 
 # 4. Créer le premier compte admin
 pnpm db:seed-admin "toi@exemple.com" "un-mot-de-passe-fort"
-# ou sans mot de passe: génération automatique (affichée en sortie)
+# Sans mot de passe : génération automatique (affichée en sortie)
 pnpm db:seed-admin "toi@exemple.com"
-# note: avec email CLI, la génération auto est prioritaire même si ADMIN_PASSWORD
-# est présent dans .env (fallback legacy uniquement sans arguments CLI)
-# reset password d'un compte existant (+ promotion admin)
+# Reset mot de passe d'un compte existant (+ promotion admin)
 pnpm db:seed-admin "toi@exemple.com" --reset-password
 
 # 5. Démarrer l'app
 pnpm dev
 ```
 
-L'application est disponible sur **http://localhost:3030** (port par défaut).
+L'application est disponible sur **http://localhost:3030**.
 
-En local, `pnpm dev` tourne par défaut en rôle **`hybrid`** : le même process
-sert le HTTP **et** exécute la pipeline IA. Rien à configurer — voir
-[Rôles d'exécution](#rôles-dexécution-web--worker--hybrid) pour séparer web et
-worker en production.
+En local, `pnpm dev` tourne en mode **`hybrid`** : le même process sert le HTTP et exécute la pipeline IA. Voir [Rôles d'exécution](#rôles-dexécution) pour séparer web et worker en production.
 
 ### Pages principales
 
 | Page | URL |
 |------|-----|
 | Feed public | `http://localhost:3030/` |
-| Proposer un article (public) | `http://localhost:3030/submit` |
+| Proposer un article | `http://localhost:3030/submit` |
 | Connexion admin | `http://localhost:3030/login` |
 | Administration | `http://localhost:3030/admin` |
 
@@ -83,12 +134,12 @@ worker en production.
 1. Se connecter sur `/login` avec les identifiants du seed.
 2. Aller sur `/admin/submit`, coller l'URL d'un article.
 3. Suivre l'avancement (scrape → extraction → vérification → agrégation → réécriture multilingue).
-4. Réviser le brouillon (titre, résumé, verdict, score, réécritures par langue), puis **Publier**.
+4. Réviser le brouillon (titre, résumé, verdict, score, réécritures), puis **Publier**.
 5. L'article apparaît sur le feed `/`.
 
 ---
 
-## Stack complet avec Docker Compose
+### Stack complet avec Docker Compose
 
 ```bash
 docker compose up --build
@@ -99,9 +150,6 @@ Seed admin dans le conteneur :
 ```bash
 docker compose exec app sh -c \
   'pnpm db:seed-admin "toi@exemple.com" "mot-de-passe-fort"'
-# ou reset sur un compte existant:
-docker compose exec app sh -c \
-  'pnpm db:seed-admin "toi@exemple.com" --reset-password'
 ```
 
 Adminer (inspecteur DB) :
@@ -113,7 +161,7 @@ docker compose --profile tools up adminer
 
 ---
 
-## Scripts
+### Scripts
 
 | Commande | Description |
 |----------|-------------|
@@ -123,12 +171,12 @@ docker compose --profile tools up adminer
 | `pnpm lint` | ESLint |
 | `pnpm db:generate` | Génère une migration depuis le schéma Drizzle |
 | `pnpm db:migrate` | Applique les migrations en attente |
-| `pnpm db:seed-admin "email" ["password"] [--reset-password]` | Crée/promeut le compte admin; auto-génère le mot de passe si absent; `--reset-password` force une mise à jour du mot de passe pour un compte existant |
+| `pnpm db:seed-admin "email" ["password"] [--reset-password]` | Crée/promeut le compte admin |
 | `pnpm db:studio` | Ouvre Drizzle Studio |
 
 ---
 
-## Variables d'environnement
+### Variables d'environnement
 
 Toutes les variables sont documentées dans `.env.example`.
 
@@ -138,7 +186,7 @@ Toutes les variables sont documentées dans `.env.example`.
 | `ANTHROPIC_API_KEY` | oui | Clé API Anthropic |
 | `BETTER_AUTH_SECRET` | oui | Secret des sessions (`openssl rand -base64 32`) |
 | `BETTER_AUTH_URL` | oui | URL publique de l'app |
-| `APP_ROLE` | non | Rôle du process : `web`, `worker` ou `hybrid` (défaut). Voir [Rôles d'exécution](#rôles-dexécution-web--worker--hybrid) |
+| `APP_ROLE` | non | `web`, `worker` ou `hybrid` (défaut) |
 | `DATABASE_POOL_MAX` | non | Connexions max du pool Postgres par process (défaut 10) |
 | `APP_PORT` / `DB_PORT` / `ADMINER_PORT` | non | Ports du stack Docker (défauts 3030/5434/8090) |
 | `ANTHROPIC_MODEL` | non | Modèle Claude |
@@ -147,12 +195,12 @@ Toutes les variables sont documentées dans `.env.example`.
 
 ---
 
-## Structure du projet
+### Structure du projet
 
 ```
 src/
   app/[locale]/
-    (public)/            # feed, page article (lecture annotée), formulaire de proposition
+    (public)/            # feed, page article, formulaire de proposition
     admin/               # administration (protégée)
     login/               # connexion admin
     api/                 # statut des jobs + BetterAuth
@@ -166,79 +214,46 @@ src/
   db/
     schema.ts            # tables Drizzle
     client.ts
-    seed-admin.ts / seed-articles.ts / clean-articles.ts
   lib/
     pipeline/            # pipeline IA
       extract-claims.ts  # phase 1 — extraction
       verify.ts          # phase 2 — vérification web
       aggregate.ts       # phase 3 — agrégation
       rewrite.ts         # phase 4 — réécriture multilingue
-      queue.ts           # file de jobs (claim SKIP LOCKED + reaper)
-      worker.ts          # boucle worker (draine la file)
-    runtime-role.ts      # résolution de APP_ROLE (web/worker/hybrid)
-    jobs.ts              # création des jobs (insère en pending)
+      queue.ts           # file de jobs (SKIP LOCKED + reaper)
+      worker.ts          # boucle worker
     scrape.ts            # extraction d'article (+ Puppeteer)
     articles.ts          # requêtes publiques
     reading.ts           # ancre les claims aux paragraphes
-    boilerplate.ts       # nettoie pubs/CTA
-    claim-status.ts      # statuts et couleurs
 drizzle/                 # migrations SQL
 k8s/                     # manifests Kubernetes
 ```
 
 ---
 
-## Rôles d'exécution (web / worker / hybrid)
+### Rôles d'exécution
 
-La pipeline IA ne tourne plus « après la requête » dans le pod qui l'a reçue :
-elle passe par une **file de jobs durable en base**. Un job soumis est inséré en
-`pending`, puis un *worker* le réclame de façon atomique
-(`SELECT … FOR UPDATE SKIP LOCKED`) — deux process ne prennent jamais le même
-job. Un *reaper* requeue les jobs bloqués (pod tué en plein traitement), donc
-**plus aucun job orphelin** lors d'un redéploiement ou d'un scale-down.
-
-Une **même image** sert les trois rôles ; la variable `APP_ROLE` décide du
-comportement du process au démarrage :
+La pipeline IA passe par une **file de jobs durable en base**. Un job soumis est inséré en `pending`, puis un worker le réclame atomiquement (`SELECT … FOR UPDATE SKIP LOCKED`). Un reaper requeue les jobs bloqués — plus aucun job orphelin lors d'un redéploiement.
 
 | `APP_ROLE` | Sert le HTTP | Draine la file | Pour qui |
 |------------|:---:|:---:|---|
-| `hybrid` *(défaut)* | ✅ | ✅ | dev local, `docker compose`, faible volume — **un seul process suffit** |
-| `web` | ✅ | ❌ | pods derrière l'ingress, qui ne doivent pas exécuter de jobs |
-| `worker` | (serveur up mais hors ingress) | ✅ | pods dédiés au traitement des jobs |
+| `hybrid` *(défaut)* | ✅ | ✅ | dev local, Docker Compose, faible volume |
+| `web` | ✅ | ❌ | pods derrière l'ingress |
+| `worker` | (up mais hors ingress) | ✅ | pods dédiés aux jobs |
 
 ```bash
-# Tout-en-un (défaut) — aucun réglage requis
-pnpm dev                 # = APP_ROLE=hybrid
-
-# Séparer les rôles (ex. deux terminaux en local)
 APP_ROLE=web    pnpm start    # sert le site, n'exécute aucun job
 APP_ROLE=worker pnpm start    # exécute les jobs, pas de trafic public
 ```
 
-> La commande reste `node server.js` (resp. `pnpm start`) dans **tous** les cas :
-> c'est `instrumentation.ts` qui démarre la boucle worker quand le rôle est
-> `worker` ou `hybrid`.
-
-**Concurrence des jobs** : on traite un job à la fois par process (borne la RAM
-Chromium/LLM). Pour aller plus vite, ajoute des process `worker` — le
-`SKIP LOCKED` rend l'ajout de replicas sûr.
-
-**Connexions DB** : chaque process (web ou worker) ouvre jusqu'à
-`DATABASE_POOL_MAX` connexions. Garde la somme sous le `max_connections` de
-Postgres :
-
-```
-(replicas web max + replicas worker) × DATABASE_POOL_MAX < postgres max_connections
-```
-
-Au-delà, plafonne `DATABASE_POOL_MAX` ou place PgBouncer devant Postgres.
+**Connexions DB** : `(replicas web + replicas worker) × DATABASE_POOL_MAX < postgres max_connections`. Au-delà, plafonner `DATABASE_POOL_MAX` ou placer PgBouncer devant Postgres.
 
 ---
 
-## Déploiement Kubernetes
+### Déploiement Kubernetes
 
 ```bash
-# 1. Construire et pousser l'image (une seule image : app + migrate + seed)
+# 1. Build et push de l'image
 docker build --target runner -t ton-registry/unbunked:latest .
 docker push ton-registry/unbunked:latest
 
@@ -250,67 +265,19 @@ cp k8s/secret.example.yaml k8s/secret.yaml
 kubectl apply -f k8s/
 ```
 
-La même image sert l'app (`node server.js`), applique les migrations
-(`node dist/scripts/migrate.cjs`, en initContainer) et seed l'admin
-(`node dist/scripts/seed-admin.cjs <email>`). Les entrypoints migrate/seed sont
-bundlés au build (esbuild, cf. `build:scripts`) et migrent via le migrator
-runtime de drizzle-orm — pas besoin de drizzle-kit en production.
+Le manifest déploie deux groupes à partir de la même image :
 
-Le manifest déploie deux groupes de pods à partir de la **même image** :
-
-- **`web`** (`k8s/app.yaml`, `APP_ROLE=web`) — derrière le `Service` / `Ingress`,
-  autoscalé par le HPA (`k8s/hpa.yaml`, CPU 70 %, 2→6 replicas).
-- **`worker`** (`k8s/worker.yaml`, `APP_ROLE=worker`) — hors ingress, draine la
-  file de jobs. Monte `replicas` pour augmenter la concurrence des jobs.
+- **`web`** (`k8s/app.yaml`, `APP_ROLE=web`) — derrière l'ingress, autoscalé par le HPA (CPU 70 %, 2→6 replicas).
+- **`worker`** (`k8s/worker.yaml`, `APP_ROLE=worker`) — hors ingress, draine la file de jobs.
 
 ```bash
-# Plus de débit sur le traitement des jobs
+# Augmenter la concurrence des jobs
 kubectl scale deployment/worker -n unbunked --replicas=3
 ```
 
-Les **migrations** s'appliquent via un `Job` ponctuel, à lancer avant un
-déploiement qui change le schéma :
+Migrations (à lancer avant un déploiement qui change le schéma) :
 
 ```bash
 kubectl delete job migrate -n unbunked --ignore-not-found
 kubectl apply -f k8s/migrate-job.yaml
 ```
-
-Le **seed admin** se lance aussi via un `Job` ponctuel (même secrets que l'app) :
-
-```bash
-# 1) Le job utilise par défaut l'image latest et admin@unbunked.local.
-#    Le secret peut exposer la clé database-url (kebab-case) : le script
-#    la mappe automatiquement vers DATABASE_URL.
-#    Ajuster l'email dans la commande si nécessaire.
-kubectl delete job seed-admin -n unbunked --ignore-not-found
-kubectl apply -f k8s/seed-admin-job.yaml
-kubectl logs -f job/seed-admin -n unbunked
-```
-
-Pour forcer un reset du mot de passe d'un compte existant, ajoute
-`--reset-password` dans la `command` du job.
-
-### Seed admin en Docker simple (hors Kubernetes)
-
-```bash
-# 1) Construire l'image (une seule image app + migrate + seed)
-docker build --target runner -t unbunked:local .
-
-# 2) Lancer le seed admin en one-shot (même env que l'app)
-docker run --rm --env-file .env.production \
-  unbunked:local \
-  node dist/scripts/seed-admin.cjs "toi@exemple.com"
-
-# Variante: forcer un reset de mot de passe
-docker run --rm --env-file .env.production \
-  unbunked:local \
-  node dist/scripts/seed-admin.cjs "toi@exemple.com" --reset-password
-```
-
-Variables minimales attendues dans l'environnement du conteneur :
-`DATABASE_URL`, `BETTER_AUTH_SECRET` (et optionnellement `BETTER_AUTH_URL`,
-`ADMIN_NAME`).
-
-> Avant de monter `web` (HPA) ou `worker` en nombre de replicas, vérifie le
-> calcul des connexions DB ci-dessus.
