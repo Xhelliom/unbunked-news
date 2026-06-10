@@ -1,15 +1,10 @@
 <div align="center">
 
-<!-- Logo SVG depuis le dépôt — dark/light mode automatique.
-     Remplacer par docs/banner-dark.png + docs/banner-light.png
-     quand un banner Figma 1280×400 px est prêt. -->
+<!-- Banner généré dynamiquement depuis la DB — se met à jour à chaque publication d'article. -->
 <a href="https://unbunked.news">
-  <img src="public/logo-wordmark-dark.svg#gh-dark-mode-only"
-       alt="Unbunked.news"
-       width="260" /><br />
-  <img src="public/logo-wordmark.svg#gh-light-mode-only"
-       alt="Unbunked.news"
-       width="260" />
+  <img src="https://unbunked.news/api/readme/banner"
+       alt="Unbunked.news — Le fact-checking de l'actualité, vérifié affirmation par affirmation"
+       width="100%" />
 </a>
 
 <br /><br />
