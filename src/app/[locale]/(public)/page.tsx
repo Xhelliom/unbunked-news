@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
+import { buildAlternates } from "@/lib/seo/site";
 import { getPublishedArticles } from "@/lib/articles";
 import { isRubric, RUBRICS, type Rubric } from "@/lib/rubrics";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
@@ -20,6 +22,18 @@ function asVerdict(value: string | undefined): Verdict | undefined {
 
 function asRubric(value: string | undefined): Rubric | undefined {
   return isRubric(value) ? value : undefined;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+  return { alternates: buildAlternates("/", locale) };
 }
 
 export default async function HomePage({

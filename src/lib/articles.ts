@@ -136,6 +136,39 @@ export async function getArticleBySlug(
   };
 }
 
+export type SitemapArticle = {
+  slug: string;
+  locale: string;
+  updatedAt: Date;
+};
+
+async function loadPublishedArticlesForSitemap(): Promise<SitemapArticle[]> {
+  const rows = await db.query.articles.findMany({
+    where: and(eq(articles.published, true), isNull(articles.deletedAt)),
+    columns: { slug: true, locale: true, updatedAt: true },
+    orderBy: (article, { desc }) => [desc(article.publishedAt)],
+  });
+  return rows.map((row) => ({
+    slug: row.slug,
+    locale: row.locale,
+    updatedAt: new Date(row.updatedAt),
+  }));
+}
+
+const loadPublishedArticlesForSitemapCached = unstable_cache(
+  loadPublishedArticlesForSitemap,
+  ["published-articles-sitemap"],
+  { revalidate: ARTICLES_CACHE_REVALIDATE_SECONDS, tags: [ARTICLES_CACHE_TAG] },
+);
+
+// Every published, non-trashed article (slug + locale + lastmod) for the XML
+// sitemap. Not capped like the feed: search engines need the full set.
+export async function getPublishedArticlesForSitemap(): Promise<
+  SitemapArticle[]
+> {
+  return loadPublishedArticlesForSitemapCached();
+}
+
 async function loadArticleIdBySlug(slug: string): Promise<string | null> {
   const article = await db.query.articles.findFirst({
     where: and(eq(articles.slug, slug), isNull(articles.deletedAt)),

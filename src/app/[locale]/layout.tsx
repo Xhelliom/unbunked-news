@@ -6,6 +6,12 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
+import { absoluteUrl, SITE_NAME, SITE_URL } from "@/lib/seo/site";
+import {
+  organizationSchema,
+  websiteSchema,
+} from "@/lib/seo/structured-data";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Applies the stored/system theme class before paint to avoid a flash of the
@@ -45,9 +51,27 @@ export async function generateMetadata({
     notFound();
   }
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const title = t("title");
+  const description = t("description");
   return {
-    title: t("title"),
-    description: t("description"),
+    metadataBase: new URL(SITE_URL),
+    title: { default: title, template: `%s — ${SITE_NAME}` },
+    description,
+    applicationName: SITE_NAME,
+    robots: { index: true, follow: true },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale,
+      url: absoluteUrl("/", locale),
+      title,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -78,6 +102,7 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="flex min-h-full flex-col">
+        <JsonLd data={[organizationSchema(), websiteSchema(locale)]} />
         <ThemeProvider defaultTheme="system" disableTransitionOnChange>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </ThemeProvider>
