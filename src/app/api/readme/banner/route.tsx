@@ -163,7 +163,7 @@ export async function GET(): Promise<Response> {
 
             {/* Tagline */}
             <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: "#e5e7eb", lineHeight: 1.3 }}>
-              Le fact-checking de l'actualité,
+              Le fact-checking de l&apos;actualité,
             </div>
             <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: "#6366f1", lineHeight: 1.3, marginTop: "2px" }}>
               vérifié affirmation par affirmation.
