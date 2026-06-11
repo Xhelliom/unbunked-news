@@ -88,6 +88,8 @@ export async function ArticleAnalysisView({
             verificationLabel={t("verificationTag")}
             peekLabel={t("peekHint")}
             railLabel={t("railClaimLabel")}
+            prevClaimLabel={t("claimNavPrev")}
+            nextClaimLabel={t("claimNavNext")}
           />
         </section>
       )}

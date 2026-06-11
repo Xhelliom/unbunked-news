@@ -57,3 +57,6 @@ claude-design
 .claude/skills/
 .claude/settings.local.json
 skills-lock.json
+
+# Visual brainstorming companion
+.superpowers/

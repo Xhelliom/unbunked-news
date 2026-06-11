@@ -33,9 +33,17 @@ export function UserMenu() {
 
   if (!session?.user) {
     return (
-      <Button asChild variant="outline" size="sm">
-        <Link href="/login">{t("login")}</Link>
-      </Button>
+      <>
+        {/* Mobile: icon-only so the header stays within a phone's width. */}
+        <Button asChild variant="outline" size="icon" className="sm:hidden">
+          <Link href="/login" aria-label={t("login")}>
+            <UserRound className="size-4" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm" className="hidden sm:flex">
+          <Link href="/login">{t("login")}</Link>
+        </Button>
+      </>
     );
   }
 

@@ -739,6 +739,7 @@
   },
   "search": {
     "label": "Rechercher",
+    "close": "Fermer la recherche",
     "placeholder": "Rechercher un article…",
     "title": "Résultats pour « {query} »",
     "empty": "Aucun article ne correspond à votre recherche."
@@ -758,6 +759,8 @@
     "verificationTag": "Vérification d'Unbunked",
     "peekHint": "Vérification — appuyez pour développer",
     "railClaimLabel": "Aller au passage vérifié",
+    "claimNavPrev": "Vérification précédente dans ce paragraphe",
+    "claimNavNext": "Vérification suivante dans ce paragraphe",
     "sourcesConsulted": "Sources consultées",
     "backToArticles": "Tous les articles",
     "originalTitle": "Titre original",
