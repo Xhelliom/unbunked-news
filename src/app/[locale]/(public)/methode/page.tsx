@@ -8,9 +8,10 @@ import {
   CORE_CRITERIA,
   CRITERION_WEIGHT,
   isConditionalCriterion,
+  VERDICT_BAND,
   type ScoreCriterion,
 } from "@/lib/score-criteria";
-import { VERDICTS } from "@/lib/verdicts";
+import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { VerdictBadge } from "@/components/verdict-badge";
 
 export default async function MethodologyPage({
@@ -29,6 +30,11 @@ export default async function MethodologyPage({
   const tv = await getTranslations("verdicts");
 
   const PRINCIPLES = ["evidence", "rigor", "doubt"] as const;
+
+  const renderBand = (verdict: Verdict) => {
+    const band = VERDICT_BAND[verdict];
+    return band ? t("bandLabel", { min: band[0], max: band[1] }) : t("bandNone");
+  };
 
   const renderCriterion = (criterion: ScoreCriterion) => {
     const weight = CRITERION_WEIGHT[criterion];
@@ -126,6 +132,9 @@ export default async function MethodologyPage({
         <p className="text-muted-foreground mt-3 leading-[1.6]">
           {tv("subtitle")}
         </p>
+        <p className="text-muted-foreground mt-3 leading-[1.6]">
+          {t("verdictScoreBody")}
+        </p>
         <dl className="mt-6 space-y-4">
           {VERDICTS.map((verdict) => (
             <div
@@ -134,6 +143,9 @@ export default async function MethodologyPage({
             >
               <dt className="sm:w-40 sm:shrink-0">
                 <VerdictBadge verdict={verdict} />
+                <span className="text-muted-foreground mt-1 block text-xs font-medium tabular-nums">
+                  {renderBand(verdict)}
+                </span>
               </dt>
               <dd className="text-muted-foreground leading-[1.55]">
                 {tv(`${verdict}.description`)}
