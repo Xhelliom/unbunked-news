@@ -8,7 +8,15 @@ import { db } from "@/db/client";
 import { articles } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
-import { VERDICT_COLORS, VERDICT_FR, WEEK_S, truncate } from "../_shared";
+import {
+  BRAND,
+  README_PALETTES,
+  VERDICT_COLORS,
+  VERDICT_FR,
+  WEEK_S,
+  parseReadmeTheme,
+  truncate,
+} from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -16,32 +24,6 @@ const BANNER_W = 1200;
 const BANNER_H = 400;
 
 const SPECTRUM = VERDICTS.map((v) => VERDICT_COLORS[v]);
-
-// Source Serif 4 Bold — fetched once per week, falls back to satori's default font.
-const loadFont = unstable_cache(
-  async (): Promise<ArrayBuffer | null> => {
-    try {
-      const css = await fetch(
-        "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@700&display=swap",
-        {
-          signal: AbortSignal.timeout(5000),
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0",
-          },
-        },
-      ).then((r) => r.text());
-      const match = /url\((https:\/\/fonts\.gstatic\.com\/[^)'"\s]+\.woff2)\)/.exec(css);
-      if (!match) return null;
-      return fetch(match[1], { signal: AbortSignal.timeout(5000) }).then((r) => r.arrayBuffer());
-    } catch (err) {
-      console.error("[readme/banner] Font load failed:", err);
-      return null;
-    }
-  },
-  ["og-source-serif-4-bold"],
-  { revalidate: WEEK_S },
-);
 
 type BannerData = {
   total: number;
@@ -71,22 +53,17 @@ const loadBannerData = unstable_cache(
   { revalidate: WEEK_S, tags: [ARTICLES_CACHE_TAG] },
 );
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  const theme = parseReadmeTheme(new URL(request.url).searchParams.get("theme"));
+  const palette = README_PALETTES[theme];
   try {
-    const [fontData, { total, latest }] = await Promise.all([
-      loadFont(),
-      loadBannerData(),
-    ]);
+    const { total, latest } = await loadBannerData();
 
     const verdict = (latest?.verdict ?? "unverifiable") as Verdict;
     const verdictColor = VERDICT_COLORS[verdict];
     const verdictLabel = VERDICT_FR[verdict];
     const score = latest?.reliabilityScore != null ? String(latest.reliabilityScore) : "—";
     const title = latest ? truncate(latest.title, 62) : null;
-
-    const fonts = fontData
-      ? [{ name: "Source Serif 4", data: fontData, weight: 700 as const, style: "normal" as const }]
-      : [];
 
     const image = new ImageResponse(
       (
@@ -95,9 +72,9 @@ export async function GET(): Promise<Response> {
             display: "flex",
             width: "100%",
             height: "100%",
-            backgroundColor: "#0d1117",
+            backgroundColor: palette.bg,
             padding: "44px 52px",
-            fontFamily: fonts.length ? "Source Serif 4" : "serif",
+            fontFamily: "serif",
           }}
         >
           {/* ── Left panel ── */}
@@ -112,7 +89,7 @@ export async function GET(): Promise<Response> {
                   justifyContent: "center",
                   width: "52px",
                   height: "52px",
-                  backgroundColor: "#6366f1",
+                  backgroundColor: BRAND,
                   borderRadius: "12px",
                   fontSize: "24px",
                   fontWeight: 700,
@@ -122,8 +99,8 @@ export async function GET(): Promise<Response> {
                 Un
               </div>
               <div style={{ display: "flex", fontSize: "34px", fontWeight: 700 }}>
-                <span style={{ color: "#6366f1" }}>Un</span>
-                <span style={{ color: "#e5e7eb" }}>bunked</span>
+                <span style={{ color: BRAND }}>Un</span>
+                <span style={{ color: palette.heading }}>bunked</span>
               </div>
             </div>
 
@@ -138,7 +115,7 @@ export async function GET(): Promise<Response> {
             </div>
 
             {/* URL */}
-            <div style={{ display: "flex", marginTop: "14px", color: "#6b7280", fontSize: "13px" }}>
+            <div style={{ display: "flex", marginTop: "14px", color: palette.muted, fontSize: "13px" }}>
               unbunked.news
             </div>
 
@@ -146,26 +123,26 @@ export async function GET(): Promise<Response> {
 
             {/* Stats */}
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "48px", fontWeight: 700, color: "#e5e7eb", lineHeight: 1 }}>
+              <span style={{ fontSize: "48px", fontWeight: 700, color: palette.heading, lineHeight: 1 }}>
                 {total > 0 ? total.toLocaleString("fr-FR") : "—"}
               </span>
-              <span style={{ fontSize: "13px", color: "#6b7280", marginTop: "6px" }}>
+              <span style={{ fontSize: "13px", color: palette.muted, marginTop: "6px" }}>
                 articles analysés
               </span>
             </div>
           </div>
 
           {/* ── Vertical divider ── */}
-          <div style={{ width: "1px", backgroundColor: "#21262d", marginRight: "52px" }} />
+          <div style={{ width: "1px", backgroundColor: palette.border, marginRight: "52px" }} />
 
           {/* ── Right panel ── */}
           <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
 
             {/* Tagline */}
-            <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: "#e5e7eb", lineHeight: 1.3 }}>
+            <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: palette.heading, lineHeight: 1.3 }}>
               Le fact-checking de l&apos;actualité,
             </div>
-            <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: "#6366f1", lineHeight: 1.3, marginTop: "2px" }}>
+            <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: BRAND, lineHeight: 1.3, marginTop: "2px" }}>
               vérifié affirmation par affirmation.
             </div>
 
@@ -174,7 +151,7 @@ export async function GET(): Promise<Response> {
             {/* Latest article */}
             {title ? (
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ height: "1px", backgroundColor: "#21262d", marginBottom: "22px" }} />
+                <div style={{ height: "1px", backgroundColor: palette.border, marginBottom: "22px" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div
                     style={{
@@ -192,7 +169,7 @@ export async function GET(): Promise<Response> {
                     style={{
                       flex: 1,
                       fontSize: "17px",
-                      color: "#c9d1d9",
+                      color: palette.body,
                       overflow: "hidden",
                       whiteSpace: "nowrap",
                     }}
@@ -212,7 +189,7 @@ export async function GET(): Promise<Response> {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "flex", color: "#4b5563", fontSize: "14px" }}>
+              <div style={{ display: "flex", color: palette.empty, fontSize: "14px" }}>
                 Bientôt en ligne — unbunked.news
               </div>
             )}
@@ -222,7 +199,6 @@ export async function GET(): Promise<Response> {
       {
         width: BANNER_W,
         height: BANNER_H,
-        fonts,
       },
     );
 
@@ -231,8 +207,8 @@ export async function GET(): Promise<Response> {
   } catch (err) {
     console.error("[readme/banner] ImageResponse failed:", err);
     const fallback = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BANNER_W} ${BANNER_H}" width="${BANNER_W}" height="${BANNER_H}">
-  <rect width="${BANNER_W}" height="${BANNER_H}" fill="#0d1117"/>
-  <text x="${BANNER_W / 2}" y="${BANNER_H / 2}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" fill="#6b7280">unbunked.news</text>
+  <rect width="${BANNER_W}" height="${BANNER_H}" fill="${palette.bg}"/>
+  <text x="${BANNER_W / 2}" y="${BANNER_H / 2}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="28" fill="${palette.muted}">unbunked.news</text>
 </svg>`;
     return new Response(fallback, {
       headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },
