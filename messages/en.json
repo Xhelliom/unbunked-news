@@ -739,6 +739,7 @@
   },
   "search": {
     "label": "Search",
+    "close": "Close search",
     "placeholder": "Search articles…",
     "title": "Results for “{query}”",
     "empty": "No articles match your search."

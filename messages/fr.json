@@ -739,6 +739,7 @@
   },
   "search": {
     "label": "Rechercher",
+    "close": "Fermer la recherche",
     "placeholder": "Rechercher un article…",
     "title": "Résultats pour « {query} »",
     "empty": "Aucun article ne correspond à votre recherche."
