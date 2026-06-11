@@ -17,9 +17,9 @@ export function ScoreDescriptors({
   if (!framing && !contentType) return null;
 
   return (
-    <div className="mt-5">
-      <p className="text-muted-foreground text-xs">{t("caption")}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+    <div className="mt-6">
+      <p className="text-sm font-semibold">{t("caption")}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
         {contentType && (
           <Badge variant="outline" className="gap-1">
             <span className="text-muted-foreground">

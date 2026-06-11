@@ -60,7 +60,6 @@
     "lowWarning": "{criterion} faible",
     "unverifiable": "—",
     "sectionTitle": "Détail de la note",
-    "sectionHint": "La note globale est la moyenne pondérée de ces critères (chacun sur 100). Un critère non évaluable n'est pas affiché.",
     "factuality": {
       "label": "Exactitude",
       "description": "Les chiffres, dates, citations et affirmations de l'article sont-ils corrects ?",
@@ -99,7 +98,7 @@
     }
   },
   "descriptors": {
-    "caption": "Descripteurs — informent sur l'article mais n'entrent pas dans la note.",
+    "caption": "Caractéristiques",
     "framingTitle": "Cadrage",
     "contentTypeTitle": "Type de contenu",
     "confidenceLabel": "Confiance",
@@ -747,9 +746,9 @@
   "article": {
     "originalSource": "Source d'origine",
     "readOriginal": "Lire l'article original",
-    "score": "Score de fiabilité",
+    "score": "Verdict Unbunked",
     "claimsBreakdownTitle": "Affirmations analysées",
-    "claimsBreakdownHint": "Statut de chaque affirmation vérifiée de l'article. Détail plus bas.",
+    "claimsBreakdownHint": "Statut de chaque affirmation vérifiée de l'article.",
     "claimsTitle": "Vérification affirmation par affirmation",
     "readingTitle": "L'article, vérifié paragraphe par paragraphe",
     "readingIntroTitle": "L'article, vérifié",
