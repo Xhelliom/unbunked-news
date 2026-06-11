@@ -64,17 +64,6 @@ export function ArticleReader({
     isNearClaim,
   } = useClaimScrollSync(containerRef, paragraphs, claims.length);
 
-  const displayedIndex = hoveredIndex ?? scrollActiveIndex;
-
-  const activeParagraph =
-    displayedIndex === null
-      ? -1
-      : paragraphs.findIndex((paragraph) =>
-          paragraph.segments.some(
-            (segment) => segment.claimIndex === displayedIndex,
-          ),
-        );
-
   // --- Mobile drawer + rail state -----------------------------------------
   // Mount the drawer/rail only below the lg breakpoint, so vaul never spins up
   // on desktop (where the side panel handles verification). Starts false so SSR
@@ -144,6 +133,22 @@ export function ArticleReader({
     tappedClaim !== null && groupIndices.includes(tappedClaim)
       ? tappedClaim
       : mobileActiveIndex;
+
+  // The highlighted claim in the text. On mobile the bottom drawer drives the
+  // reading, so the highlight tracks the claim it shows — including the one the
+  // reader steps to with the chevrons, not just the scroll-selected one.
+  // Desktop keeps hover, falling back to scroll.
+  const displayedIndex =
+    hoveredIndex ?? (hasMobileClaims ? drawerSelectedIndex : scrollActiveIndex);
+
+  const activeParagraph =
+    displayedIndex === null
+      ? -1
+      : paragraphs.findIndex((paragraph) =>
+          paragraph.segments.some(
+            (segment) => segment.claimIndex === displayedIndex,
+          ),
+        );
 
   const expanded = expandedForGroupKey === groupKey;
   const activeSnapPoint = expanded ? EXPANDED_SNAP : PEEK_SNAP;
