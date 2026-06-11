@@ -17,32 +17,6 @@ const BANNER_H = 400;
 
 const SPECTRUM = VERDICTS.map((v) => VERDICT_COLORS[v]);
 
-// Source Serif 4 Bold — fetched once per week, falls back to satori's default font.
-const loadFont = unstable_cache(
-  async (): Promise<ArrayBuffer | null> => {
-    try {
-      const css = await fetch(
-        "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@700&display=swap",
-        {
-          signal: AbortSignal.timeout(5000),
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0",
-          },
-        },
-      ).then((r) => r.text());
-      const match = /url\((https:\/\/fonts\.gstatic\.com\/[^)'"\s]+\.woff2)\)/.exec(css);
-      if (!match) return null;
-      return fetch(match[1], { signal: AbortSignal.timeout(5000) }).then((r) => r.arrayBuffer());
-    } catch (err) {
-      console.error("[readme/banner] Font load failed:", err);
-      return null;
-    }
-  },
-  ["og-source-serif-4-bold"],
-  { revalidate: WEEK_S },
-);
-
 type BannerData = {
   total: number;
   latest: { title: string; verdict: Verdict | null; reliabilityScore: number | null } | null;
@@ -73,20 +47,13 @@ const loadBannerData = unstable_cache(
 
 export async function GET(): Promise<Response> {
   try {
-    const [fontData, { total, latest }] = await Promise.all([
-      loadFont(),
-      loadBannerData(),
-    ]);
+    const { total, latest } = await loadBannerData();
 
     const verdict = (latest?.verdict ?? "unverifiable") as Verdict;
     const verdictColor = VERDICT_COLORS[verdict];
     const verdictLabel = VERDICT_FR[verdict];
     const score = latest?.reliabilityScore != null ? String(latest.reliabilityScore) : "—";
     const title = latest ? truncate(latest.title, 62) : null;
-
-    const fonts = fontData
-      ? [{ name: "Source Serif 4", data: fontData, weight: 700 as const, style: "normal" as const }]
-      : [];
 
     const image = new ImageResponse(
       (
@@ -97,7 +64,7 @@ export async function GET(): Promise<Response> {
             height: "100%",
             backgroundColor: "#0d1117",
             padding: "44px 52px",
-            fontFamily: fonts.length ? "Source Serif 4" : "serif",
+            fontFamily: "serif",
           }}
         >
           {/* ── Left panel ── */}
@@ -222,7 +189,6 @@ export async function GET(): Promise<Response> {
       {
         width: BANNER_W,
         height: BANNER_H,
-        fonts,
       },
     );
 

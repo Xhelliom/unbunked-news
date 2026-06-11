@@ -405,9 +405,8 @@ Le manifest déploie deux groupes à partir de la même image :
 kubectl scale deployment/worker -n unbunked --replicas=3
 ```
 
-Migrations (à lancer avant un déploiement qui change le schéma) :
-
-```bash
-kubectl delete job migrate -n unbunked --ignore-not-found
-kubectl apply -f k8s/migrate-job.yaml
-```
+Les migrations Drizzle s'exécutent **automatiquement** via un initContainer du
+pod web : avant chaque démarrage du serveur, il lance `node dist/scripts/migrate.cjs`
+depuis la même image applicative. L'opération est idempotente — sans danger à
+réexécuter à chaque rollout — donc aucune étape manuelle n'est requise pour un
+déploiement qui change le schéma.
