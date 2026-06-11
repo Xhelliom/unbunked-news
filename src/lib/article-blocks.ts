@@ -16,10 +16,20 @@ export type BlockKind = (typeof BLOCK_KINDS)[number];
 
 export type ArticleBlock = { kind: BlockKind; text: string };
 
-const HEADING_PREFIX = "## ";
-const SUBHEADING_PREFIX = "### ";
-const QUOTE_PREFIX = "> ";
-const CODE_FENCE = "```";
+// The exact markers of the subset, exported as the single source the renderers,
+// the extractor AND the editor toolbar derive from (so none can drift).
+export const HEADING_PREFIX = "## ";
+export const SUBHEADING_PREFIX = "### ";
+export const QUOTE_PREFIX = "> ";
+export const CODE_FENCE = "```";
+
+// Block markers a single line can carry, longest-first so a startsWith check
+// never strips a shorter marker off a longer one.
+export const LINE_BLOCK_PREFIXES = [
+  SUBHEADING_PREFIX,
+  HEADING_PREFIX,
+  QUOTE_PREFIX,
+] as const;
 
 export function serializeBlock(block: ArticleBlock): string {
   switch (block.kind) {
