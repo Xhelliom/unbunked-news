@@ -62,7 +62,9 @@ spec:
             requests:
               # HPA CPU utilization is computed against this request.
               cpu: 250m
-              memory: 256Mi
+              # Real steady-state usage is ~120Mi; 256Mi over-reserved and
+              # blocked rollouts on memory-tight nodes (see #57).
+              memory: 160Mi
             limits:
               # Chromium/puppeteer scraping fallback runs in this pod and OOMs
               # at 512Mi. No CPU limit on purpose: avoid throttling under load.
