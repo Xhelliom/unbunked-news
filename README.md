@@ -2,9 +2,12 @@
 
 <!-- Banner généré dynamiquement depuis la DB — se met à jour à chaque publication d'article. -->
 <a href="https://unbunked.news">
-  <img src="https://unbunked.news/api/readme/banner"
-       alt="Unbunked.news — Le fact-checking de l'actualité, vérifié affirmation par affirmation"
-       width="100%" />
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/banner?theme=light" />
+    <img src="https://unbunked.news/api/readme/banner"
+         alt="Unbunked.news — Le fact-checking de l'actualité, vérifié affirmation par affirmation"
+         width="100%" />
+  </picture>
 </a>
 
 <br /><br />
@@ -114,9 +117,12 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
 <!-- Carte stats dynamique — générée depuis la DB via /api/readme/stats -->
 <div align="center">
   <a href="https://unbunked.news">
-    <img src="https://unbunked.news/api/readme/stats"
-         alt="Stats Unbunked.news — articles analysés et répartition des verdicts"
-         width="600" />
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/stats?theme=light" />
+      <img src="https://unbunked.news/api/readme/stats"
+           alt="Stats Unbunked.news — articles analysés et répartition des verdicts"
+           width="600" />
+    </picture>
   </a>
 </div>
 
@@ -127,9 +133,12 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
 <!-- Carte dynamique — mise à jour automatique depuis la DB via /api/readme/latest -->
 <div align="center">
   <a href="https://unbunked.news">
-    <img src="https://unbunked.news/api/readme/latest"
-         alt="Dernières analyses Unbunked.news"
-         width="600" />
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/latest?theme=light" />
+      <img src="https://unbunked.news/api/readme/latest"
+           alt="Dernières analyses Unbunked.news"
+           width="600" />
+    </picture>
   </a>
 </div>
 
@@ -145,15 +154,21 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
   <tr>
     <td align="center" width="50%">
       <a href="https://unbunked.news">
-        <img src="https://unbunked.news/api/readme/latest"
-             alt="Dernières analyses publiées" />
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/latest?theme=light" />
+          <img src="https://unbunked.news/api/readme/latest"
+               alt="Dernières analyses publiées" />
+        </picture>
       </a><br />
       <sub><b>Feed</b> — les dernières analyses publiées</sub>
     </td>
     <td align="center" width="50%">
       <a href="https://unbunked.news">
-        <img src="https://unbunked.news/api/readme/stats"
-             alt="Statistiques Unbunked.news" />
+        <picture>
+          <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/stats?theme=light" />
+          <img src="https://unbunked.news/api/readme/stats"
+               alt="Statistiques Unbunked.news" />
+        </picture>
       </a><br />
       <sub><b>Stats</b> — articles analysés et répartition des verdicts</sub>
     </td>
@@ -162,9 +177,12 @@ Les poids sont fixes et publics. Le score global est la moyenne pondérée, calc
 
 <div align="center">
   <a href="https://unbunked.news">
-    <img src="https://unbunked.news/api/readme/sample"
-         alt="Exemple d'analyse — article avec affirmations vérifiées"
-         width="600" />
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="https://unbunked.news/api/readme/sample?theme=light" />
+      <img src="https://unbunked.news/api/readme/sample"
+           alt="Exemple d'analyse — article avec affirmations vérifiées"
+           width="600" />
+    </picture>
   </a><br />
   <sub><b>Analyse</b> — article réel avec affirmations vérifiées et verdict par claim</sub>
 </div>

@@ -8,7 +8,18 @@ import { articles, claims } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import type { ClaimStatus } from "@/lib/claim-status";
 import type { Verdict } from "@/lib/verdicts";
-import { CLAIM_COLORS, CLAIM_FR, VERDICT_COLORS, VERDICT_FR, WEEK_S, esc, truncate } from "../_shared";
+import {
+  BRAND,
+  CLAIM_COLORS,
+  CLAIM_FR,
+  README_PALETTES,
+  VERDICT_COLORS,
+  VERDICT_FR,
+  WEEK_S,
+  esc,
+  parseReadmeTheme,
+  truncate,
+} from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +65,9 @@ const CLAIM_HEADER_H = 34;
 const CLAIM_ROW_H = 42;
 const FOOTER_H = 14;
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  const theme = parseReadmeTheme(new URL(request.url).searchParams.get("theme"));
+  const palette = README_PALETTES[theme];
   try {
     const data = await loadSample();
 
@@ -65,9 +78,9 @@ export async function GET(): Promise<Response> {
     if (!data) {
       const emptyH = HEADER_H + ARTICLE_ROW_H + FOOTER_H;
       const emptySvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${emptyH}" width="${W}" height="${emptyH}">
-  <rect width="${W}" height="${emptyH}" rx="12" fill="#0d1117"/>
-  <rect width="${W}" height="${emptyH}" rx="12" fill="none" stroke="#21262d" stroke-width="1"/>
-  <text x="${W / 2}" y="${emptyH / 2 + 5}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#4b5563">Aucun article publié pour le moment.</text>
+  <rect width="${W}" height="${emptyH}" rx="12" fill="${palette.bg}"/>
+  <rect width="${W}" height="${emptyH}" rx="12" fill="none" stroke="${palette.border}" stroke-width="1"/>
+  <text x="${W / 2}" y="${emptyH / 2 + 5}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="${palette.empty}">Aucun article publié pour le moment.</text>
 </svg>`;
       return new Response(emptySvg, {
         headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },
@@ -89,24 +102,24 @@ export async function GET(): Promise<Response> {
         const rowY = HEADER_H + ARTICLE_ROW_H + CLAIM_HEADER_H + i * CLAIM_ROW_H;
         const isLast = i === data.claims.length - 1;
         return `
-  ${!isLast ? `<line x1="20" y1="${rowY + CLAIM_ROW_H}" x2="${W - 20}" y2="${rowY + CLAIM_ROW_H}" stroke="#161b22" stroke-width="1"/>` : ""}
+  ${!isLast ? `<line x1="20" y1="${rowY + CLAIM_ROW_H}" x2="${W - 20}" y2="${rowY + CLAIM_ROW_H}" stroke="${palette.border}" stroke-width="1"/>` : ""}
   <circle cx="34" cy="${rowY + 14}" r="4" fill="${color}"/>
   <text x="46" y="${rowY + 11}" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="${color}">${label}</text>
-  <text x="46" y="${rowY + 27}" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="#8b949e">${text}</text>`;
+  <text x="46" y="${rowY + 27}" font-family="system-ui,-apple-system,sans-serif" font-size="12" fill="${palette.body}">${text}</text>`;
       })
       .join("");
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
-  <rect width="${W}" height="${H}" rx="12" fill="#0d1117"/>
-  <rect width="${W}" height="${H}" rx="12" fill="none" stroke="#21262d" stroke-width="1"/>
+  <rect width="${W}" height="${H}" rx="12" fill="${palette.bg}"/>
+  <rect width="${W}" height="${H}" rx="12" fill="none" stroke="${palette.border}" stroke-width="1"/>
 
   <!-- Header -->
-  <rect x="20" y="14" width="32" height="32" rx="7" fill="#6366f1"/>
+  <rect x="20" y="14" width="32" height="32" rx="7" fill="${BRAND}"/>
   <text x="36" y="36" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="16" fill="#fff">Un</text>
   <text x="60" y="29" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="18">
-    <tspan fill="#6366f1">Un</tspan><tspan fill="#e5e7eb">bunked</tspan>
+    <tspan fill="${BRAND}">Un</tspan><tspan fill="${palette.heading}">bunked</tspan>
   </text>
-  <text x="60" y="44" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#6b7280">Exemple d'analyse</text>
+  <text x="60" y="44" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="${palette.muted}">Exemple d'analyse</text>
 
   <!-- Header spectrum -->
   <rect x="${W - 116}" y="20" width="19" height="4" rx="2" fill="#059669"/>
@@ -116,18 +129,18 @@ export async function GET(): Promise<Response> {
   <rect x="${W - 24}" y="20" width="19" height="4" rx="2" fill="#71717a"/>
 
   <!-- Article row -->
-  <line x1="20" y1="${HEADER_H}" x2="${W - 20}" y2="${HEADER_H}" stroke="#21262d" stroke-width="1"/>
+  <line x1="20" y1="${HEADER_H}" x2="${W - 20}" y2="${HEADER_H}" stroke="${palette.border}" stroke-width="1"/>
   <circle cx="36" cy="${HEADER_H + 18}" r="5" fill="${verdictColor}"/>
   <text x="50" y="${HEADER_H + 14}" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="${verdictColor}">${verdictLabel}</text>
-  <text x="50" y="${HEADER_H + 31}" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="500" fill="#e5e7eb">${title}</text>
+  <text x="50" y="${HEADER_H + 31}" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="500" fill="${palette.heading}">${title}</text>
   <text x="${W - 20}" y="${HEADER_H + 24}" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="18" fill="${verdictColor}">${score}</text>
 
   <!-- Claims header -->
-  <line x1="20" y1="${HEADER_H + ARTICLE_ROW_H}" x2="${W - 20}" y2="${HEADER_H + ARTICLE_ROW_H}" stroke="#21262d" stroke-width="1"/>
-  <text x="20" y="${HEADER_H + ARTICLE_ROW_H + 22}" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="#4b5563" letter-spacing="0.5">AFFIRMATIONS VÉRIFIÉES (${claimCount})</text>
+  <line x1="20" y1="${HEADER_H + ARTICLE_ROW_H}" x2="${W - 20}" y2="${HEADER_H + ARTICLE_ROW_H}" stroke="${palette.border}" stroke-width="1"/>
+  <text x="20" y="${HEADER_H + ARTICLE_ROW_H + 22}" font-family="system-ui,-apple-system,sans-serif" font-size="10" fill="${palette.empty}" letter-spacing="0.5">AFFIRMATIONS VÉRIFIÉES (${claimCount})</text>
 
   <!-- Claim rows -->
-  <line x1="20" y1="${HEADER_H + ARTICLE_ROW_H + CLAIM_HEADER_H}" x2="${W - 20}" y2="${HEADER_H + ARTICLE_ROW_H + CLAIM_HEADER_H}" stroke="#21262d" stroke-width="1"/>
+  <line x1="20" y1="${HEADER_H + ARTICLE_ROW_H + CLAIM_HEADER_H}" x2="${W - 20}" y2="${HEADER_H + ARTICLE_ROW_H + CLAIM_HEADER_H}" stroke="${palette.border}" stroke-width="1"/>
   ${claimRows}
 </svg>`;
 
@@ -140,8 +153,8 @@ export async function GET(): Promise<Response> {
   } catch {
     const fallbackH = 80;
     const fallback = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${fallbackH}" width="${W}" height="${fallbackH}">
-  <rect width="${W}" height="${fallbackH}" rx="12" fill="#0d1117"/>
-  <text x="${W / 2}" y="${fallbackH / 2 + 5}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#6b7280">unbunked.news</text>
+  <rect width="${W}" height="${fallbackH}" rx="12" fill="${palette.bg}"/>
+  <text x="${W / 2}" y="${fallbackH / 2 + 5}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="${palette.muted}">unbunked.news</text>
 </svg>`;
     return new Response(fallback, {
       headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },

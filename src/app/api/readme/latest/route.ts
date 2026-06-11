@@ -7,7 +7,16 @@ import { db } from "@/db/client";
 import { articles } from "@/db/schema";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
 import { type Verdict } from "@/lib/verdicts";
-import { HOUR_S, VERDICT_COLORS, VERDICT_FR, esc, truncate } from "../_shared";
+import {
+  BRAND,
+  HOUR_S,
+  README_PALETTES,
+  VERDICT_COLORS,
+  VERDICT_FR,
+  esc,
+  parseReadmeTheme,
+  truncate,
+} from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +49,9 @@ const HEADER_H = 64;
 const ROW_H = 50;
 const FOOTER_H = 16;
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
+  const theme = parseReadmeTheme(new URL(request.url).searchParams.get("theme"));
+  const palette = README_PALETTES[theme];
   try {
     const latest: LatestRow[] = await loadLatest();
 
@@ -48,7 +59,7 @@ export async function GET(): Promise<Response> {
     const H = HEADER_H + rowCount * ROW_H + FOOTER_H;
 
     const rowSvg = latest.length === 0
-      ? `<text x="${W / 2}" y="${HEADER_H + 28}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#4b5563">Aucun article publié pour le moment.</text>`
+      ? `<text x="${W / 2}" y="${HEADER_H + 28}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="${palette.empty}">Aucun article publié pour le moment.</text>`
       : latest
           .map((article, i) => {
             const verdict = (article.verdict ?? "unverifiable") as Verdict;
@@ -64,28 +75,28 @@ export async function GET(): Promise<Response> {
 
             return `
   <!-- Article ${i + 1} -->
-  ${!isLast ? `<line x1="20" y1="${rowY + ROW_H}" x2="${W - 20}" y2="${rowY + ROW_H}" stroke="#21262d" stroke-width="1"/>` : ""}
+  ${!isLast ? `<line x1="20" y1="${rowY + ROW_H}" x2="${W - 20}" y2="${rowY + ROW_H}" stroke="${palette.border}" stroke-width="1"/>` : ""}
   <circle cx="36" cy="${rowY + 18}" r="5" fill="${color}"/>
   <text x="50" y="${rowY + 14}" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="600" fill="${color}">${label}</text>
-  <text x="50" y="${rowY + 32}" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="#c9d1d9">${title}</text>
+  <text x="50" y="${rowY + 32}" font-family="system-ui,-apple-system,sans-serif" font-size="13" fill="${palette.body}">${title}</text>
   <text x="${W - 20}" y="${rowY + 26}" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-weight="700" font-size="18" fill="${color}">${score}</text>`;
           })
           .join("");
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <!-- Background -->
-  <rect width="${W}" height="${H}" rx="12" fill="#0d1117"/>
-  <rect width="${W}" height="${H}" rx="12" fill="none" stroke="#21262d" stroke-width="1"/>
+  <rect width="${W}" height="${H}" rx="12" fill="${palette.bg}"/>
+  <rect width="${W}" height="${H}" rx="12" fill="none" stroke="${palette.border}" stroke-width="1"/>
 
   <!-- Logo icon -->
-  <rect x="20" y="14" width="32" height="32" rx="7" fill="#6366f1"/>
+  <rect x="20" y="14" width="32" height="32" rx="7" fill="${BRAND}"/>
   <text x="36" y="36" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="16" fill="#fff">Un</text>
 
   <!-- Wordmark -->
   <text x="60" y="29" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="18">
-    <tspan fill="#6366f1">Un</tspan><tspan fill="#e5e7eb">bunked</tspan>
+    <tspan fill="${BRAND}">Un</tspan><tspan fill="${palette.heading}">bunked</tspan>
   </text>
-  <text x="60" y="44" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="#6b7280">Dernières analyses</text>
+  <text x="60" y="44" font-family="system-ui,-apple-system,sans-serif" font-size="11" fill="${palette.muted}">Dernières analyses</text>
 
   <!-- Spectrum bar (logo signature) -->
   <rect x="${W - 116}" y="20" width="19" height="4" rx="2" fill="#059669"/>
@@ -95,7 +106,7 @@ export async function GET(): Promise<Response> {
   <rect x="${W - 24}" y="20" width="19" height="4" rx="2" fill="#71717a"/>
 
   <!-- Divider -->
-  <line x1="20" y1="${HEADER_H}" x2="${W - 20}" y2="${HEADER_H}" stroke="#21262d" stroke-width="1"/>
+  <line x1="20" y1="${HEADER_H}" x2="${W - 20}" y2="${HEADER_H}" stroke="${palette.border}" stroke-width="1"/>
 
   ${rowSvg}
 </svg>`;
@@ -109,8 +120,8 @@ export async function GET(): Promise<Response> {
   } catch {
     const H = HEADER_H + ROW_H + FOOTER_H;
     const fallback = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
-  <rect width="${W}" height="${H}" rx="12" fill="#0d1117"/>
-  <text x="${W / 2}" y="${H / 2 + 5}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#6b7280">unbunked.news — dernières analyses</text>
+  <rect width="${W}" height="${H}" rx="12" fill="${palette.bg}"/>
+  <text x="${W / 2}" y="${H / 2 + 5}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="${palette.muted}">unbunked.news — dernières analyses</text>
 </svg>`;
     return new Response(fallback, {
       headers: {
