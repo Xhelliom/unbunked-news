@@ -21,7 +21,6 @@ import { ScoreDescriptors } from "@/components/score-descriptors";
 // the admin preview through ArticleView.
 export async function ArticleHeader({ article }: { article: PublicArticle }) {
   const t = await getTranslations("article");
-  const tVerdict = await getTranslations("verdicts");
   const tRubric = await getTranslations("rubrics");
   const format = await getFormatter();
 
@@ -45,7 +44,13 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
       </Link>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        {article.verdict && <VerdictBadge verdict={article.verdict} />}
+        {article.rubric && (
+          <Link href={`/?rubric=${article.rubric}`}>
+            <Badge variant="secondary">
+              {tRubric(`${article.rubric}.label`)}
+            </Badge>
+          </Link>
+        )}
         <span className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
           {article.sourceName}
         </span>
@@ -84,24 +89,18 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
       </div>
 
       <div className="mt-7">
-        <div className="flex flex-wrap items-center gap-4">
-          <div>
-            <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-              {t("score")}
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-2">
-              <span className="text-[32px] font-bold tracking-tight">
-                {article.reliabilityScore ?? "—"}
-              </span>
-              {article.reliabilityScore !== null && (
-                <span className="text-muted-foreground text-sm">/ 100</span>
-              )}
-              {article.verdict && (
-                <span className="text-sm font-medium">
-                  · {tVerdict(`${article.verdict}.label`)}
-                </span>
-              )}
-            </div>
+        <h2 className="font-serif text-2xl font-bold tracking-tight">
+          {t("score")}
+        </h2>
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[32px] font-bold tracking-tight">
+              {article.reliabilityScore ?? "—"}
+            </span>
+            {article.reliabilityScore !== null && (
+              <span className="text-muted-foreground text-sm">/ 100</span>
+            )}
+            {article.verdict && <VerdictBadge verdict={article.verdict} />}
           </div>
           {originalUrl && (
             <Button asChild variant="outline" size="sm" className="ml-auto">
@@ -147,15 +146,6 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
         </div>
       )}
 
-      {article.rubric && (
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Link href={`/?rubric=${article.rubric}`}>
-            <Badge variant="secondary">
-              {tRubric(`${article.rubric}.label`)}
-            </Badge>
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

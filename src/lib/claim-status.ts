@@ -23,17 +23,13 @@ export const claimStatusToVerdict: Record<ClaimStatus, Verdict> = {
   unverifiable: "unverifiable",
 };
 
-export const claimStatusBadgeClasses: Record<ClaimStatus, string> = {
-  supported:
-    "bg-verdict-reliable-bg text-verdict-reliable-fg ring-verdict-reliable/30",
-  partly_true:
-    "bg-verdict-nuanced-bg text-verdict-nuanced-fg ring-verdict-nuanced/30",
-  misleading:
-    "bg-verdict-fragile-bg text-verdict-fragile-fg ring-verdict-fragile/30",
-  false:
-    "bg-verdict-debunked-bg text-verdict-debunked-fg ring-verdict-debunked/30",
-  unverifiable:
-    "bg-verdict-unverifiable-bg text-verdict-unverifiable-fg ring-verdict-unverifiable/40",
+// Readable text colour per status, for the underlined label treatment.
+export const claimStatusTextClasses: Record<ClaimStatus, string> = {
+  supported: "text-verdict-reliable-fg",
+  partly_true: "text-verdict-nuanced-fg",
+  misleading: "text-verdict-fragile-fg",
+  false: "text-verdict-debunked-fg",
+  unverifiable: "text-verdict-unverifiable-fg",
 };
 
 export const claimStatusDotClasses: Record<ClaimStatus, string> = {
