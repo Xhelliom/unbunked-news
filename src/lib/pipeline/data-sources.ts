@@ -1,5 +1,7 @@
 import "server-only";
 
+import { MAX_CLAIMS_CEILING } from "./limits";
+
 // Unified access to the external data sources that feed the scoring decision
 // (docs/SCORING.md §6). Every source degrades gracefully: a missing API key, a
 // network error or a malformed payload yields `null` ("unknown") — NEVER an
@@ -13,7 +15,11 @@ import "server-only";
 const FACTCHECK_ENDPOINT =
   "https://factchecktools.googleapis.com/v1alpha1/claims:search";
 const CACHE_TTL_MS = 60 * 60 * 1000;
-const MAX_FACTCHECK_CLAIMS = 5;
+// Cover every extracted claim with a fact-check lookup, not just the first few:
+// the claim list is already bounded to MAX_CLAIMS_CEILING upstream, so this caps
+// the parallel ClaimReview queries at that same ceiling. Each query degrades to
+// "unknown" on any failure (rate-limit included), so a long list never fabricates.
+const MAX_FACTCHECK_CLAIMS = MAX_CLAIMS_CEILING;
 const FACTCHECK_TIMEOUT_MS = 8000;
 
 export type FactCheckReview = {
