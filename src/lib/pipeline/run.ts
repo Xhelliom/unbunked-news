@@ -33,8 +33,8 @@ import type { JobLive, PauseInfo } from "./job-live";
 import {
   DEFAULT_MAX_CLAIMS,
   DEFAULT_MAX_SEARCH_ROUNDS,
-  LONG_ARTICLE_SUGGESTED_CLAIMS,
   LONG_ARTICLE_SUGGESTED_SEARCH_ROUNDS,
+  suggestedMaxClaims,
 } from "./limits";
 import {
   DEFAULT_REASONING_MODEL,
@@ -75,7 +75,7 @@ function buildPauseInfo(contentChars: number): PauseInfo {
     truncateAt: MAX_CONTENT_CHARS,
     defaultMaxClaims: DEFAULT_MAX_CLAIMS,
     defaultMaxSearchRounds: DEFAULT_MAX_SEARCH_ROUNDS,
-    suggestedMaxClaims: LONG_ARTICLE_SUGGESTED_CLAIMS,
+    suggestedMaxClaims: suggestedMaxClaims(contentChars),
     suggestedMaxSearchRounds: LONG_ARTICLE_SUGGESTED_SEARCH_ROUNDS,
   };
 }
@@ -176,7 +176,7 @@ export async function runPipeline(jobId: string): Promise<void> {
       return;
     }
 
-    const maxClaims = job.maxClaims ?? DEFAULT_MAX_CLAIMS;
+    const maxClaims = job.maxClaims ?? suggestedMaxClaims(contentChars);
     const maxSearchRounds = job.maxSearchRounds ?? DEFAULT_MAX_SEARCH_ROUNDS;
 
     await updateJob(jobId, {
