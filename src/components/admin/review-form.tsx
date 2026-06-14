@@ -188,6 +188,12 @@ export function ReviewForm(props: ReviewFormProps) {
                 {props.published ? t("unpublish") : t("publish")}
               </Button>
             </form>
+            <form action={relaunchArticle}>
+              <input type="hidden" name="id" value={props.id} />
+              <Button type="submit" variant="secondary">
+                {t("relaunch")}
+              </Button>
+            </form>
             <form action={setDeleted}>
               <input type="hidden" name="id" value={props.id} />
               <Button type="submit" variant="destructive">

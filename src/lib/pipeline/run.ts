@@ -3,20 +3,12 @@ import "server-only";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import {
-  articleKeywords,
-  articleRewrites,
-  articleTokenUsage,
-  articles,
-  claimSources,
-  claims as claimsTable,
-  jobs,
-  type NewJob,
-} from "@/db/schema";
+import { jobs, type NewJob } from "@/db/schema";
 import { routing } from "@/i18n/routing";
 import { scrapeArticle } from "@/lib/scrape";
 import { aggregate } from "./aggregate";
 import { assessClaims } from "./assess-claims";
+import { saveAnalysis } from "./save-article";
 import {
   addUsage,
   MAX_CONTENT_CHARS,
@@ -46,23 +38,10 @@ import { rewriteArticle } from "./rewrite";
 import { structureArticleBody } from "./structure-body";
 import { verifyClaims } from "./verify";
 
-// Upper bound on the stored article body to keep rows reasonable.
-const MAX_STORED_CONTENT_CHARS = 60_000;
-
 // Below this the scraped body is suspiciously thin; the run still proceeds but
 // the diagnostics flag it so an admin can tell a near-empty scrape from a real
 // short article.
 const SHORT_BODY_WARNING_CHARS = 800;
-
-function slugify(input: string): string {
-  return input
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
 
 async function updateJob(id: string, fields: Partial<NewJob>): Promise<void> {
   await db.update(jobs).set(fields).where(eq(jobs.id, id));
@@ -308,109 +287,17 @@ export async function runPipeline(jobId: string): Promise<void> {
       live,
     });
 
-    let keywordsStored = 0;
-    const articleId = await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(articles)
-        .values({
-          slug: `${slugify(analysis.title)}-${crypto.randomUUID().slice(0, 6)}`,
-          urlOrigine: article.url,
-          sourceName: article.sourceName,
-          originalTitle: article.title,
-          title: analysis.title,
-          summary: analysis.summary,
-          originalSummary: analysis.originalSummary,
-          content: article.content.slice(0, MAX_STORED_CONTENT_CHARS),
-          scrapeDebug: provenance,
-          imageUrl: article.imageUrl,
-          verdict: analysis.verdict,
-          reliabilityScore: analysis.reliabilityScore,
-          factualityScore: analysis.scores.factualityScore,
-          corroborationScore: analysis.scores.corroborationScore,
-          sourcingScore: analysis.scores.sourcingScore,
-          completenessScore: analysis.scores.completenessScore,
-          transparencyScore: analysis.scores.transparencyScore,
-          recencyScore: analysis.scores.recencyScore,
-          framing: analysis.framing,
-          contentType: analysis.contentType,
-          fabricationDetected: analysis.killswitch.fabricationDetected.value,
-          domainImpersonation: analysis.killswitch.domainImpersonation.value,
-          centralClaimDebunked: analysis.killswitch.centralClaimDebunked.value,
-          undisclosedAIWithErrors:
-            analysis.killswitch.undisclosedAIWithErrors.value,
-          globalConfidence: analysis.globalConfidence,
-          criteriaVersion: analysis.criteriaVersion,
-          modelVersion: analysis.modelVersion,
-          evidence: analysis.evidence,
-          rubric: analysis.rubric,
-          locale: analysis.language,
-          published: false,
-        })
-        .returning({ id: articles.id });
-
-      await tx.insert(articleTokenUsage).values(
-        [...usageByModel.entries()].map(([model, usage]) => ({
-          articleId: created.id,
-          model,
-          inputTokens: usage.inputTokens,
-          outputTokens: usage.outputTokens,
-          cacheCreationTokens: usage.cacheCreationTokens,
-          cacheReadTokens: usage.cacheReadTokens,
-          webSearchRequests:
-            model === reasoningModel ? verification.searchRequests : 0,
-          searchProvider: verification.searchProvider,
-        })),
-      );
-
-      if (rewrites.length > 0) {
-        await tx.insert(articleRewrites).values(
-          rewrites.map((r) => ({
-            articleId: created.id,
-            locale: r.locale,
-            title: r.title,
-            body: r.body,
-          })),
-        );
-      }
-
-      if (analysis.keywords.length > 0) {
-        const keywordRows = [...new Set(analysis.keywords.map(slugify))]
-          .filter(Boolean)
-          .map((keyword) => ({ articleId: created.id, keyword }));
-        keywordsStored = keywordRows.length;
-        if (keywordRows.length > 0) {
-          await tx
-            .insert(articleKeywords)
-            .values(keywordRows)
-            .onConflictDoNothing();
-        }
-      }
-
-      for (const [index, claim] of assessedClaims.entries()) {
-        const [createdClaim] = await tx
-          .insert(claimsTable)
-          .values({
-            articleId: created.id,
-            position: index,
-            claimText: claim.text,
-            status: claim.status,
-            explanation: claim.explanation,
-            sourceQuote: claim.sourceQuote || null,
-          })
-          .returning({ id: claimsTable.id });
-
-        if (claim.sources.length > 0) {
-          await tx.insert(claimSources).values(
-            claim.sources.map((source) => ({
-              claimId: createdClaim.id,
-              url: source.url,
-              title: source.title,
-            })),
-          );
-        }
-      }
-
-      return created.id;
+    const { articleId, keywordsStored } = await saveAnalysis({
+      targetArticleId: job.targetArticleId,
+      scraped: article,
+      provenance,
+      analysis,
+      assessedClaims,
+      rewrites,
+      usageByModel,
+      reasoningModel,
+      searchRequests: verification.searchRequests,
+      searchProvider: verification.searchProvider,
     });
 
     steps.push(

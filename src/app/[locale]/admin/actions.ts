@@ -104,7 +104,7 @@ export async function submitUrl(
   const reasoningModel = isReasoningModel(modelRaw)
     ? modelRaw
     : DEFAULT_REASONING_MODEL;
-  const jobId = await createAnalysisJob(url, reasoningModel);
+  const jobId = await createAnalysisJob(url, { reasoningModel });
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
   return {};
 }
@@ -212,8 +212,10 @@ export async function restoreArticle(formData: FormData): Promise<void> {
   redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
 }
 
-// Re-runs the pipeline on the original URL, producing a fresh analysis. The
-// soft-deleted article is left as-is; the new run creates its own article.
+// Re-runs the pipeline on the original URL and overwrites this article in place:
+// the prior version is snapshotted (article_snapshots) then replaced, keeping the
+// article's id, slug and publication state. Used to refresh a review when the
+// source or its corroborating evidence has evolved.
 export async function relaunchArticle(formData: FormData): Promise<void> {
   await requireAdminSession();
   const id = String(formData.get("id") ?? "");
@@ -225,7 +227,9 @@ export async function relaunchArticle(formData: FormData): Promise<void> {
     redirect({ href: "/admin", locale: await getLocale() });
     return;
   }
-  const jobId = await createAnalysisJob(article.urlOrigine);
+  const jobId = await createAnalysisJob(article.urlOrigine, {
+    targetArticleId: id,
+  });
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
 }
 
