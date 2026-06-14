@@ -3,14 +3,8 @@ import "server-only";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import {
-  articleKeywords,
-  articleRewrites,
-  articleSnapshots,
-  articles,
-  claimSources,
-  claims as claimsTable,
-} from "@/db/schema";
+import { articleSnapshots, articles } from "@/db/schema";
+import { replaceArticleAnalysisChildren } from "@/lib/article-children";
 import { buildArticleSnapshot } from "@/lib/article-snapshot";
 import { CLAIM_STATUSES, type ClaimStatus } from "@/lib/claim-status";
 import { isRubric, type Rubric } from "@/lib/rubrics";
@@ -22,7 +16,7 @@ import {
   type ContentType,
   type Framing,
 } from "@/lib/score-criteria";
-import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { toVerdict } from "@/lib/verdicts";
 
 // A claim's status is NOT NULL, so an unrecognised value (a removed enum member
 // in a very old snapshot) falls back to the most cautious one rather than
@@ -32,12 +26,6 @@ const FALLBACK_CLAIM_STATUS: ClaimStatus = "unverifiable";
 // Snapshots store enum columns as plain strings (see ArticleSnapshotData), so a
 // restore narrows them back to the live enum, dropping any value the schema no
 // longer accepts.
-function toVerdict(value: string | null): Verdict | null {
-  return value !== null && (VERDICTS as readonly string[]).includes(value)
-    ? (value as Verdict)
-    : null;
-}
-
 function toFraming(value: string | null): Framing | null {
   return value !== null && (FRAMING_VALUES as readonly string[]).includes(value)
     ? (value as Framing)
@@ -124,57 +112,18 @@ export async function restoreArticleSnapshot(
       })
       .where(eq(articles.id, articleId));
 
-    await tx.delete(claimsTable).where(eq(claimsTable.articleId, articleId));
-    await tx
-      .delete(articleRewrites)
-      .where(eq(articleRewrites.articleId, articleId));
-    await tx
-      .delete(articleKeywords)
-      .where(eq(articleKeywords.articleId, articleId));
-
-    const keywords = [...new Set(data.keywords)].filter(Boolean);
-    if (keywords.length > 0) {
-      await tx
-        .insert(articleKeywords)
-        .values(keywords.map((keyword) => ({ articleId, keyword })))
-        .onConflictDoNothing();
-    }
-
-    if (data.rewrites.length > 0) {
-      await tx.insert(articleRewrites).values(
-        data.rewrites.map((rewrite) => ({
-          articleId,
-          locale: rewrite.locale,
-          title: rewrite.title,
-          body: rewrite.body,
-        })),
-      );
-    }
-
-    for (const claim of data.claims) {
-      const [createdClaim] = await tx
-        .insert(claimsTable)
-        .values({
-          articleId,
-          position: claim.position,
-          claimText: claim.claimText,
-          status: toClaimStatus(claim.status),
-          explanation: claim.explanation,
-          sourceQuote: claim.sourceQuote,
-        })
-        .returning({ id: claimsTable.id });
-
-      if (claim.sources.length > 0) {
-        await tx.insert(claimSources).values(
-          claim.sources.map((source) => ({
-            claimId: createdClaim.id,
-            url: source.url,
-            title: source.title,
-            publisher: source.publisher,
-          })),
-        );
-      }
-    }
+    await replaceArticleAnalysisChildren(tx, articleId, {
+      keywords: data.keywords,
+      rewrites: data.rewrites,
+      claims: data.claims.map((claim) => ({
+        position: claim.position,
+        claimText: claim.claimText,
+        status: toClaimStatus(claim.status),
+        explanation: claim.explanation,
+        sourceQuote: claim.sourceQuote,
+        sources: claim.sources,
+      })),
+    });
 
     return articleId;
   });

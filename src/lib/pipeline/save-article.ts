@@ -4,14 +4,14 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
-  articleKeywords,
-  articleRewrites,
   articleSnapshots,
   articleTokenUsage,
   articles,
-  claimSources,
-  claims as claimsTable,
 } from "@/db/schema";
+import {
+  replaceArticleAnalysisChildren,
+  type ArticleAnalysisChildren,
+} from "@/lib/article-children";
 import { buildArticleSnapshot } from "@/lib/article-snapshot";
 import type { ScrapeProvenance, ScrapedArticle } from "@/lib/scrape";
 import type { TokenUsage } from "./client";
@@ -53,14 +53,12 @@ export type SaveAnalysisParams = {
 
 export type SaveAnalysisResult = {
   articleId: string;
-  snapshotTaken: boolean;
   keywordsStored: number;
 };
 
 // Persists a completed analysis: either a fresh article or an in-place overwrite
-// of an existing one. Children (token usage, rewrites, keywords, claims and
-// their sources) are written identically in both cases; only the parent row
-// differs (insert vs. snapshot-then-update-then-replace-children).
+// of an existing one. The analysis children are written identically in both
+// cases; only the parent row differs (insert vs. snapshot-then-update).
 export async function saveAnalysis(
   params: SaveAnalysisParams,
 ): Promise<SaveAnalysisResult> {
@@ -112,6 +110,28 @@ export async function saveAnalysis(
     locale: analysis.language,
   };
 
+  const keywords = [...new Set(analysis.keywords.map(slugify))].filter(Boolean);
+  const children: ArticleAnalysisChildren = {
+    keywords,
+    rewrites: rewrites.map((rewrite) => ({
+      locale: rewrite.locale,
+      title: rewrite.title,
+      body: rewrite.body,
+    })),
+    claims: assessedClaims.map((claim, index) => ({
+      position: index,
+      claimText: claim.text,
+      status: claim.status,
+      explanation: claim.explanation,
+      sourceQuote: claim.sourceQuote || null,
+      sources: claim.sources.map((source) => ({
+        url: source.url,
+        title: source.title,
+        publisher: null,
+      })),
+    })),
+  };
+
   return db.transaction(async (tx) => {
     const existing = targetArticleId
       ? await tx.query.articles.findFirst({
@@ -125,29 +145,20 @@ export async function saveAnalysis(
       : null;
 
     let articleId: string;
-    let snapshotTaken = false;
 
     if (existing) {
       await tx.insert(articleSnapshots).values({
         articleId: existing.id,
         data: buildArticleSnapshot(existing),
       });
-      snapshotTaken = true;
 
       await tx
         .update(articles)
         .set(articleValues)
         .where(eq(articles.id, existing.id));
 
-      // Replace the children wholesale. Deleting claims cascades to claim
-      // sources; the rest are deleted explicitly before being re-inserted.
-      await tx.delete(claimsTable).where(eq(claimsTable.articleId, existing.id));
-      await tx
-        .delete(articleRewrites)
-        .where(eq(articleRewrites.articleId, existing.id));
-      await tx
-        .delete(articleKeywords)
-        .where(eq(articleKeywords.articleId, existing.id));
+      // Token usage is owned by the saving step, so it is cleared here; the rest
+      // of the children are replaced by replaceArticleAnalysisChildren.
       await tx
         .delete(articleTokenUsage)
         .where(eq(articleTokenUsage.articleId, existing.id));
@@ -178,55 +189,8 @@ export async function saveAnalysis(
       })),
     );
 
-    if (rewrites.length > 0) {
-      await tx.insert(articleRewrites).values(
-        rewrites.map((rewrite) => ({
-          articleId,
-          locale: rewrite.locale,
-          title: rewrite.title,
-          body: rewrite.body,
-        })),
-      );
-    }
+    await replaceArticleAnalysisChildren(tx, articleId, children);
 
-    let keywordsStored = 0;
-    if (analysis.keywords.length > 0) {
-      const keywordRows = [...new Set(analysis.keywords.map(slugify))]
-        .filter(Boolean)
-        .map((keyword) => ({ articleId, keyword }));
-      keywordsStored = keywordRows.length;
-      if (keywordRows.length > 0) {
-        await tx
-          .insert(articleKeywords)
-          .values(keywordRows)
-          .onConflictDoNothing();
-      }
-    }
-
-    for (const [index, claim] of assessedClaims.entries()) {
-      const [createdClaim] = await tx
-        .insert(claimsTable)
-        .values({
-          articleId,
-          position: index,
-          claimText: claim.text,
-          status: claim.status,
-          explanation: claim.explanation,
-          sourceQuote: claim.sourceQuote || null,
-        })
-        .returning({ id: claimsTable.id });
-
-      if (claim.sources.length > 0) {
-        await tx.insert(claimSources).values(
-          claim.sources.map((source) => ({
-            claimId: createdClaim.id,
-            url: source.url,
-            title: source.title,
-          })),
-        );
-      }
-    }
-
-    return { articleId, snapshotTaken, keywordsStored };
+    return { articleId, keywordsStored: keywords.length };
   });
 }

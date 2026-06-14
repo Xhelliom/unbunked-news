@@ -32,7 +32,7 @@ import {
   clampScore,
   type CriterionScores,
 } from "@/lib/score-criteria";
-import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { toVerdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
 
@@ -116,10 +116,7 @@ export async function saveArticle(
 ): Promise<ActionState> {
   await requireAdminSession();
   const id = String(formData.get("id") ?? "");
-  const verdictValue = String(formData.get("verdict") ?? "");
-  const verdict = (VERDICTS as readonly string[]).includes(verdictValue)
-    ? (verdictValue as Verdict)
-    : null;
+  const verdict = toVerdict(formData.get("verdict"));
   const criterionScores = Object.fromEntries(
     SCORE_CRITERIA.map((criterion) => {
       const column = CRITERION_COLUMN[criterion];

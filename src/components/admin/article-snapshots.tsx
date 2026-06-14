@@ -2,7 +2,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 
 import { restoreSnapshot } from "@/app/[locale]/admin/actions";
 import type { ArticleSnapshotData } from "@/lib/article-snapshot";
-import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { toVerdict } from "@/lib/verdicts";
 import { Button } from "@/components/ui/button";
 import { VerdictBadge } from "@/components/verdict-badge";
 
@@ -11,12 +11,6 @@ type SnapshotRow = {
   createdAt: Date;
   data: ArticleSnapshotData;
 };
-
-function asVerdict(value: string | null): Verdict | null {
-  return value !== null && (VERDICTS as readonly string[]).includes(value)
-    ? (value as Verdict)
-    : null;
-}
 
 // Lists the versions captured before each in-place re-analysis (or restore),
 // most recent first, and lets an admin roll the article back to any of them.
@@ -43,7 +37,7 @@ export async function ArticleSnapshots({
       <p className="text-muted-foreground text-sm">{t("hint")}</p>
       <ul className="space-y-3">
         {snapshots.map((snapshot) => {
-          const verdict = asVerdict(snapshot.data.verdict);
+          const verdict = toVerdict(snapshot.data.verdict);
           return (
             <li
               key={snapshot.id}
