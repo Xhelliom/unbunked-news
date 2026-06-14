@@ -19,6 +19,7 @@ import {
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
+import { restoreArticleSnapshot } from "@/lib/article-snapshot-restore";
 import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { clampMaxClaims, clampMaxSearchRounds } from "@/lib/pipeline/limits";
@@ -231,6 +232,20 @@ export async function relaunchArticle(formData: FormData): Promise<void> {
     targetArticleId: id,
   });
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
+}
+
+// Rolls an article back to a captured version. The current state is archived
+// first (so the restore can itself be undone), then the article is overwritten
+// in place — id, slug and publication state are preserved.
+export async function restoreSnapshot(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const snapshotId = String(formData.get("snapshotId") ?? "");
+  const articleId = await restoreArticleSnapshot(snapshotId);
+  revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
+  redirect({
+    href: articleId ? `/admin/articles/${articleId}` : "/admin",
+    locale: await getLocale(),
+  });
 }
 
 // Resumes a run paused by the long-article preflight gate. The chosen limits are

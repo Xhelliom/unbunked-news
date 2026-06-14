@@ -610,6 +610,14 @@
       "restore": "Restore",
       "relaunch": "Relaunch analysis",
       "deletedBanner": "This article is deleted: hidden from the public. Restore it or relaunch an analysis.",
+      "snapshots": {
+        "title": "Previous versions",
+        "hint": "Each version was archived just before a re-analysis or a restore. Restoring rolls the analysis back without touching the URL or publication state.",
+        "empty": "No previous version yet. They appear after the first re-analysis.",
+        "archivedOn": "Archived on",
+        "claimsCount": "{count, plural, one {# claim} other {# claims}}",
+        "restore": "Restore this version"
+      },
       "rewrites": {
         "title": "Unbunked version (rewrite)",
         "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",

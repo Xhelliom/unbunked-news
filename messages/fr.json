@@ -610,6 +610,14 @@
       "restore": "Restaurer",
       "relaunch": "Relancer l'analyse",
       "deletedBanner": "Cet article est supprimé : invisible côté public. Restaurez-le ou relancez une analyse.",
+      "snapshots": {
+        "title": "Versions précédentes",
+        "hint": "Chaque version a été archivée juste avant une réanalyse ou une restauration. Restaurer revient à l'analyse précédente sans toucher à l'URL ni à l'état de publication.",
+        "empty": "Aucune version précédente pour l'instant. Elles apparaissent après la première réanalyse.",
+        "archivedOn": "Archivée le",
+        "claimsCount": "{count, plural, one {# affirmation} other {# affirmations}}",
+        "restore": "Restaurer cette version"
+      },
       "rewrites": {
         "title": "Version Unbunked (réécriture)",
         "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction à l'affirmation N.",
