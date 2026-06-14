@@ -19,6 +19,7 @@ import {
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { ARTICLES_CACHE_TAG } from "@/lib/articles";
+import { restoreArticleSnapshot } from "@/lib/article-snapshot-restore";
 import { REVALIDATE_PROFILE } from "@/lib/cache";
 import { createAnalysisJob, getJob } from "@/lib/jobs";
 import { clampMaxClaims, clampMaxSearchRounds } from "@/lib/pipeline/limits";
@@ -31,7 +32,7 @@ import {
   clampScore,
   type CriterionScores,
 } from "@/lib/score-criteria";
-import { VERDICTS, type Verdict } from "@/lib/verdicts";
+import { toVerdict } from "@/lib/verdicts";
 
 export type ActionState = { error?: string };
 
@@ -104,7 +105,7 @@ export async function submitUrl(
   const reasoningModel = isReasoningModel(modelRaw)
     ? modelRaw
     : DEFAULT_REASONING_MODEL;
-  const jobId = await createAnalysisJob(url, reasoningModel);
+  const jobId = await createAnalysisJob(url, { reasoningModel });
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
   return {};
 }
@@ -115,10 +116,7 @@ export async function saveArticle(
 ): Promise<ActionState> {
   await requireAdminSession();
   const id = String(formData.get("id") ?? "");
-  const verdictValue = String(formData.get("verdict") ?? "");
-  const verdict = (VERDICTS as readonly string[]).includes(verdictValue)
-    ? (verdictValue as Verdict)
-    : null;
+  const verdict = toVerdict(formData.get("verdict"));
   const criterionScores = Object.fromEntries(
     SCORE_CRITERIA.map((criterion) => {
       const column = CRITERION_COLUMN[criterion];
@@ -212,8 +210,10 @@ export async function restoreArticle(formData: FormData): Promise<void> {
   redirect({ href: `/admin/articles/${id}`, locale: await getLocale() });
 }
 
-// Re-runs the pipeline on the original URL, producing a fresh analysis. The
-// soft-deleted article is left as-is; the new run creates its own article.
+// Re-runs the pipeline on the original URL and overwrites this article in place:
+// the prior version is snapshotted (article_snapshots) then replaced, keeping the
+// article's id, slug and publication state. Used to refresh a review when the
+// source or its corroborating evidence has evolved.
 export async function relaunchArticle(formData: FormData): Promise<void> {
   await requireAdminSession();
   const id = String(formData.get("id") ?? "");
@@ -225,8 +225,24 @@ export async function relaunchArticle(formData: FormData): Promise<void> {
     redirect({ href: "/admin", locale: await getLocale() });
     return;
   }
-  const jobId = await createAnalysisJob(article.urlOrigine);
+  const jobId = await createAnalysisJob(article.urlOrigine, {
+    targetArticleId: id,
+  });
   redirect({ href: `/admin/jobs/${jobId}`, locale: await getLocale() });
+}
+
+// Rolls an article back to a captured version. The current state is archived
+// first (so the restore can itself be undone), then the article is overwritten
+// in place — id, slug and publication state are preserved.
+export async function restoreSnapshot(formData: FormData): Promise<void> {
+  await requireAdminSession();
+  const snapshotId = String(formData.get("snapshotId") ?? "");
+  const articleId = await restoreArticleSnapshot(snapshotId);
+  revalidateTag(ARTICLES_CACHE_TAG, REVALIDATE_PROFILE);
+  redirect({
+    href: articleId ? `/admin/articles/${articleId}` : "/admin",
+    locale: await getLocale(),
+  });
 }
 
 // Resumes a run paused by the long-article preflight gate. The chosen limits are

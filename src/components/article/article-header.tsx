@@ -15,6 +15,11 @@ import { VerdictBadge } from "@/components/verdict-badge";
 import { ScoreCriteria } from "@/components/score-criteria";
 import { ScoreDescriptors } from "@/components/score-descriptors";
 
+// Below this gap, updatedAt is treated as equal to publishedAt (publishing bumps
+// both in the same write), so the "updated on" line only shows after a genuine
+// later edit or in-place re-analysis.
+const UPDATED_NOTICE_MIN_GAP_MS = 60_000;
+
 // The masthead of the reader view: back link, verdict, source, headline, hero
 // image, the reliability score block, the claim-status strip and the rubric.
 // Pure presentation derived from the article; shared by the public route and
@@ -33,6 +38,11 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
     status,
     count: article.claims.filter((claim) => claim.status === status).length,
   })).filter(({ count }) => count > 0);
+
+  const wasUpdatedAfterPublish =
+    article.publishedAt !== null &&
+    article.updatedAt.getTime() - article.publishedAt.getTime() >
+      UPDATED_NOTICE_MIN_GAP_MS;
 
   return (
     <div className="max-w-[760px]">
@@ -53,6 +63,12 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
           <span className="text-muted-foreground text-sm whitespace-nowrap">
             {t("publishedOn")}{" "}
             {format.dateTime(article.publishedAt, { dateStyle: "long" })}
+          </span>
+        )}
+        {wasUpdatedAfterPublish && (
+          <span className="text-muted-foreground text-sm whitespace-nowrap">
+            {t("updatedOn")}{" "}
+            {format.dateTime(article.updatedAt, { dateStyle: "long" })}
           </span>
         )}
       </div>
