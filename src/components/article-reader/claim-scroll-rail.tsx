@@ -15,6 +15,9 @@ import { RailViewportThumb } from "@/components/article-reader/rail-viewport-thu
 // visible occupe une fraction minuscule du rail ; on garde une cible visible.
 const MIN_THUMB_PX = 22;
 
+// Light mode keeps the rail dots coloured but desaturates the scroll thumb.
+const NEUTRAL_THUMB_COLOR = "var(--muted-foreground)";
+
 type Props = {
   anchors: ClaimAnchor[];
   claims: ClaimCardData[];
@@ -29,6 +32,8 @@ type Props = {
   className?: string;
   // Desktop renders a fixed-height bead instead of a viewport-sized window.
   fixedThumbPx?: number;
+  // Light mode: render the scroll thumb in a neutral tone (dots stay coloured).
+  neutralThumb?: boolean;
   // When set, the dots become tappable (mobile navigation between claims).
   onSelect?: (index: number) => void;
   selectLabel?: string;
@@ -44,6 +49,7 @@ export function ClaimScrollRail({
   displayedIndex,
   className,
   fixedThumbPx,
+  neutralThumb = false,
   onSelect,
   selectLabel,
 }: Props) {
@@ -64,9 +70,11 @@ export function ClaimScrollRail({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const thumbColor = activeStatus
-    ? `var(--verdict-${claimStatusToVerdict[activeStatus]})`
-    : null;
+  const thumbColor = neutralThumb
+    ? NEUTRAL_THUMB_COLOR
+    : activeStatus
+      ? `var(--verdict-${claimStatusToVerdict[activeStatus]})`
+      : null;
 
   // Desktop: a fixed-height bead riding the reading probe (its dot stays in the
   // bead). Mobile: a viewport-sized window centred on what's on screen.

@@ -279,6 +279,18 @@
       "article": "Sur l'article",
       "claim": "Sur l'affirmation {n}"
     },
+    "reader": {
+      "title": "Affichage des articles",
+      "subtitle": "Choisissez la densité des repères de couleur dans les articles annotés.",
+      "mode": {
+        "light": "Épuré",
+        "full": "Complet"
+      },
+      "hint": {
+        "light": "Surlignage et pastilles conservés ; barre de couleur et indicateur de défilement neutralisés.",
+        "full": "Tous les repères de couleur affichés : barre des paragraphes, surlignage et indicateur de défilement coloré."
+      }
+    },
     "displayName": {
       "title": "Pseudo",
       "label": "Pseudo affiché",
