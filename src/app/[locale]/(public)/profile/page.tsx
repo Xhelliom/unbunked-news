@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { hasLocale } from "next-intl";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
@@ -5,11 +6,13 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { Link, redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { getContributionsByUser } from "@/lib/contributions/queries";
+import { parseReaderMode, READER_MODE_COOKIE } from "@/lib/reader-mode";
 import { getSession, toSessionUser } from "@/lib/session";
 import type { ContributionStatus } from "@/lib/contributions/constants";
 import { Badge } from "@/components/ui/badge";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
 import { DisplayNameForm } from "@/components/profile/display-name-form";
+import { ReaderModeForm } from "@/components/profile/reader-mode-form";
 
 const STATUS_VARIANT: Record<
   ContributionStatus,
@@ -41,6 +44,9 @@ export default async function ProfilePage({
   const t = await getTranslations("profile");
   const format = await getFormatter();
   const contributions = await getContributionsByUser(sessionUser.id);
+  const readerMode = parseReaderMode(
+    (await cookies()).get(READER_MODE_COOKIE)?.value,
+  );
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-10 pb-16 sm:px-6">
@@ -84,6 +90,18 @@ export default async function ProfilePage({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="mt-12">
+        <h2 className="font-serif text-xl font-bold tracking-tight">
+          {t("reader.title")}
+        </h2>
+        <p className="text-muted-foreground mt-1.5 text-sm">
+          {t("reader.subtitle")}
+        </p>
+        <div className="mt-4">
+          <ReaderModeForm initialMode={readerMode} />
+        </div>
       </section>
 
       <section className="mt-12">
