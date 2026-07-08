@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 import { db } from "@/db/client";
@@ -15,6 +15,15 @@ const MAX_SUGGESTIONS = 3;
 const SUGGESTIONS_CACHE_REVALIDATE_SECONDS = 60;
 
 async function loadSuggestedArticles(articleId: string) {
+  // We only recommend articles rated strictly higher than the one being read
+  // ("On the same topic, better rated"). With no score we can't establish
+  // "better", so the TRUSTWORTHY_VERDICTS floor below is the only guarantee.
+  const current = await db.query.articles.findFirst({
+    where: eq(articles.id, articleId),
+    columns: { reliabilityScore: true },
+  });
+  const currentScore = current?.reliabilityScore ?? null;
+
   const ownKeywords = await db
     .select({ keyword: articleKeywords.keyword })
     .from(articleKeywords)
@@ -53,6 +62,9 @@ async function loadSuggestedArticles(articleId: string) {
       eq(articles.published, true),
       isNull(articles.deletedAt),
       inArray(articles.verdict, [...TRUSTWORTHY_VERDICTS]),
+      currentScore === null
+        ? undefined
+        : gt(articles.reliabilityScore, currentScore),
     ),
     with: {
       claims: { columns: { status: true } },
