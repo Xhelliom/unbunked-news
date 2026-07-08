@@ -23,6 +23,7 @@ type Props = {
   viewportTopRatio: number;
   viewportHeightRatio: number;
   displayedIndex: number;
+  neutralThumb: boolean;
   sourcesLabel: string;
   verificationLabel: string;
 };
@@ -38,6 +39,7 @@ export function VerificationPanel({
   viewportTopRatio,
   viewportHeightRatio,
   displayedIndex,
+  neutralThumb,
   sourcesLabel,
   verificationLabel,
 }: Props) {
@@ -79,6 +81,7 @@ export function VerificationPanel({
           viewportHeightRatio={viewportHeightRatio}
           displayedIndex={displayedIndex}
           fixedThumbPx={28}
+          neutralThumb={neutralThumb}
         />
 
         <div className="relative min-w-0 flex-1">
