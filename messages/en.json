@@ -148,7 +148,10 @@
     "howLabel": "How we assess it",
     "coreTitle": "Always assessed",
     "optionalTitle": "Assessed when relevant",
-    "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number."
+    "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number.",
+    "bandLabel": "{min}–{max} out of 100",
+    "bandNone": "No score",
+    "verdictScoreBody": "The verdict follows directly from the score: each score range maps to one verdict, listed below. We deliberately set the bar for the \"Reliable\" verdict very high — it takes at least 85 out of 100. An article can be serious and well-sourced and still fall short, and that is by design: \"Reliable\" is a demanding label, reserved for work that is solid on the essentials — factual accuracy and corroboration by independent sources. We would rather a \"Reliable\" be rare but earned than handed out too easily."
   },
   "home": {
     "kicker": "Work in progress",
@@ -607,6 +610,14 @@
       "restore": "Restore",
       "relaunch": "Relaunch analysis",
       "deletedBanner": "This article is deleted: hidden from the public. Restore it or relaunch an analysis.",
+      "snapshots": {
+        "title": "Previous versions",
+        "hint": "Each version was archived just before a re-analysis or a restore. Restoring rolls the analysis back without touching the URL or publication state.",
+        "empty": "No previous version yet. They appear after the first re-analysis.",
+        "archivedOn": "Archived on",
+        "claimsCount": "{count, plural, one {# claim} other {# claims}}",
+        "restore": "Restore this version"
+      },
       "rewrites": {
         "title": "Unbunked version (rewrite)",
         "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",
@@ -736,6 +747,7 @@
   },
   "search": {
     "label": "Search",
+    "close": "Close search",
     "placeholder": "Search articles…",
     "title": "Results for “{query}”",
     "empty": "No articles match your search."
@@ -755,6 +767,8 @@
     "verificationTag": "Unbunked's verification",
     "peekHint": "Verification — tap to expand",
     "railClaimLabel": "Go to checked claim",
+    "claimNavPrev": "Previous verification in this paragraph",
+    "claimNavNext": "Next verification in this paragraph",
     "sourcesConsulted": "Sources consulted",
     "backToArticles": "All articles",
     "originalTitle": "Original headline",
@@ -762,6 +776,7 @@
     "otherChecks": "Other checks",
     "sources": "Sources",
     "publishedOn": "Published on",
+    "updatedOn": "Updated on",
     "notFound": "Article not found.",
     "originalSummaryTitle": "What the original article says",
     "suggestions": {

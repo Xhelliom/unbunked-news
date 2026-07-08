@@ -26,9 +26,19 @@ import type { VerificationFindings } from "./verify";
 
 // Split out of the aggregate phase so the per-claim verdicts get their own
 // token budget — when claims shared record_analysis they were emitted last and
-// silently dropped on truncation (PR #38). A claim verdict is short, but a long
-// list with quotes and sources needs headroom.
-const MAX_TOKENS = 8192;
+// silently dropped on truncation (PR #38). Each verdict carries a verbatim quote
+// and sources (a few hundred tokens), so the budget scales with the claim count
+// rather than a flat ceiling a long list would overrun — run.ts treats that
+// truncation as a hard failure. Floored at the budget that covered the old claim
+// ceiling, capped so a runaway list can't request an unbounded completion.
+const ASSESS_TOKENS_PER_CLAIM = 400;
+const MIN_ASSESS_MAX_TOKENS = 8192;
+const MAX_ASSESS_MAX_TOKENS = 16384;
+
+function assessMaxTokens(claimCount: number): number {
+  const scaled = claimCount * ASSESS_TOKENS_PER_CLAIM;
+  return Math.min(MAX_ASSESS_MAX_TOKENS, Math.max(MIN_ASSESS_MAX_TOKENS, scaled));
+}
 
 export type AssessClaimsResult = {
   claims: AnalysisClaim[];
@@ -117,7 +127,7 @@ export async function assessClaims(
 
   const message = await client.messages.create({
     model,
-    max_tokens: MAX_TOKENS,
+    max_tokens: assessMaxTokens(claims.length),
     system: withCurrentDate(SYSTEM),
     tools: [recordClaimsAssessmentTool],
     tool_choice: { type: "tool", name: "record_claims_assessment" },

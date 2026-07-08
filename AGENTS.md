@@ -171,3 +171,23 @@ you are about to break one, stop and ask.
 - **Read one neighbor file before writing a new one.** The patterns are already there; copy them.
 - **Smaller PRs land faster.** When a change starts touching > 15 files, split it.
 - **Stuck on architecture?** Ask before writing. A 30-second clarification beats a 30-minute rewrite.
+
+## 21. Recommended agent skills
+
+Skills are **installed locally, never committed** — `.claude/skills/`, `.agents/`
+and `skills-lock.json` are git-ignored on purpose. Install these yourself once
+per checkout; they make the rules above active checklists the agent reads
+before acting, instead of prose it can lose as context fills.
+
+- **ponytail** — enforces rules §3 (DRY / no premature abstraction) and §17
+  (no needless deps): YAGNI → stdlib → native → existing dep → one line →
+  minimum. Install:
+  ```
+  /plugin marketplace add DietrichGebert/ponytail
+  /plugin install ponytail@ponytail
+  ```
+  Tune with `/ponytail lite|full|ultra`; `/ponytail-review` audits a diff for
+  bloat (pairs with the bundled `/code-review`).
+- **superpowers** (obra) — the brainstorm → plan → TDD → review workflow that
+  `docs/superpowers/` already follows. See
+  [github.com/obra/superpowers](https://github.com/obra/superpowers).

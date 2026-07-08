@@ -279,6 +279,17 @@ export function levelForScore(score: number): Level {
   return 0;
 }
 
+// The score band each verdict occupies, derived from LEVEL_BANDS so the public
+// methodology page and the scoring logic never drift. `unverifiable` has no
+// band: it is the "no number" state (reliabilityScore is null).
+export const VERDICT_BAND: Record<Verdict, readonly [number, number] | null> = {
+  reliable: LEVEL_BANDS[3],
+  nuanced: LEVEL_BANDS[2],
+  fragile: LEVEL_BANDS[1],
+  debunked: LEVEL_BANDS[0],
+  unverifiable: null,
+};
+
 // Maps a 0-100 score to the verdict colour family used for its progress bar,
 // reusing the same bands as the overall verdict.
 export function scoreBand(score: number): Verdict {

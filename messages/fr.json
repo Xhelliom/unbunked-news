@@ -148,7 +148,10 @@
     "howLabel": "Comment on l'évalue",
     "coreTitle": "Critères toujours évalués",
     "optionalTitle": "Critères évalués selon la pertinence",
-    "optionalHint": "Ces critères ne sont notés que lorsqu'ils peuvent l'être de façon fiable ; sinon ils sont laissés de côté plutôt que de produire une note arbitraire."
+    "optionalHint": "Ces critères ne sont notés que lorsqu'ils peuvent l'être de façon fiable ; sinon ils sont laissés de côté plutôt que de produire une note arbitraire.",
+    "bandLabel": "{min}–{max} sur 100",
+    "bandNone": "Pas de note",
+    "verdictScoreBody": "Le verdict découle directement de la note : à chaque tranche de score correspond un verdict, les voici. Nous plaçons volontairement la barre du verdict « Fiable » très haut — il faut au moins 85 sur 100. Un article peut être sérieux et correctement sourcé sans l'atteindre, et c'est délibéré : « Fiable » est un label exigeant, réservé aux analyses solides sur l'essentiel — l'exactitude des faits et leur corroboration par des sources indépendantes. Nous préférons un « Fiable » rare mais mérité à un label distribué trop facilement."
   },
   "home": {
     "kicker": "Chantier en cours",
@@ -607,6 +610,14 @@
       "restore": "Restaurer",
       "relaunch": "Relancer l'analyse",
       "deletedBanner": "Cet article est supprimé : invisible côté public. Restaurez-le ou relancez une analyse.",
+      "snapshots": {
+        "title": "Versions précédentes",
+        "hint": "Chaque version a été archivée juste avant une réanalyse ou une restauration. Restaurer revient à l'analyse précédente sans toucher à l'URL ni à l'état de publication.",
+        "empty": "Aucune version précédente pour l'instant. Elles apparaissent après la première réanalyse.",
+        "archivedOn": "Archivée le",
+        "claimsCount": "{count, plural, one {# affirmation} other {# affirmations}}",
+        "restore": "Restaurer cette version"
+      },
       "rewrites": {
         "title": "Version Unbunked (réécriture)",
         "hint": "Markdown. Utilisez [[claim:N]] pour ancrer une correction à l'affirmation N.",
@@ -736,6 +747,7 @@
   },
   "search": {
     "label": "Rechercher",
+    "close": "Fermer la recherche",
     "placeholder": "Rechercher un article…",
     "title": "Résultats pour « {query} »",
     "empty": "Aucun article ne correspond à votre recherche."
@@ -755,6 +767,8 @@
     "verificationTag": "Vérification d'Unbunked",
     "peekHint": "Vérification — appuyez pour développer",
     "railClaimLabel": "Aller au passage vérifié",
+    "claimNavPrev": "Vérification précédente dans ce paragraphe",
+    "claimNavNext": "Vérification suivante dans ce paragraphe",
     "sourcesConsulted": "Sources consultées",
     "backToArticles": "Tous les articles",
     "originalTitle": "Titre original",
@@ -762,6 +776,7 @@
     "otherChecks": "Autres vérifications",
     "sources": "Sources",
     "publishedOn": "Publié le",
+    "updatedOn": "Mis à jour le",
     "notFound": "Article introuvable.",
     "originalSummaryTitle": "Ce que dit l'article original",
     "suggestions": {
