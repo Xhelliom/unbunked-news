@@ -4,8 +4,8 @@ export type ClaimAnchor = { index: number; ratio: number };
 /** État du rail : claim actif, repère de lecture et fenêtre visible. */
 export type ScrollSelection = {
   activeIndex: number;
-  // Repère de lecture (0–1) : ligne un peu au-dessus du centre, accélérée. Pilote
-  // le claim actif et la bille desktop.
+  // Repère de lecture (0–1) : ligne un peu au-dessus du centre. Pilote la bille
+  // desktop ; le claim actif est l'ancre la plus proche de ce repère.
   indicatorRatio: number;
   // Fenêtre visible en fraction de la colonne (0–1) : le pouce viewport mobile
   // s'en sert pour épouser ce que le lecteur voit à l'écran.
@@ -15,8 +15,6 @@ export type ScrollSelection = {
 
 // Ligne de lecture : un peu au-dessus du centre pour activer les claims plus tôt.
 export const PROBE_VIEWPORT_RATIO = 0.32;
-// Accélère la progression du sélecteur / repère par rapport au scroll réel.
-export const SCROLL_PROGRESS_BOOST = 1.28;
 // En bas de page, on force le dernier claim même si la citation n'atteint pas le centre.
 export const BOTTOM_SCROLL_THRESHOLD_PX = 72;
 
@@ -54,8 +52,11 @@ export function measureClaimAnchors(root: HTMLElement): ClaimAnchor[] {
 
 /**
  * Déduit le claim actif, le repère de lecture et la fenêtre visible à partir du
- * scroll. Le repère (probe + boost) pilote desktop ; la fenêtre est un mapping
- * linéaire, pour que le pouce mobile reste calé sur ce que le lecteur voit.
+ * scroll. Le claim actif est l'ancre la plus proche du repère de lecture (et non
+ * « la dernière franchie » : dans un long écart entre deux claims, celle-ci
+ * resterait le claim précédent, hors écran, et le drawer ne s'ouvrirait pas). La
+ * fenêtre est un mapping linéaire, pour que le pouce mobile reste calé sur ce que
+ * le lecteur voit.
  */
 export function computeScrollSelection(
   anchors: ClaimAnchor[],
@@ -95,12 +96,14 @@ export function computeScrollSelection(
   }
 
   const probe = viewTop + window.innerHeight * PROBE_VIEWPORT_RATIO;
-  const rawProgress = clamp01((probe - columnTop) / safeHeight);
-  const indicatorRatio = Math.min(1, rawProgress * SCROLL_PROGRESS_BOOST);
+  const indicatorRatio = clamp01((probe - columnTop) / safeHeight);
 
   let activeIndex = anchors[0].index;
+  let nearestDistance = Infinity;
   for (const anchor of anchors) {
-    if (anchor.ratio <= indicatorRatio) {
+    const distance = Math.abs(anchor.ratio - indicatorRatio);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
       activeIndex = anchor.index;
     }
   }

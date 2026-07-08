@@ -5,6 +5,7 @@ import {
   firstToolInput,
   formatArticle,
   getClaude,
+  MAX_CONTENT_CHARS,
   usageOf,
   type TokenUsage,
 } from "./client";
@@ -16,9 +17,28 @@ import {
   type Rewrite,
 } from "./schemas";
 
-// A full-article rewrite in markdown can be long; 4096 truncated the body on
-// longer pieces, dropping trailing paragraphs and [[claim:N]] markers.
-const MAX_TOKENS = 8192;
+// A full-article rewrite mirrors the source's structure and length, so its
+// output budget has to scale with the article: a flat ceiling (8192, before that
+// 4096) truncated the body on long pieces — dropping the tail and its
+// [[claim:N]] markers, and on the worst cases cutting the forced-tool JSON
+// before `body` was emitted at all, leaving an empty rewrite. Budget the output
+// from the (capped) source length, floored at the ceiling that covered short
+// articles and capped well under Sonnet's 64k output limit so a runaway page
+// can't request an unbounded completion. 0.4 tokens/char gives ~33% headroom
+// over a same-length French rewrite plus its markers.
+const REWRITE_TOKENS_PER_CHAR = 0.4;
+const MIN_REWRITE_MAX_TOKENS = 8192;
+const MAX_REWRITE_MAX_TOKENS = 32000;
+
+function rewriteMaxTokens(contentChars: number): number {
+  const scaled = Math.ceil(
+    Math.min(contentChars, MAX_CONTENT_CHARS) * REWRITE_TOKENS_PER_CHAR,
+  );
+  return Math.min(
+    MAX_REWRITE_MAX_TOKENS,
+    Math.max(MIN_REWRITE_MAX_TOKENS, scaled),
+  );
+}
 
 export type RewriteResult = {
   rewrite: Rewrite;
@@ -75,38 +95,43 @@ export async function rewriteArticle(
   const client = getClaude();
   const language = languageOf(locale);
 
-  const message = await client.messages.create({
-    model,
-    max_tokens: MAX_TOKENS,
-    system: SYSTEM,
-    tools: [recordRewriteTool],
-    tool_choice: { type: "tool", name: "record_rewrite" },
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: formatArticle(article),
-            cache_control: { type: "ephemeral" },
-          },
-          {
-            type: "text",
-            text: [
-              `TARGET LANGUAGE: ${language}`,
-              "",
-              `OUR VERDICT: ${analysis.verdict} (reliability ${analysis.reliabilityScore ?? "—"}/100)`,
-              `OUR SUMMARY: ${analysis.summary}`,
-              "",
-              `CHECKED CLAIMS:\n${claimsBrief(claims)}`,
-              "",
-              `Produce the Unbunked rewrite in ${language}. Insert [[claim:N]] markers as instructed.`,
-            ].join("\n"),
-          },
-        ],
-      },
-    ],
-  });
+  // Stream rather than a single create(): the scaled budget can exceed the
+  // ~16k ceiling under which a non-streaming request risks an SDK HTTP timeout.
+  // We only need the assembled result, so collect it with finalMessage().
+  const message = await client.messages
+    .stream({
+      model,
+      max_tokens: rewriteMaxTokens(article.content.length),
+      system: SYSTEM,
+      tools: [recordRewriteTool],
+      tool_choice: { type: "tool", name: "record_rewrite" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: formatArticle(article),
+              cache_control: { type: "ephemeral" },
+            },
+            {
+              type: "text",
+              text: [
+                `TARGET LANGUAGE: ${language}`,
+                "",
+                `OUR VERDICT: ${analysis.verdict} (reliability ${analysis.reliabilityScore ?? "—"}/100)`,
+                `OUR SUMMARY: ${analysis.summary}`,
+                "",
+                `CHECKED CLAIMS:\n${claimsBrief(claims)}`,
+                "",
+                `Produce the Unbunked rewrite in ${language}. Insert [[claim:N]] markers as instructed.`,
+              ].join("\n"),
+            },
+          ],
+        },
+      ],
+    })
+    .finalMessage();
 
   const input = firstToolInput(message, "record_rewrite");
   if (!input) {

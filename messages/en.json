@@ -279,6 +279,18 @@
       "article": "On the article",
       "claim": "On claim {n}"
     },
+    "reader": {
+      "title": "Article display",
+      "subtitle": "Choose how dense the colour cues are in annotated articles.",
+      "mode": {
+        "light": "Clean",
+        "full": "Full"
+      },
+      "hint": {
+        "light": "Highlights and dots kept; paragraph colour bar and scroll indicator neutralised.",
+        "full": "Every colour cue shown: paragraph bar, highlights and a coloured scroll indicator."
+      }
+    },
     "displayName": {
       "title": "Display name",
       "label": "Public display name",
