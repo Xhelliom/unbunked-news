@@ -278,6 +278,18 @@
       "article": "On the article",
       "claim": "On claim {n}"
     },
+    "reader": {
+      "title": "Article display",
+      "subtitle": "Choose how dense the colour cues are in annotated articles.",
+      "mode": {
+        "light": "Clean",
+        "full": "Full"
+      },
+      "hint": {
+        "light": "Highlights and dots kept; paragraph colour bar and scroll indicator neutralised.",
+        "full": "Every colour cue shown: paragraph bar, highlights and a coloured scroll indicator."
+      }
+    },
     "displayName": {
       "title": "Display name",
       "label": "Public display name",
@@ -609,6 +621,14 @@
       "restore": "Restore",
       "relaunch": "Relaunch analysis",
       "deletedBanner": "This article is deleted: hidden from the public. Restore it or relaunch an analysis.",
+      "snapshots": {
+        "title": "Previous versions",
+        "hint": "Each version was archived just before a re-analysis or a restore. Restoring rolls the analysis back without touching the URL or publication state.",
+        "empty": "No previous version yet. They appear after the first re-analysis.",
+        "archivedOn": "Archived on",
+        "claimsCount": "{count, plural, one {# claim} other {# claims}}",
+        "restore": "Restore this version"
+      },
       "rewrites": {
         "title": "Unbunked version (rewrite)",
         "hint": "Markdown. Use [[claim:N]] to anchor a correction to claim N.",
@@ -767,6 +787,7 @@
     "otherChecks": "Other checks",
     "sources": "Sources",
     "publishedOn": "Published on",
+    "updatedOn": "Updated on",
     "notFound": "Article not found.",
     "originalSummaryTitle": "What the original article says",
     "suggestions": {

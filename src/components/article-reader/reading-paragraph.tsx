@@ -18,6 +18,8 @@ type Props = {
   statusLabels: Record<ClaimStatus, string>;
   displayedIndex: number | null;
   isActiveParagraph: boolean;
+  // Light mode hides the left colour bar (and its indent); only "full" shows it.
+  showBar: boolean;
   onHoverClaim: (index: number) => void;
   onLeaveClaim: (event: MouseEvent<HTMLElement>) => void;
   // Mobile only: tapping a highlight selects that claim in the bottom drawer.
@@ -35,6 +37,7 @@ export function ReadingParagraphBlock({
   statusLabels,
   displayedIndex,
   isActiveParagraph,
+  showBar,
   onHoverClaim,
   onLeaveClaim,
   onSelectClaim,
@@ -43,6 +46,7 @@ export function ReadingParagraphBlock({
     .map((segment) => segment.claimIndex)
     .filter((index): index is number => index !== null);
   const annotated = claimIndices.length > 0;
+  const showBarForParagraph = annotated && showBar;
 
   const colors: string[] = [];
   for (const index of claimIndices) {
@@ -62,11 +66,11 @@ export function ReadingParagraphBlock({
       <div
         className={cn(
           "relative transition-transform duration-300 ease-out",
-          annotated && "pl-4",
+          showBarForParagraph && "pl-4",
           isActiveParagraph && "translate-x-1.5",
         )}
       >
-        {annotated && (
+        {showBarForParagraph && (
           <span
             aria-hidden
             title={barTitle}

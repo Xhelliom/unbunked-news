@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { ClaimCardData } from "@/components/claim-card";
 import type { PublicContribution } from "@/lib/contributions/queries";
 import type { ReadingParagraph } from "@/lib/reading";
+import type { ReaderMode } from "@/lib/reader-mode";
 import { ClaimScrollRail } from "@/components/article-reader/claim-scroll-rail";
 import {
   EXPANDED_SNAP,
@@ -26,6 +27,7 @@ export type ArticleReaderProps = {
   claimIds: string[];
   articleId: string;
   isAuthenticated: boolean;
+  readerMode: ReaderMode;
   statusLabels: Record<ClaimStatus, string>;
   sourcesLabel: string;
   verificationLabel: string;
@@ -44,6 +46,7 @@ export function ArticleReader({
   claimIds,
   articleId,
   isAuthenticated,
+  readerMode,
   statusLabels,
   sourcesLabel,
   verificationLabel,
@@ -54,6 +57,10 @@ export function ArticleReader({
 }: ArticleReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Light mode (the default) keeps the highlight and the rail dots but drops the
+  // per-paragraph colour bar and renders the scroll thumb in a neutral tone.
+  const isFullMode = readerMode === "full";
 
   const {
     scrollActiveIndex,
@@ -211,6 +218,7 @@ export function ArticleReader({
             statusLabels={statusLabels}
             displayedIndex={displayedIndex}
             isActiveParagraph={paragraphIndex === activeParagraph}
+            showBar={isFullMode}
             onHoverClaim={setHoveredIndex}
             onLeaveClaim={clearHoverUnlessMovingToClaim}
             onSelectClaim={isMobile ? selectClaim : undefined}
@@ -230,6 +238,7 @@ export function ArticleReader({
           viewportTopRatio={viewportTopRatio}
           viewportHeightRatio={viewportHeightRatio}
           displayedIndex={displayedIndex}
+          neutralThumb={!isFullMode}
           sourcesLabel={sourcesLabel}
           verificationLabel={verificationLabel}
         />
@@ -237,13 +246,14 @@ export function ArticleReader({
 
       {hasMobileClaims && !expanded && isReadingInView && (
         <ClaimScrollRail
-          className="fixed top-1/2 right-1 z-30 h-[60dvh] w-9 -translate-y-1/2 lg:hidden"
+          className="fixed top-1/2 right-1 z-30 h-[32dvh] w-9 -translate-y-1/2 lg:hidden"
           anchors={claimAnchors}
           claims={claims}
           indicatorRatio={indicatorRatio}
           viewportTopRatio={viewportTopRatio}
           viewportHeightRatio={viewportHeightRatio}
           displayedIndex={drawerSelectedIndex}
+          neutralThumb={!isFullMode}
           onSelect={scrollToClaim}
           selectLabel={railLabel}
         />

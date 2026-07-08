@@ -12,8 +12,9 @@ import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import { clampMaxClaims, DEFAULT_MAX_CLAIMS } from "./limits";
 import { recordClaimsTool } from "./schemas";
 
-// 3-8 short claim sentences fit easily; the headroom only guards against a
-// pathological article producing a long list and getting cut off mid-array.
+// A length-scaled list (up to the ceiling) of short claim sentences fits easily;
+// the headroom only guards against a long article's list getting cut off
+// mid-array.
 const MAX_TOKENS = 4096;
 
 export type ExtractClaimsResult = {
@@ -26,7 +27,10 @@ const SYSTEM =
   "You are a rigorous fact-checking assistant. You isolate the concrete, " +
   "checkable factual claims in a news article — statements that can be " +
   "verified against external sources. Ignore opinions, framing, and rhetoric. " +
-  "Prefer 3-8 of the most consequential claims. Write each claim in the same " +
+  "Select the most consequential claims and scale the count to the article's " +
+  "length: a short piece yields only a handful, a long multi-section " +
+  "investigation yields proportionally more. Cover the whole article through " +
+  "its closing sections, not just its opening. Write each claim in the same " +
   "language as the article; never translate.";
 
 export async function extractClaims(
@@ -57,7 +61,10 @@ export async function extractClaims(
           },
           {
             type: "text",
-            text: "Extract the checkable factual claims from the article above.",
+            text:
+              "Extract the checkable factual claims from the article above. " +
+              "Cover the entire article through its final sections, and return " +
+              `up to ${cap} of the most consequential claims.`,
           },
         ],
       },

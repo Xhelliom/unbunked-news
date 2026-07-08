@@ -1,20 +1,24 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Eye } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { db } from "@/db/client";
-import { articles } from "@/db/schema";
+import { articleSnapshots, articles } from "@/db/schema";
 import { routing } from "@/i18n/routing";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VerdictBadge } from "@/components/verdict-badge";
+import { ArticleSnapshots } from "@/components/admin/article-snapshots";
 import { CriteriaEvidence } from "@/components/admin/criteria-evidence";
 import { ReviewForm } from "@/components/admin/review-form";
 import { RewriteForm } from "@/components/admin/rewrite-form";
 import { ScrapeDebug } from "@/components/admin/scrape-debug";
 import { ScrapedBody } from "@/components/admin/scraped-body";
+
+// Cap the version history shown in the review UI; older versions stay in the DB.
+const MAX_SNAPSHOTS_SHOWN = 50;
 
 export default async function AdminArticleReviewPage({
   params,
@@ -35,6 +39,13 @@ export default async function AdminArticleReviewPage({
   if (!article) {
     notFound();
   }
+
+  const snapshots = await db.query.articleSnapshots.findMany({
+    where: eq(articleSnapshots.articleId, id),
+    columns: { id: true, createdAt: true, data: true },
+    orderBy: [desc(articleSnapshots.createdAt)],
+    limit: MAX_SNAPSHOTS_SHOWN,
+  });
 
   const t = await getTranslations("admin.review");
   const ts = await getTranslations("claimStatus");
@@ -92,6 +103,8 @@ export default async function AdminArticleReviewPage({
       />
 
       <CriteriaEvidence evidence={article.evidence} />
+
+      <ArticleSnapshots snapshots={snapshots} />
 
       <ScrapeDebug provenance={article.scrapeDebug} />
 

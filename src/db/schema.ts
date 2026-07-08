@@ -28,6 +28,7 @@ const tsvector = customType<{ data: string }>({
     return "tsvector";
   },
 });
+import type { ArticleSnapshotData } from "@/lib/article-snapshot";
 import type { RunDiagnostics } from "@/lib/pipeline/diagnostics";
 import type { JobLive, PauseInfo } from "@/lib/pipeline/job-live";
 import type { AnalysisEvidence } from "@/lib/pipeline/schemas";
@@ -223,6 +224,27 @@ export const claimSources = pgTable(
   (table) => [index("claim_sources_claim_id_idx").on(table.claimId)],
 );
 
+// Frozen copy of an article's analysis (verdict, scores, evidence, claims and
+// rewrites) captured right before an in-place re-analysis overwrites it. Lets an
+// admin keep the prior version and, later, diff how a verdict evolved when its
+// sources changed. The body itself is excluded (it lives on the article row).
+export const articleSnapshots = pgTable(
+  "article_snapshots",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    articleId: uuid()
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    data: jsonb().$type<ArticleSnapshotData>().notNull(),
+    createdAt: timestamp({ withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("article_snapshots_article_id_idx").on(table.articleId),
+  ],
+);
+
 // Unbunked-fiable rewrite of the source article, one row per locale.
 // Markdown body; uses [[claim:N]] markers to link to claims by position.
 export const articleRewrites = pgTable(
@@ -308,6 +330,12 @@ export const jobs = pgTable(
   {
     id: uuid().primaryKey().defaultRandom(),
     articleId: uuid().references(() => articles.id, { onDelete: "set null" }),
+    // When set, the run re-analyses this existing article in place — it snapshots
+    // the current version then overwrites the same row — instead of creating a
+    // new article. Null means a normal run that produces a fresh article.
+    targetArticleId: uuid().references(() => articles.id, {
+      onDelete: "set null",
+    }),
     url: text().notNull(),
     // Reasoning-tier model chosen at submission (see SELECTABLE_REASONING_MODELS).
     // Null means "use the default tier" — kept for jobs created before the picker
@@ -422,9 +450,20 @@ export const articlesRelations = relations(articles, ({ many }) => ({
   articleTags: many(articleTags),
   rewrites: many(articleRewrites),
   keywords: many(articleKeywords),
+  snapshots: many(articleSnapshots),
   jobs: many(jobs),
   tokenUsage: many(articleTokenUsage),
 }));
+
+export const articleSnapshotsRelations = relations(
+  articleSnapshots,
+  ({ one }) => ({
+    article: one(articles, {
+      fields: [articleSnapshots.articleId],
+      references: [articles.id],
+    }),
+  }),
+);
 
 export const articleKeywordsRelations = relations(
   articleKeywords,
@@ -513,3 +552,5 @@ export type ArticleKeyword = typeof articleKeywords.$inferSelect;
 export type NewArticleKeyword = typeof articleKeywords.$inferInsert;
 export type ArticleTokenUsage = typeof articleTokenUsage.$inferSelect;
 export type NewArticleTokenUsage = typeof articleTokenUsage.$inferInsert;
+export type ArticleSnapshot = typeof articleSnapshots.$inferSelect;
+export type NewArticleSnapshot = typeof articleSnapshots.$inferInsert;
