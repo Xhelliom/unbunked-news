@@ -1,9 +1,12 @@
+import { cookies } from "next/headers";
+
 import type { PublicArticle } from "@/lib/articles";
 import {
   getApprovedContributions,
   type PublicContribution,
 } from "@/lib/contributions/queries";
 import { buildReadingModel } from "@/lib/reading";
+import { parseReaderMode, READER_MODE_COOKIE } from "@/lib/reader-mode";
 import { routing } from "@/i18n/routing";
 import { getSession } from "@/lib/session";
 import { getSuggestedArticles } from "@/lib/suggestions";
@@ -81,6 +84,10 @@ export async function ArticleView({
     ? (await getSession()) !== null
     : false;
 
+  const readerMode = parseReaderMode(
+    (await cookies()).get(READER_MODE_COOKIE)?.value,
+  );
+
   return (
     <article className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6">
       <ArticleHeader article={article} />
@@ -100,6 +107,7 @@ export async function ArticleView({
           orphanCards={orphans.map(toClaimCardData)}
           articleId={article.id}
           isAuthenticated={isAuthenticated}
+          readerMode={readerMode}
           showSummaryInstead={showSummaryInstead}
           originalSummary={article.originalSummary}
         />

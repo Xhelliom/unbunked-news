@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { CLAIM_STATUSES, type ClaimStatus } from "@/lib/claim-status";
 import type { PublicContribution } from "@/lib/contributions/queries";
 import type { ReadingParagraph } from "@/lib/reading";
+import type { ReaderMode } from "@/lib/reader-mode";
 import { ArticleReader } from "@/components/article-reader";
 import { ClaimCard, type ClaimCardData } from "@/components/claim-card";
 
@@ -14,6 +15,7 @@ type Props = {
   orphanCards: ClaimCardData[];
   articleId: string;
   isAuthenticated: boolean;
+  readerMode: ReaderMode;
   showSummaryInstead: boolean;
   originalSummary: string | null;
 };
@@ -29,6 +31,7 @@ export async function ArticleAnalysisView({
   orphanCards,
   articleId,
   isAuthenticated,
+  readerMode,
   showSummaryInstead,
   originalSummary,
 }: Props) {
@@ -83,6 +86,7 @@ export async function ArticleAnalysisView({
             claimIds={claimIds}
             articleId={articleId}
             isAuthenticated={isAuthenticated}
+            readerMode={readerMode}
             statusLabels={statusLabels}
             sourcesLabel={t("sourcesConsulted")}
             verificationLabel={t("verificationTag")}
