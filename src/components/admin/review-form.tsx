@@ -3,13 +3,13 @@
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 
-import type { ActionState } from "@/app/[locale]/admin/actions";
 import {
   relaunchArticle,
   restoreArticle,
   saveArticle,
   setDeleted,
   setPublished,
+  type ActionState,
 } from "@/app/[locale]/admin/articles/[id]/actions";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { CriteriaFieldset } from "@/components/admin/criteria-fieldset";

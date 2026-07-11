@@ -54,6 +54,7 @@ export default async function AdminArticleReviewPage({
   const articleLocale = hasLocale(routing.locales, article.locale)
     ? article.locale
     : routing.defaultLocale;
+  const isDeleted = article.deletedAt !== null;
 
   return (
     <div className="space-y-8">
@@ -74,7 +75,7 @@ export default async function AdminArticleReviewPage({
             {t("title")}
           </h1>
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {article.published && (
+            {article.published && !isDeleted && (
               <Button asChild variant="outline" size="sm">
                 <Link
                   href={`/article/${article.slug}`}
@@ -118,7 +119,7 @@ export default async function AdminArticleReviewPage({
         recencyScore={article.recencyScore}
         contributionsEnabled={article.contributionsEnabled}
         published={article.published}
-        isDeleted={article.deletedAt !== null}
+        isDeleted={isDeleted}
       />
 
       <CriteriaEvidence evidence={article.evidence} />

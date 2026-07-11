@@ -20,7 +20,8 @@ import {
 } from "@/lib/score-criteria";
 import { requireAdminSession } from "@/lib/session";
 import { toVerdict } from "@/lib/verdicts";
-import type { ActionState } from "@/app/[locale]/admin/actions";
+
+export type ActionState = { error?: string };
 
 // A blank field (cleared global score, or an optional criterion whose disabled
 // slider is omitted from the form data) means "unscored" -> null.
