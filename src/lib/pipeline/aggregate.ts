@@ -29,6 +29,7 @@ import {
 } from "./data-sources";
 import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
 import { recordAnalysisTool, type Analysis } from "./schemas";
+import { recoverSummaries } from "./summary-recovery";
 import { FALLBACK_RUBRIC, isRubric } from "@/lib/rubrics";
 import type { VerificationFindings } from "./verify";
 
@@ -169,11 +170,15 @@ export async function aggregate(
   // because corroboration could only rest on the web research above.
   const scoring = deriveScoring(criteria, anyKillswitchRaised(killswitch));
 
+  const { summary, originalSummary } = recoverSummaries(
+    input.summary,
+    input.originalSummary,
+  );
+
   const analysis: Analysis = {
     title: typeof input.title === "string" ? input.title : article.title,
-    summary: typeof input.summary === "string" ? input.summary : "",
-    originalSummary:
-      typeof input.originalSummary === "string" ? input.originalSummary : "",
+    summary,
+    originalSummary,
     language:
       typeof input.language === "string" && input.language.trim().length > 0
         ? input.language.trim().slice(0, 5).toLowerCase()
