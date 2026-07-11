@@ -499,7 +499,7 @@
       "modelLabel": "Analysis model",
       "modelHint": "Model used for verification, judgement and rewriting. Extraction stays on Haiku.",
       "models": {
-        "sonnet": "Sonnet 4.6 (default, recommended)",
+        "sonnet": "Sonnet 5 (default, recommended)",
         "haiku": "Haiku 4.5 (faster and cheaper)"
       }
     },

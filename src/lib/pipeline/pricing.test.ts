@@ -25,7 +25,7 @@ test("Haiku 4.5 is priced at its list rates", () => {
   approx(costForUsage(HAIKU_MODEL, ONE_MTOK_EACH), 7.35);
 });
 
-test("Sonnet 4.6 is priced at its list rates", () => {
+test("Sonnet 5 is priced at its list rates", () => {
   // input 3.0 + output 15.0 + cache write 3.75 + cache read 0.3
   approx(costForUsage(SONNET_MODEL, ONE_MTOK_EACH), 22.05);
 });
