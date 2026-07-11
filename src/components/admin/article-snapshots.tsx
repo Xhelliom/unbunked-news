@@ -1,6 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
 
-import { restoreSnapshot } from "@/app/[locale]/admin/actions";
+import { restoreSnapshot } from "@/app/[locale]/admin/articles/[id]/actions";
 import type { ArticleSnapshotData } from "@/lib/article-snapshot";
 import { toVerdict } from "@/lib/verdicts";
 import { Button } from "@/components/ui/button";

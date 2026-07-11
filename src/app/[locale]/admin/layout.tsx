@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ExternalLink } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { Link, redirect } from "@/i18n/navigation";
@@ -10,6 +11,7 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/admin/sign-out-button";
+import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
@@ -68,6 +70,12 @@ export default async function AdminLayout({
                 {t("title")}
               </Link>
               <div className="ml-auto flex items-center gap-1">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/" target="_blank" rel="noreferrer">
+                    <ExternalLink className="size-3.5" />
+                    {t("viewSite")}
+                  </Link>
+                </Button>
                 <ThemeToggle />
                 <LocaleSwitcher />
                 <SignOutButton />

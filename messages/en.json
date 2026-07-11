@@ -317,6 +317,7 @@
   },
   "admin": {
     "title": "Administration",
+    "viewSite": "View public site",
     "nav": {
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
@@ -581,6 +582,7 @@
     "review": {
       "title": "Review before publishing",
       "preview": "Preview",
+      "viewPublished": "View published page",
       "headline": "Title",
       "summary": "Summary",
       "originalSummary": "Original article summary (neutral paraphrase)",
@@ -602,6 +604,9 @@
       "scrapedBody": "Scraped body",
       "scrapedBodyChars": "{count, plural, one {# character} other {# characters}}",
       "scrapedBodyEmpty": "No scraped content.",
+      "scrapedBodyEdit": "Edit",
+      "scrapedBodyCancel": "Cancel",
+      "scrapedBodyHint": "Fix up the automatically scraped text (a stray word, ad, or menu left stuck to the article).",
       "scrapeDebug": "Scrape debug",
       "scrapeDebugEmpty": "No scrape diagnostics for this article.",
       "scrapeMethod": "Method",
