@@ -3,6 +3,7 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
+import { CLAIM_STATUSES, claimStatusDotClasses } from "@/lib/claim-status";
 import { ArticleImage } from "@/components/article-image";
 import { LowCriterionBadge } from "@/components/low-criterion-badge";
 import { VerdictBadge } from "@/components/verdict-badge";
@@ -14,6 +15,13 @@ export function HeroCard({ article }: { article: FeedArticle }) {
   const tr = useTranslations("rubrics");
   const format = useFormatter();
   const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
+
+  // Aggregate claim statuses into the verdict-coloured breakdown bar.
+  const total = article.claims.length;
+  const counts = CLAIM_STATUSES.map((status) => ({
+    status,
+    count: article.claims.filter((claim) => claim.status === status).length,
+  })).filter(({ count }) => count > 0);
 
   return (
     <Link
@@ -64,7 +72,25 @@ export function HeroCard({ article }: { article: FeedArticle }) {
             {article.summary}
           </p>
         )}
-        <div className="mt-auto flex flex-wrap items-center gap-2.5 border-t pt-5">
+        {total > 0 && (
+          <div className="mt-auto flex items-center gap-2.5">
+            <div className="bg-muted flex h-[5px] flex-1 overflow-hidden rounded-full">
+              {counts.map(({ status, count }) => (
+                <span
+                  key={status}
+                  className={claimStatusDotClasses[status]}
+                  style={{ width: `${(count / total) * 100}%` }}
+                />
+              ))}
+            </div>
+            <span className="text-muted-foreground font-mono text-[11px] whitespace-nowrap">
+              {t("claimsCount", { count: total })}
+            </span>
+          </div>
+        )}
+        <div
+          className={`flex flex-wrap items-center gap-2.5 border-t pt-5 ${total > 0 ? "" : "mt-auto"}`}
+        >
           <span className="text-xs font-semibold tracking-[0.05em] uppercase">
             {article.sourceName}
           </span>
