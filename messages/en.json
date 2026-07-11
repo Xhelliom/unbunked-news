@@ -60,7 +60,6 @@
     "lowWarning": "Low {criterion}",
     "unverifiable": "—",
     "sectionTitle": "Score breakdown",
-    "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
       "label": "Accuracy",
       "description": "Are the article's figures, dates, quotes and claims correct?",
@@ -99,7 +98,7 @@
     }
   },
   "descriptors": {
-    "caption": "Descriptors — they describe the article but are not part of the score.",
+    "caption": "Characteristics",
     "framingTitle": "Framing",
     "contentTypeTitle": "Content type",
     "confidenceLabel": "Confidence",
@@ -767,9 +766,9 @@
   "article": {
     "originalSource": "Original source",
     "readOriginal": "Read the original article",
-    "score": "Reliability score",
+    "score": "Unbunked Verdict",
     "claimsBreakdownTitle": "Analyzed claims",
-    "claimsBreakdownHint": "Status of each checked claim in the article. Full detail below.",
+    "claimsBreakdownHint": "Status of each checked claim in the article.",
     "claimsTitle": "Claim-by-claim review",
     "readingTitle": "The article, checked paragraph by paragraph",
     "readingIntroTitle": "The article, checked",
