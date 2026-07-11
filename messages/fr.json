@@ -317,6 +317,7 @@
   },
   "admin": {
     "title": "Administration",
+    "viewSite": "Voir le site public",
     "nav": {
       "dashboard": "Tableau de bord",
       "submit": "Soumettre une URL",
@@ -581,6 +582,7 @@
     "review": {
       "title": "Révision avant publication",
       "preview": "Aperçu",
+      "viewPublished": "Voir la page publiée",
       "headline": "Titre",
       "summary": "Résumé",
       "originalSummary": "Résumé de l'article original (paraphrase neutre)",
@@ -602,6 +604,9 @@
       "scrapedBody": "Corps scrapé",
       "scrapedBodyChars": "{count, plural, one {# caractère} other {# caractères}}",
       "scrapedBodyEmpty": "Aucun contenu scrapé.",
+      "scrapedBodyEdit": "Modifier",
+      "scrapedBodyCancel": "Annuler",
+      "scrapedBodyHint": "Corrigez le texte récupéré automatiquement (mot, publicité ou menu resté collé à l'article).",
       "scrapeDebug": "Débogage du scraping",
       "scrapeDebugEmpty": "Aucune donnée de scraping pour cet article.",
       "scrapeMethod": "Méthode",

@@ -3,7 +3,8 @@
 import { useActionState, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { saveRewrite, type ActionState } from "@/app/[locale]/admin/actions";
+import type { ActionState } from "@/app/[locale]/admin/actions";
+import { saveRewrite } from "@/app/[locale]/admin/articles/[id]/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
