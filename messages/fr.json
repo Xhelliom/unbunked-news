@@ -10,6 +10,9 @@
   "nav": {
     "home": "À la une",
     "method": "Méthode",
+    "menu": "Menu",
+    "language": "Langue",
+    "theme": "Thème",
     "submit": "Proposer un article"
   },
   "howItWorks": {
@@ -760,7 +763,6 @@
   },
   "feed": {
     "empty": "Aucun article publié pour l'instant.",
-    "readArticle": "Lire l'article",
     "featured": "À la une",
     "allArticles": "Tous les articles",
     "claimsCount": "{count} affirmations",

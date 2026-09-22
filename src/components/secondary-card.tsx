@@ -1,17 +1,12 @@
-import { useTranslations } from "next-intl";
-
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
 import { ArticleImage } from "@/components/article-image";
+import { CardMeta } from "@/components/card-meta";
 import { VerdictBadge } from "@/components/verdict-badge";
 
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
 
 export function SecondaryCard({ article }: { article: FeedArticle }) {
-  const tr = useTranslations("rubrics");
-  const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
-  const eyebrow = [article.sourceName, rubric].filter(Boolean).join(" · ");
-
   return (
     <Link
       href={`/article/${article.slug}`}
@@ -26,6 +21,7 @@ export function SecondaryCard({ article }: { article: FeedArticle }) {
         />
       </div>
       <div className="flex min-w-0 flex-col justify-center gap-1.5 py-3 pr-3.5 pl-0 lg:py-5">
+        <CardMeta sourceName={article.sourceName} rubric={article.rubric} />
         <div className="flex flex-wrap items-center gap-2">
           {article.verdict && <VerdictBadge verdict={article.verdict} />}
           {article.reliabilityScore !== null && (
@@ -37,9 +33,6 @@ export function SecondaryCard({ article }: { article: FeedArticle }) {
         <h3 className="group-hover:text-primary line-clamp-3 font-serif text-[15px] leading-[1.25] font-bold text-balance transition-colors lg:text-[17px]">
           {article.title}
         </h3>
-        <p className="text-muted-foreground text-xs font-semibold tracking-[0.05em] uppercase">
-          {eyebrow}
-        </p>
       </div>
     </Link>
   );

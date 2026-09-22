@@ -1,17 +1,9 @@
-import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
-
 import { Link } from "@/i18n/navigation";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SearchBox } from "@/components/search-box";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { UserMenu } from "@/components/user-menu";
+import { SiteMenu } from "@/components/site-menu";
 
 export function SiteHeader() {
-  const t = useTranslations("nav");
-
   return (
     <header className="bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 w-full border-b backdrop-blur">
       <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
@@ -19,26 +11,9 @@ export function SiteHeader() {
           <Logo className="text-[28px]" />
         </Link>
 
-        <nav className="shrink-0">
-          <Link
-            href="/methode"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-          >
-            {t("method")}
-          </Link>
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <SearchBox />
-          <Button asChild variant="outline" size="sm" className="hidden sm:flex">
-            <Link href="/submit">
-              <Plus className="size-3.5" />
-              {t("submit")}
-            </Link>
-          </Button>
-          <ThemeToggle />
-          <LocaleSwitcher />
-          <UserMenu />
+          <SiteMenu />
         </div>
       </div>
     </header>

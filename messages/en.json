@@ -10,6 +10,9 @@
   "nav": {
     "home": "Top stories",
     "method": "Method",
+    "menu": "Menu",
+    "language": "Language",
+    "theme": "Theme",
     "submit": "Submit an article"
   },
   "howItWorks": {
@@ -760,7 +763,6 @@
   },
   "feed": {
     "empty": "No published articles yet.",
-    "readArticle": "Read the article",
     "featured": "Featured",
     "allArticles": "All articles",
     "claimsCount": "{count} claims",
