@@ -11,9 +11,12 @@ import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { cn } from "@/lib/utils";
 import { ArticleCard } from "@/components/article-card";
 import { HeroCard } from "@/components/hero-card";
-import { SecondaryCard } from "@/components/secondary-card";
 import { FeedFilters } from "@/components/feed-filters";
 import { HowItWorks } from "@/components/how-it-works";
+
+// The lead block is one big card plus two beside it, so it only makes sense
+// once there are at least that many articles to fill it.
+const LEAD_BLOCK_SIZE = 3;
 
 function asVerdict(value: string | undefined): Verdict | undefined {
   return value && (VERDICTS as readonly string[]).includes(value)
@@ -60,23 +63,20 @@ export default async function HomePage({
 
   const hasFilter = Boolean(verdict || rubric);
 
-  // The editorial layout (hero + two secondaries) always reflects the latest
-  // stories, independent of the filters — those only narrow the grid below.
+  // The lead block always reflects the latest stories, independent of the
+  // filters — those only narrow the grid below.
   const recent = await getPublishedArticles({});
-  const showHero = recent.length >= 3;
-  const hero = showHero ? recent[0] : null;
-  const stack = showHero ? recent.slice(1, 3) : [];
-  const heroIds = new Set(
-    showHero ? recent.slice(0, 3).map((article) => article.id) : [],
-  );
+  const lead =
+    recent.length >= LEAD_BLOCK_SIZE ? recent.slice(0, LEAD_BLOCK_SIZE) : [];
+  const leadIds = new Set(lead.map((article) => article.id));
 
   // The grid honours the active filter; reuse the recent list when nothing is
-  // filtered to avoid a second identical query. Either way, the hero stories
+  // filtered to avoid a second identical query. Either way, the lead stories
   // are dropped so they never appear twice.
   const filtered = hasFilter
     ? await getPublishedArticles({ verdict, rubric })
     : recent;
-  const grid = filtered.filter((article) => !heroIds.has(article.id));
+  const grid = filtered.filter((article) => !leadIds.has(article.id));
 
   const sectionTitle = verdict
     ? tv(`${verdict}.label`)
@@ -97,12 +97,12 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-20 sm:px-6">
-      {hero && (
+      {lead.length > 0 && (
         <section className="grid gap-5 lg:grid-cols-[2fr_1fr]">
-          <HeroCard article={hero} />
-          <div className="flex flex-col gap-3.5">
-            {stack.map((article) => (
-              <SecondaryCard key={article.id} article={article} />
+          <HeroCard article={lead[0]} />
+          <div className="flex flex-col gap-5">
+            {lead.slice(1).map((article) => (
+              <ArticleCard key={article.id} article={article} />
             ))}
           </div>
         </section>
@@ -110,7 +110,7 @@ export default async function HomePage({
 
       <HowItWorks />
 
-      <section className={cn(hero ? "mt-14" : "mt-0")}>
+      <section className={cn(lead.length > 0 ? "mt-14" : "mt-0")}>
         <header className="mb-6 flex flex-col gap-4 border-b pb-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
           <h2 className="font-serif text-[22px] font-bold tracking-tight whitespace-nowrap">
             {sectionTitle}
