@@ -5,7 +5,6 @@ import {
   CONFIDENCE_LEVELS,
   CONTENT_TYPE_VALUES,
   CORE_CRITERIA,
-  CRITERION_RUBRIC,
   CRITERION_WEIGHT,
   FRAMING_VALUES,
   KILLSWITCH_FLAGS,
@@ -22,6 +21,8 @@ import {
 } from "@/lib/score-criteria";
 import type { Verdict } from "@/lib/verdicts";
 import { RUBRICS, type Rubric } from "@/lib/rubrics";
+
+import { CRITERION_RUBRIC } from "./criterion-rubric";
 
 // Matches the claim_status enum in the database schema.
 export const CLAIM_STATUSES = [
@@ -177,6 +178,7 @@ function criterionDescription(criterion: ScoreCriterion): string {
     `Weight ${CRITERION_WEIGHT[criterion]}.`,
     `Checklist: ${rubric.checklist.join(" ")}`,
     `Levels: ${levels}`,
+    `Calibration: ${rubric.anchors.join(" ")}`,
   ].join(" ");
 }
 

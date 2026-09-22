@@ -9,19 +9,20 @@ import { extractClaims } from "@/lib/pipeline/extract-claims";
 import { HAIKU_MODEL, SONNET_MODEL } from "@/lib/pipeline/models";
 import { structureArticleBody } from "@/lib/pipeline/structure-body";
 import { verifyClaims } from "@/lib/pipeline/verify";
+import { CRITERIA_VERSION } from "@/lib/score-criteria";
 
-// Re-scores existing local articles with the v1.2 pipeline IN PLACE (no new
+// Re-scores existing local articles with the current pipeline IN PLACE (no new
 // rows). Reuses the stored article body when present so it doesn't re-scrape;
 // falls back to scraping when the body is missing. Existing rewrites are left
 // untouched. The react-server condition makes `server-only` a no-op; --env-file
-// loads .env.local before any module reads process.env:
+// loads .env before any module reads process.env:
 //
 //   pnpm db:rescore-local
-//   # = node --conditions=react-server --env-file=.env.local --import tsx \
+//   # = node --conditions=react-server --env-file=.env --import tsx \
 //   #     src/db/rescore-articles.local.ts
 //
-// Requires a real ANTHROPIC_API_KEY in .env.local (extract + web-search verify +
-// aggregate each cost API calls).
+// Requires the .env the README's setup creates, with a real ANTHROPIC_API_KEY
+// (extract + web-search verify + aggregate each cost API calls).
 
 async function scrapedFor(article: {
   urlOrigine: string;
@@ -59,11 +60,11 @@ async function scrapedFor(article: {
 
 async function rescore(): Promise<void> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY is empty — set a real key in .env.local");
+    throw new Error("ANTHROPIC_API_KEY is empty — set a real key in .env");
   }
 
   const rows = await db.query.articles.findMany();
-  console.log(`Re-scoring ${rows.length} article(s) with v1.2…`);
+  console.log(`Re-scoring ${rows.length} article(s) with ${CRITERIA_VERSION}…`);
 
   for (const article of rows) {
     console.log(`\n• ${article.title}\n  ${article.urlOrigine}`);
