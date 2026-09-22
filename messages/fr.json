@@ -64,7 +64,7 @@
       "label": "Exactitude",
       "description": "Les chiffres, dates, citations et affirmations de l'article sont-ils corrects ?",
       "why": "C'est le cœur de la fiabilité. Une seule affirmation centrale fausse fait basculer tout l'article. C'est pourquoi ce critère pèse le plus lourd.",
-      "how": "On isole les affirmations principales et on les confronte aux sources : citations non tronquées, données non déformées, noms et dates cohérents."
+      "how": "On isole les affirmations principales et on les confronte aux sources : citations non tronquées, données non déformées, noms et dates cohérents. Une coquille qui ne change rien pour le lecteur n'est pas pénalisée ; une affirmation fausse, si."
     },
     "corroboration": {
       "label": "Recoupement",
@@ -76,19 +76,19 @@
       "label": "Sources citées",
       "description": "Les références que l'article mentionne sont-elles nommées, vérifiables et indépendantes ?",
       "why": "Un article qui s'appuie sur des sources anonymes ou introuvables demande une confiance aveugle. On préfère ce qu'on peut remonter et vérifier soi-même.",
-      "how": "On examine ce que l'article cite : des sources nommées plutôt qu'anonymes, des documents de première main plutôt que des reprises, des liens qui fonctionnent vraiment."
+      "how": "On examine ce que l'article cite : des sources nommées plutôt qu'anonymes, des documents de première main plutôt que des reprises. Une source nommée dans le texte compte, même sans lien hypertexte."
     },
     "completeness": {
       "label": "Contexte",
       "description": "Des faits essentiels ont-ils été passés sous silence, changeant la lecture de l'article ?",
       "why": "On peut tromper sans mentir, en omettant ce qui dérange. À noter : on ne juge ni le ton ni l'opinion, seulement les omissions qui faussent la compréhension.",
-      "how": "On vérifie si le contexte indispensable est présent, si un fait connu manque, ou si des citations sont sorties de leur contexte."
+      "how": "On vérifie si le contexte indispensable est présent, si un fait connu qui changerait la lecture manque, ou si des citations sont sorties de leur contexte. Aucun article ne dit tout : une lacune qui ne change pas la lecture ne coûte rien."
     },
     "transparency": {
       "label": "Transparence",
-      "description": "L'auteur, la date, le responsable éditorial et le financement sont-ils identifiables ?",
-      "why": "Savoir qui parle, quand, et qui finance fait partie de l'information. Un média qui se cache n'inspire pas confiance : l'opacité est en soi un défaut.",
-      "how": "On cherche l'auteur, la date de publication, l'éditeur du site et ses sources de financement. Plus c'est clair, plus la note monte."
+      "description": "L'auteur, la date et l'éditeur responsable sont-ils identifiables ?",
+      "why": "Savoir qui parle et quand fait partie de l'information. Un média qui se cache n'inspire pas confiance : l'opacité est en soi un défaut.",
+      "how": "On cherche l'auteur, la date de publication et l'éditeur du site. Un financement déclaré est un plus, jamais une obligation : presque aucun média ne le publie sur la page d'un article."
     },
     "recency": {
       "label": "Actualité",

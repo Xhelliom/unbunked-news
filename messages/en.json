@@ -64,7 +64,7 @@
       "label": "Accuracy",
       "description": "Are the article's figures, dates, quotes and claims correct?",
       "why": "This is the heart of reliability. A single false central claim tips the whole article over, which is why it carries the most weight.",
-      "how": "We isolate the main claims and test them against the sources: quotes not truncated, data not distorted, names and dates consistent."
+      "how": "We isolate the main claims and test them against the sources: quotes not truncated, data not distorted, names and dates consistent. A typo that changes nothing for the reader isn't penalised; a false claim is."
     },
     "corroboration": {
       "label": "Cross-checking",
@@ -76,19 +76,19 @@
       "label": "Cited sources",
       "description": "Are the references the article mentions named, verifiable and independent?",
       "why": "An article leaning on anonymous or untraceable sources asks for blind trust. We prefer what you can trace back and check yourself.",
-      "how": "We examine what the article cites: named sources over anonymous ones, first-hand documents over reprints, links that actually work."
+      "how": "We examine what the article cites: named sources over anonymous ones, first-hand documents over reprints. A source named in the text counts, even without a hyperlink."
     },
     "completeness": {
       "label": "Context",
       "description": "Have essential facts been left out in a way that changes how the article reads?",
       "why": "You can mislead without lying, by leaving out what's inconvenient. Note: we judge neither tone nor opinion, only omissions that distort understanding.",
-      "how": "We check whether the essential context is present, whether a known fact is missing, or whether quotes are taken out of context."
+      "how": "We check whether the essential context is present, whether a known fact that would change the reading is missing, or whether quotes are taken out of context. No article says everything: a gap that doesn't change the reading costs nothing."
     },
     "transparency": {
       "label": "Transparency",
-      "description": "Are the author, date, editorial owner and funding identifiable?",
-      "why": "Knowing who is speaking, when, and who funds them is part of the information. An outlet that hides doesn't inspire trust: opacity is itself a flaw.",
-      "how": "We look for the author, the publication date, the site's publisher and its funding sources. The clearer it is, the higher the score."
+      "description": "Are the author, date and editorial owner identifiable?",
+      "why": "Knowing who is speaking and when is part of the information. An outlet that hides doesn't inspire trust: opacity is itself a flaw.",
+      "how": "We look for the author, the publication date and the site's publisher. Disclosed funding is a bonus, never a requirement: almost no outlet publishes it on an article page."
     },
     "recency": {
       "label": "Recency",

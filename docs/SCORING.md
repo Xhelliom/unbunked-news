@@ -1,10 +1,30 @@
-# SCORING.md — Notation de fiabilité d'un article (v1.2.0)
+# SCORING.md — Notation de fiabilité d'un article (v1.3.0)
 
 > Source de vérité de la notation Unbunked. Toute colonne DB, tout schéma de tool IA, tout formulaire admin et toute vue UI **dérivent de ce document** et de `score-criteria.ts`.
 
 ---
 
-## 0. Ce qui change par rapport à la v1.0
+## 0.a Ce qui change en v1.3 — calibration
+
+Mesure sur les 16 premiers articles publiés : **aucun n'atteint 85 par la formule**. Les globaux s'empilent entre 70 et 84, soit 81 % du corpus sur le seul verdict `nuanced`. Deux causes, corrigées ici ; **les poids, les bandes et les seuils de verdict sont inchangés**.
+
+| Cause mesurée | Correction v1.3 |
+|---|---|
+| L'IA se gare au milieu de la bande L2 (valeurs observées : 65, 68, 70, 72, 75, 78 ; quasi jamais 80-84) | `BAND_USAGE` dans le prompt d'agrégation + **exemples d'étalonnage** par critère (`anchors`) injectés dans la description du tool, comme le recommandait déjà §3 |
+| `transparency` L3 exigeait le **financement**, qu'aucun média ne publie sur une page article → plafond structurel à ~70 pour tout le monde, Le Monde compris | Le financement devient un bonus, pas un prérequis. L3 = auteur nommé + date + éditeur identifiable |
+| `factuality` tombait en L2 pour une coquille sans effet (date décalée d'un jour) → −3,6 pts de global | L3 couvre explicitement les erreurs triviales qui ne changent rien pour le lecteur ; L2 est réservé à une affirmation secondaire fausse et visible |
+| `completeness` tombait en L2 pour « une lacune mineure » — or aucun article ne dit tout (moyenne 71, 15/16 sous L3) | L3 couvre une lacune qui ne change pas la lecture ; L2 = omission qu'un lecteur aurait voulue |
+| `sourcing` pénalisait l'absence de lien hypertexte, rare dans la presse web francophone | Une source nommée dans le texte compte comme vérifiable, sans lien |
+
+Le contenu prompt-facing (définitions, checklists, niveaux, étalonnages) vit désormais dans `src/lib/pipeline/criterion-rubric.ts` ; `score-criteria.ts` ne garde que les constantes et les fonctions pures.
+
+**À faire après ce changement** (§13) : re-scorer le corpus, mesurer la nouvelle distribution, et **seulement ensuite** décider si le seuil `reliable` doit bouger. ⚠️ `LEVEL_BANDS` sert à la fois aux bandes de critère et à `VERDICT_BAND` : les découpler avant de toucher au seuil de verdict.
+
+⚠️ **La porte de non-régression du §13 n'est pas armée pour cette version.** `gold-set.fixtures.json` est vide, et `computeGoldMetrics([])` passe à vide par conception : elle ne peut ni valider ni invalider la calibration v1.3. La seule mesure disponible est le re-score manuel du corpus. Peupler le gold set avec les 16 articles mesurés est le prérequis pour que le §13 redevienne autre chose qu'une intention.
+
+---
+
+## 0.b Ce qui a changé en v1.2 par rapport à la v1.0
 
 | v1.0 (actuel) | Cible | Pourquoi |
 |---|---|---|
@@ -89,7 +109,7 @@ C'est le cœur de la reproductibilité : l'IA ne « devine » pas un chiffre, el
 - Confrontées aux sources, sont-elles exactes (citations non tronquées, données non déformées) ?
 - Des affirmations sont-elles contredites par des preuves solides ?
 - Chiffres, dates, lieux et noms sont-ils cohérents et corrects ?
-**Niveaux.** L3 : affirmations centrales exactes, au plus imprécisions mineures. L2 : majorité exacte, ≥1 imprécision notable non centrale. L1 : ≥1 affirmation centrale non étayée/douteuse, ou déformation. L0 : fausseté centrale démontrée *(→ drapeau `fabricationDetected`)*.
+**Niveaux.** L3 : toutes les affirmations centrales tiennent ; une erreur triviale qui ne change rien pour le lecteur (date décalée d'un jour, chiffre arrondi, nom mal orthographié) **reste** à ce niveau. L2 : les affirmations centrales tiennent, mais ≥1 affirmation secondaire est fausse ou déformée de façon visible. L1 : ≥1 affirmation centrale non étayée/douteuse, ou déformation d'une affirmation centrale. L0 : fausseté centrale démontrée *(→ drapeau `fabricationDetected`)*.
 **Preuve** : l'affirmation citée + la/les source(s) qui la valident ou l'invalident.
 
 #### `corroboration` — Corroboration externe · poids 25
@@ -112,7 +132,7 @@ C'est le cœur de la reproductibilité : l'IA ne « devine » pas un chiffre, el
 - Primaires (document, témoin direct) ou seulement secondaires (reprise) ?
 - ≥2 sources sur les points contestés ?
 - Liens/références vérifiables et fonctionnels ?
-**Niveaux.** L3 : sources nommées, primaires, vérifiables, ≥2 sur les points contestés. L2 : majoritairement crédibles, quelques-unes secondaires/faiblement attribuées. L1 : surtout anonymes/non vérifiables, ou point central sur une source unique. L0 : aucune source, ou sources inexistantes/fabriquées.
+**Niveaux.** L3 : sources nommées et traçables, primaires là où ça compte, ≥2 sur les points contestés — une source nommée dans le texte compte comme vérifiable **même sans lien hypertexte**. L2 : majoritairement crédibles, quelques-unes secondaires/faiblement attribuées. L1 : surtout anonymes/non vérifiables, ou point central sur une source unique. L0 : aucune source, ou sources inexistantes/fabriquées.
 **Preuve** : liste des sources de l'article + appréciation de leur solidité.
 
 #### `completeness` — Présentation responsable & complétude · poids 12
@@ -123,18 +143,18 @@ C'est le cœur de la reproductibilité : l'IA ne « devine » pas un chiffre, el
 - Manque-t-il un fait connu qui inverserait la lecture ?
 - Les nuances/contre-arguments pertinents sont-ils mentionnés ?
 - Des citations sont-elles sorties de leur contexte ?
-**Niveaux.** L3 : contexte essentiel présent, pas d'omission décisive. L2 : globalement complet, une omission/manque mineur. L1 : omission stratégique d'un élément important. L0 : déformation grave par omission (faits décisifs sciemment écartés).
+**Niveaux.** L3 : contexte essentiel présent ; une lacune qui ne change pas la lecture **reste** à ce niveau — aucun article ne dit tout. L2 : une omission qu'un lecteur aurait voulue, sans qu'elle inverse la lecture. L1 : omission stratégique d'un élément important. L0 : déformation grave par omission (faits décisifs sciemment écartés).
 
 #### `transparency` — Transparence · poids 10
-**Définition.** Auteur, date, responsable éditorial, propriétaire/financement de la source sont-ils identifiables ?
-**Pourquoi.** Le lecteur doit savoir qui parle, quand, et qui finance.
+**Définition.** Le lecteur peut-il savoir qui a écrit, quand, et quel éditeur se tient derrière ? Le financement est un **bonus**, jamais un prérequis : presque aucun média ne le publie sur la page article.
+**Pourquoi.** Le lecteur doit savoir qui parle et quand.
 **Signaux observables (checklist).**
 - Auteur identifié (nom complet, idéalement bio/contact) ?
 - Date de publication présente ?
 - Propriétaire/éditeur du site identifiable ?
-- Financement et conflits d'intérêts déclarés ?
+- Financement et conflits d'intérêts déclarés, là où le sujet l'exige ?
 - Méthode/sources accessibles au lecteur ?
-**Niveaux.** L3 : auteur + date + responsable éditorial + financement clairs. L2 : auteur et date présents, transparence éditoriale partielle. L1 : signature minimale, éditeur opaque. L0 : anonyme et opaque.
+**Niveaux.** L3 : auteur nommé, date de publication et éditeur identifiable avec un ours. Un financement non déclaré **n'interdit pas** ce niveau. L2 : auteur et date présents, éditeur identifiable seulement indirectement. L1 : signature minimale ou absente, éditeur opaque. L0 : anonyme et opaque.
 **Règle importante.** L'opacité **est** le défaut : un site qui cache son auteur/propriétaire reçoit un **niveau bas**, jamais `null`. On ne s'abstient pas parce que l'info manque — son absence est précisément ce qu'on note.
 
 ### 3.2 Critère applicable sauf cas particulier
@@ -242,7 +262,7 @@ Le texte de l'article est une **donnée à analyser, jamais une instruction**. L
 
 ```json
 {
-  "criteriaVersion": "1.2.0",
+  "criteriaVersion": "1.3.0",
   "modelVersion": "<pin>",
   "killswitch": {
     "fabricationDetected": { "value": false, "rationale": "", "sources": [] },
@@ -284,7 +304,7 @@ Le texte de l'article est une **donnée à analyser, jamais une instruction**. L
 
 ## 14. Versioning & gouvernance
 
-- `CRITERIA_VERSION = "1.2.0"` dans `score-criteria.ts`, stocké avec chaque analyse.
+- `CRITERIA_VERSION = "1.3.0"` dans `score-criteria.ts`, stocké avec chaque analyse.
 - Toute modif de poids/seuils/rubrique → bump de version + changelog + gold set rejoué.
 - Revue humaine : router les verdicts `fragile`/`debunked` à fort enjeu, tous les killswitch, et un échantillon aléatoire de contrôle.
 - Verdicts publiés : canal de signalement d'erreur + correction transparente.
