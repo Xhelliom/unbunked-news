@@ -766,6 +766,7 @@
     "featured": "Featured",
     "allArticles": "All articles",
     "claimsCount": "{count} claims",
+    "filter": "Filter",
     "verdictFilter": "Verdict",
     "rubricFilter": "Section",
     "all": "All"
