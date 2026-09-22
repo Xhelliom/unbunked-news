@@ -3,10 +3,8 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import type { getPublishedArticles } from "@/lib/articles";
 import { Link } from "@/i18n/navigation";
-import { CLAIM_STATUSES, claimStatusDotClasses } from "@/lib/claim-status";
 import { ArticleImage } from "@/components/article-image";
-import { LowCriterionBadge } from "@/components/low-criterion-badge";
-import { VerdictBadge } from "@/components/verdict-badge";
+import { FeedImageOverlay } from "@/components/feed-image-overlay";
 
 type FeedArticle = Awaited<ReturnType<typeof getPublishedArticles>>[number];
 
@@ -15,13 +13,6 @@ export function HeroCard({ article }: { article: FeedArticle }) {
   const tr = useTranslations("rubrics");
   const format = useFormatter();
   const rubric = article.rubric ? tr(`${article.rubric}.label`) : undefined;
-
-  // Aggregate claim statuses into the verdict-coloured breakdown bar.
-  const total = article.claims.length;
-  const counts = CLAIM_STATUSES.map((status) => ({
-    status,
-    count: article.claims.filter((claim) => claim.status === status).length,
-  })).filter(({ count }) => count > 0);
 
   return (
     <Link
@@ -35,25 +26,11 @@ export function HeroCard({ article }: { article: FeedArticle }) {
           label={article.sourceName}
           labelClassName="text-xl tracking-[0.12em]"
         />
-        {article.verdict && (
-          <div className="absolute top-[18px] left-[18px]">
-            <VerdictBadge verdict={article.verdict} />
-          </div>
-        )}
-        <div className="absolute bottom-[18px] left-[18px]">
-          <LowCriterionBadge scores={article} />
-        </div>
-        {article.reliabilityScore !== null && (
-          <span className="bg-background/90 ring-border absolute right-[18px] bottom-[18px] inline-flex items-baseline gap-1 rounded-xl px-3.5 py-2 ring-1 ring-inset backdrop-blur">
-            <span className="text-muted-foreground mr-1 self-center text-[10px] font-semibold tracking-[0.08em] uppercase">
-              {t("score")}
-            </span>
-            <span className="text-2xl font-extrabold tracking-tight">
-              {article.reliabilityScore}
-            </span>
-            <span className="text-muted-foreground text-xs">/100</span>
-          </span>
-        )}
+        <FeedImageOverlay
+          verdict={article.verdict}
+          score={article.reliabilityScore}
+          className="p-[18px]"
+        />
       </div>
 
       <div className="flex flex-col gap-3.5 p-8">
@@ -72,25 +49,7 @@ export function HeroCard({ article }: { article: FeedArticle }) {
             {article.summary}
           </p>
         )}
-        {total > 0 && (
-          <div className="mt-auto flex items-center gap-2.5">
-            <div className="bg-muted flex h-[5px] flex-1 overflow-hidden rounded-full">
-              {counts.map(({ status, count }) => (
-                <span
-                  key={status}
-                  className={claimStatusDotClasses[status]}
-                  style={{ width: `${(count / total) * 100}%` }}
-                />
-              ))}
-            </div>
-            <span className="text-muted-foreground font-mono text-[11px] whitespace-nowrap">
-              {t("claimsCount", { count: total })}
-            </span>
-          </div>
-        )}
-        <div
-          className={`flex flex-wrap items-center gap-2.5 border-t pt-5 ${total > 0 ? "" : "mt-auto"}`}
-        >
+        <div className="mt-auto flex flex-wrap items-center gap-2.5 border-t pt-5">
           <span className="text-xs font-semibold tracking-[0.05em] uppercase">
             {article.sourceName}
           </span>

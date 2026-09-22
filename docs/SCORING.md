@@ -66,7 +66,7 @@ Notation en **deux temps** :
 
 > Le **niveau** est l'ancre stable (cohérence d'un passage à l'autre) ; le **chiffre affiné** n'ajoute que du détail, sans pouvoir changer la couleur du critère.
 
-**Badge « critère faible »** : déclenché par le **niveau** (L0 ou L1), via `LOW_CRITERION_LEVEL = 1`.
+**Critère faible** : un critère en L0 ou L1, via `LOW_CRITERION_LEVEL = 1`. Sert à `deriveScoring` (§9) pour décider quand la corroboration est trop mince pour publier un chiffre. Le badge d'alerte qui l'affichait sur les cartes du fil a été retiré : la note et le verdict portent déjà le signal, et il concurrençait le titre.
 
 Chaque critère noté renvoie :
 ```ts

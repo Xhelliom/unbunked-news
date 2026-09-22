@@ -79,7 +79,6 @@
     }
   },
   "criteria": {
-    "lowWarning": "Low {criterion}",
     "unverifiable": "—",
     "sectionTitle": "Score breakdown",
     "factuality": {
@@ -761,11 +760,9 @@
   },
   "feed": {
     "empty": "No published articles yet.",
-    "readAnalysis": "Read the analysis",
     "readArticle": "Read the article",
     "featured": "Featured",
     "allArticles": "All articles",
-    "score": "Score",
     "claimsCount": "{count} claims",
     "verdictFilter": "Verdict",
     "rubricFilter": "Section",
@@ -793,8 +790,6 @@
     "readOriginal": "Read the original article",
     "score": "Unbunked Verdict",
     "howScored": "How we score",
-    "claimsBreakdownTitle": "Analyzed claims",
-    "claimsBreakdownHint": "What we checked, claim by claim. This count mainly informs the {criterion} criterion; the overall score also weighs the five others, which is why the two can differ.",
     "claimsTitle": "Claim-by-claim review",
     "readingTitle": "The article, checked paragraph by paragraph",
     "readingIntroTitle": "The article, checked",

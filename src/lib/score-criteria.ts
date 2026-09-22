@@ -57,8 +57,8 @@ export const LEVEL_BANDS: Record<Level, readonly [number, number]> = {
   3: [85, 100],
 };
 
-// A criterion at or below this level is surfaced as a "weak criterion" warning
-// badge on feed cards. Replaces the old numeric LOW_CRITERION_THRESHOLD.
+// A criterion at or below this level counts as weak: deriveScoring uses it to
+// decide when corroboration is too thin to publish a number at all.
 export const LOW_CRITERION_LEVEL: Level = 1;
 
 // Killswitch flags. The AI returns the booleans (with rationale + sources); the
@@ -165,8 +165,8 @@ export function clampToBand(level: Level, score: number): number {
 }
 
 // The level a stored 0-100 score falls into. Because scores are clamped to their
-// level's band, this round-trips: it lets the feed badge and the bars recover
-// the level without persisting it separately.
+// level's band, this round-trips: it recovers the level without persisting it
+// separately.
 export function levelForScore(score: number): Level {
   if (score >= LEVEL_BANDS[3][0]) return 3;
   if (score >= LEVEL_BANDS[2][0]) return 2;
@@ -192,23 +192,6 @@ export function scoreBand(score: number): Verdict {
   if (score >= LEVEL_BANDS[2][0]) return "nuanced";
   if (score >= LEVEL_BANDS[1][0]) return "fragile";
   return "debunked";
-}
-
-// The weakest scored criterion whose level is at or below LOW_CRITERION_LEVEL,
-// or null when all scored criteria are healthy. Absent (null) criteria are
-// ignored. Used by feed cards to flag a weak article.
-export function lowestWeakCriterion(
-  scores: CriterionScores,
-): ScoreCriterion | null {
-  let weakest: { criterion: ScoreCriterion; value: number } | null = null;
-  for (const criterion of SCORE_CRITERIA) {
-    const value = criterionValue(scores, criterion);
-    if (value === null || levelForScore(value) > LOW_CRITERION_LEVEL) continue;
-    if (!weakest || value < weakest.value) {
-      weakest = { criterion, value };
-    }
-  }
-  return weakest?.criterion ?? null;
 }
 
 // --- Deterministic aggregation (pure; no server-only, so it is unit-testable) ---

@@ -143,7 +143,7 @@ export async function GET(request: Request): Promise<Response> {
               Le fact-checking de l&apos;actualité,
             </div>
             <div style={{ display: "flex", fontSize: "26px", fontWeight: 700, color: BRAND, lineHeight: 1.3, marginTop: "2px" }}>
-              vérifié affirmation par affirmation.
+              vérifié point par point.
             </div>
 
             <div style={{ flex: 1 }} />
