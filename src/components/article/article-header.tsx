@@ -4,9 +4,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import type { PublicArticle } from "@/lib/articles";
 import { safeHttpUrl } from "@/lib/safe-url";
 import { CLAIM_STATUSES } from "@/lib/claim-status";
-import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
-import { verdictDotClasses } from "@/lib/verdicts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArticleImage } from "@/components/article-image";
@@ -27,6 +25,7 @@ const UPDATED_NOTICE_MIN_GAP_MS = 60_000;
 export async function ArticleHeader({ article }: { article: PublicArticle }) {
   const t = await getTranslations("article");
   const tRubric = await getTranslations("rubrics");
+  const tCriteria = await getTranslations("criteria");
   const format = await getFormatter();
 
   // The original URL is stored from a scraped/proposed source; only link out to
@@ -105,9 +104,17 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
       </div>
 
       <div className="mt-7">
-        <h2 className="font-serif text-2xl font-bold tracking-tight">
-          {t("score")}
-        </h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className="font-serif text-2xl font-bold tracking-tight">
+            {t("score")}
+          </h2>
+          <Link
+            href="/methode"
+            className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 transition-colors hover:underline"
+          >
+            {t("howScored")}
+          </Link>
+        </div>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <div className="flex items-baseline gap-2">
             <span className="text-[32px] font-bold tracking-tight">
@@ -127,17 +134,6 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
             </Button>
           )}
         </div>
-        {article.reliabilityScore !== null && article.verdict && (
-          <div className="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">
-            <div
-              className={cn(
-                "h-full rounded-full",
-                verdictDotClasses[article.verdict],
-              )}
-              style={{ width: `${article.reliabilityScore}%` }}
-            />
-          </div>
-        )}
         <ScoreCriteria scores={article} />
         <ScoreDescriptors
           framing={article.framing}
@@ -148,8 +144,8 @@ export async function ArticleHeader({ article }: { article: PublicArticle }) {
       {statusCounts.length > 0 && (
         <div className="mt-6">
           <p className="text-sm font-semibold">{t("claimsBreakdownTitle")}</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            {t("claimsBreakdownHint")}
+          <p className="text-muted-foreground mt-1 max-w-[62ch] text-xs leading-[1.5]">
+            {t("claimsBreakdownHint", { criterion: tCriteria("factuality.label") })}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             {statusCounts.map(({ status, count }) => (

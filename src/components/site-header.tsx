@@ -19,6 +19,15 @@ export function SiteHeader() {
           <Logo className="text-[28px]" />
         </Link>
 
+        <nav className="shrink-0">
+          <Link
+            href="/methode"
+            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+          >
+            {t("method")}
+          </Link>
+        </nav>
+
         <div className="ml-auto flex items-center gap-2">
           <SearchBox />
           <Button asChild variant="outline" size="sm" className="hidden sm:flex">

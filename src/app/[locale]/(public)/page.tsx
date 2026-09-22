@@ -13,6 +13,7 @@ import { ArticleCard } from "@/components/article-card";
 import { HeroCard } from "@/components/hero-card";
 import { SecondaryCard } from "@/components/secondary-card";
 import { FeedFilters } from "@/components/feed-filters";
+import { HowItWorks } from "@/components/how-it-works";
 
 function asVerdict(value: string | undefined): Verdict | undefined {
   return value && (VERDICTS as readonly string[]).includes(value)
@@ -106,6 +107,8 @@ export default async function HomePage({
           </div>
         </section>
       )}
+
+      <HowItWorks />
 
       <section className={cn(hero ? "mt-14" : "mt-0")}>
         <header className="mb-6 flex flex-col gap-4 border-b pb-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
