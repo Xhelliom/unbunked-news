@@ -28,7 +28,6 @@ export function ScoreCriteria({ scores }: { scores: CriterionScores }) {
   return (
     <div className="mt-6">
       <p className="text-sm font-semibold">{t("sectionTitle")}</p>
-      <p className="text-muted-foreground mt-0.5 text-xs">{t("sectionHint")}</p>
       <dl className="mt-3 space-y-2.5">
       {rows.map(({ criterion, value }) => (
         <div

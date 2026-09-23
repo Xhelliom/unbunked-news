@@ -7,7 +7,7 @@
 // fast model. Reasoning phases (verification, scoring, rewrite) run on a stronger
 // model — see run.ts for the tiering.
 export const HAIKU_MODEL = "claude-haiku-4-5-20251001";
-export const SONNET_MODEL = "claude-sonnet-4-6";
+export const SONNET_MODEL = "claude-sonnet-5";
 
 // The reasoning-tier model an admin may pick when submitting a URL — the single
 // source of truth reused by the submit form, the server action that validates

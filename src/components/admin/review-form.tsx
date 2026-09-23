@@ -10,7 +10,7 @@ import {
   setDeleted,
   setPublished,
   type ActionState,
-} from "@/app/[locale]/admin/actions";
+} from "@/app/[locale]/admin/articles/[id]/actions";
 import { VERDICTS, type Verdict } from "@/lib/verdicts";
 import { CriteriaFieldset } from "@/components/admin/criteria-fieldset";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ export function ReviewForm(props: ReviewFormProps) {
           {t("deletedBanner")}
         </p>
       )}
-      <form action={action} className="space-y-4">
+      <form id="review-form" action={action} className="space-y-4">
         <input type="hidden" name="id" value={props.id} />
         <div className="space-y-1.5">
           <label htmlFor="title" className="text-sm font-medium">
@@ -153,12 +153,12 @@ export function ReviewForm(props: ReviewFormProps) {
           />
           <span>{t("contributionsEnabled")}</span>
         </label>
-        <Button type="submit" disabled={pending}>
-          {pending ? t("saving") : t("save")}
-        </Button>
       </form>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-background/95 sticky bottom-0 z-30 -mx-4 flex flex-wrap items-center gap-3 border-t px-4 py-3 backdrop-blur sm:-mx-0 sm:rounded-lg sm:border">
+        <Button type="submit" form="review-form" disabled={pending}>
+          {pending ? t("saving") : t("save")}
+        </Button>
         {props.isDeleted ? (
           <>
             <form action={restoreArticle}>

@@ -17,20 +17,6 @@ export function toVerdict(value: unknown): Verdict | null {
     : null;
 }
 
-// Soft badge styles (tinted background + readable text), per verdict.
-export const verdictBadgeClasses: Record<Verdict, string> = {
-  reliable:
-    "bg-verdict-reliable-bg text-verdict-reliable-fg ring-verdict-reliable/30",
-  nuanced:
-    "bg-verdict-nuanced-bg text-verdict-nuanced-fg ring-verdict-nuanced/30",
-  fragile:
-    "bg-verdict-fragile-bg text-verdict-fragile-fg ring-verdict-fragile/30",
-  debunked:
-    "bg-verdict-debunked-bg text-verdict-debunked-fg ring-verdict-debunked/30",
-  unverifiable:
-    "bg-verdict-unverifiable-bg text-verdict-unverifiable-fg ring-verdict-unverifiable/40",
-};
-
 // Solid accent color (status dot, bars), per verdict.
 export const verdictDotClasses: Record<Verdict, string> = {
   reliable: "bg-verdict-reliable",
@@ -38,4 +24,13 @@ export const verdictDotClasses: Record<Verdict, string> = {
   fragile: "bg-verdict-fragile",
   debunked: "bg-verdict-debunked",
   unverifiable: "bg-verdict-unverifiable",
+};
+
+// Readable text colour per verdict, for the underlined label treatment.
+export const verdictTextClasses: Record<Verdict, string> = {
+  reliable: "text-verdict-reliable-fg",
+  nuanced: "text-verdict-nuanced-fg",
+  fragile: "text-verdict-fragile-fg",
+  debunked: "text-verdict-debunked-fg",
+  unverifiable: "text-verdict-unverifiable-fg",
 };
