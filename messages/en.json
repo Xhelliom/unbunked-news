@@ -9,7 +9,30 @@
   },
   "nav": {
     "home": "Top stories",
+    "method": "Method",
+    "menu": "Menu",
+    "language": "Language",
+    "theme": "Theme",
     "submit": "Submit an article"
+  },
+  "howItWorks": {
+    "title": "How we score an article",
+    "steps": {
+      "extract": {
+        "title": "We break the article down",
+        "body": "We read the original article and pull out every claim that can be held against the facts."
+      },
+      "evidence": {
+        "title": "We go looking for sources",
+        "body": "Each claim goes through web search and the fact-checking databases. The ones we cannot settle are shown as unsettled."
+      },
+      "score": {
+        "title": "We score six criteria",
+        "body": "Accuracy, cross-checking, cited sources, context, transparency and recency. A fixed formula turns them into the overall score, the same way every time."
+      }
+    },
+    "scaleTitle": "The five verdicts",
+    "link": "Read the full method"
   },
   "themeToggle": {
     "label": "Toggle theme",
@@ -35,6 +58,8 @@
   "verdicts": {
     "title": "Our verdict scale",
     "subtitle": "Every analysis is assigned one of these five verdicts.",
+    "bandLabel": "{min}–{max} out of 100",
+    "bandNone": "No score",
     "reliable": {
       "label": "Reliable",
       "description": "Solid, well-sourced and consistent with the facts."
@@ -57,15 +82,13 @@
     }
   },
   "criteria": {
-    "lowWarning": "Low {criterion}",
     "unverifiable": "—",
     "sectionTitle": "Score breakdown",
-    "sectionHint": "The overall score is the weighted average of these criteria (each out of 100). A criterion that can't be assessed is not shown.",
     "factuality": {
       "label": "Accuracy",
       "description": "Are the article's figures, dates, quotes and claims correct?",
-      "why": "This is the heart of reliability. A single false central claim tips the whole article over, which is why it carries the most weight.",
-      "how": "We isolate the main claims and test them against the sources: quotes not truncated, data not distorted, names and dates consistent."
+      "why": "A single false central claim tips the whole article over, which is why this criterion carries more weight than any other.",
+      "how": "We isolate the main claims and test them against the sources: quotes not truncated, data not distorted, names and dates consistent. A typo that changes nothing for the reader isn't penalised; a false claim is."
     },
     "corroboration": {
       "label": "Cross-checking",
@@ -77,19 +100,19 @@
       "label": "Cited sources",
       "description": "Are the references the article mentions named, verifiable and independent?",
       "why": "An article leaning on anonymous or untraceable sources asks for blind trust. We prefer what you can trace back and check yourself.",
-      "how": "We examine what the article cites: named sources over anonymous ones, first-hand documents over reprints, links that actually work."
+      "how": "We examine what the article cites: named sources over anonymous ones, first-hand documents over reprints. A source named in the text counts, even without a hyperlink."
     },
     "completeness": {
       "label": "Context",
       "description": "Have essential facts been left out in a way that changes how the article reads?",
       "why": "You can mislead without lying, by leaving out what's inconvenient. Note: we judge neither tone nor opinion, only omissions that distort understanding.",
-      "how": "We check whether the essential context is present, whether a known fact is missing, or whether quotes are taken out of context."
+      "how": "We check whether the essential context is present, whether a known fact that would change the reading is missing, or whether quotes are taken out of context. No article says everything: a gap that doesn't change the reading costs nothing."
     },
     "transparency": {
       "label": "Transparency",
-      "description": "Are the author, date, editorial owner and funding identifiable?",
-      "why": "Knowing who is speaking, when, and who funds them is part of the information. An outlet that hides doesn't inspire trust: opacity is itself a flaw.",
-      "how": "We look for the author, the publication date, the site's publisher and its funding sources. The clearer it is, the higher the score."
+      "description": "Are the author, date and editorial owner identifiable?",
+      "why": "Knowing who is speaking and when is part of the information. An outlet that hides doesn't inspire trust: opacity is itself a flaw.",
+      "how": "We look for the author, the publication date and the site's publisher. Disclosed funding is a bonus, never a requirement: almost no outlet publishes it on an article page."
     },
     "recency": {
       "label": "Recency",
@@ -99,7 +122,7 @@
     }
   },
   "descriptors": {
-    "caption": "Descriptors — they describe the article but are not part of the score.",
+    "caption": "Characteristics",
     "framingTitle": "Framing",
     "contentTypeTitle": "Content type",
     "confidenceLabel": "Confidence",
@@ -124,12 +147,12 @@
   },
   "methodology": {
     "title": "How Unbunked rates the news",
-    "intro": "A claim deserves better than a \"true\" or \"false\" tossed off in passing. So we publish a reliability score, built the same way every time. Here, without the jargon, is how it is computed, and why you can trust it.",
+    "intro": "A claim deserves better than a \"true\" or \"false\" tossed off in passing. Every article we publish gets a reliability score, built the same way every time. This page explains how it is worked out.",
     "principlesTitle": "Where we stand",
     "principles": {
       "evidence": {
         "title": "Evidence first",
-        "body": "Every criterion rests on sources actually consulted, never on a hunch. Anyone can redo the verification."
+        "body": "Every criterion rests on sources we opened and cite. The links are there so you can redo the check yourself."
       },
       "rigor": {
         "title": "Rigour, not opinion",
@@ -141,7 +164,7 @@
       }
     },
     "scoreTitle": "The overall score and its criteria",
-    "scoreBody": "The reliability score (0 to 100) is the weighted average of six criteria, each rated out of 100. It isn't decided by intuition: our code computes it from the criteria, which makes it reproducible and explainable. Not every criterion weighs the same. Here is which, why we chose them and how we assess them.",
+    "scoreBody": "The reliability score runs from 0 to 100. It is the weighted average of six criteria, each rated out of 100, and a fixed formula works it out: two analyses of the same article return the same number. The criteria do not carry equal weight.",
     "weightLabel": "{weight}% of the score",
     "weightLabelConditional": "{weight}% of the score, when it applies",
     "whyLabel": "Why this criterion",
@@ -149,9 +172,7 @@
     "coreTitle": "Always assessed",
     "optionalTitle": "Assessed when relevant",
     "optionalHint": "These criteria are only scored when they can be judged reliably; otherwise they are left out rather than producing an arbitrary number.",
-    "bandLabel": "{min}–{max} out of 100",
-    "bandNone": "No score",
-    "verdictScoreBody": "The verdict follows directly from the score: each score range maps to one verdict, listed below. We deliberately set the bar for the \"Reliable\" verdict very high — it takes at least 85 out of 100. An article can be serious and well-sourced and still fall short, and that is by design: \"Reliable\" is a demanding label, reserved for work that is solid on the essentials — factual accuracy and corroboration by independent sources. We would rather a \"Reliable\" be rare but earned than handed out too easily."
+    "verdictScoreBody": "The verdict follows from the score: each score range maps to one verdict. The bar for \"Reliable\" sits high, at 85 out of 100. An article can be serious and well sourced without reaching it, because the label rewards not general seriousness but solidity on the essentials: factual accuracy and corroboration by independent sources."
   },
   "home": {
     "kicker": "Work in progress",
@@ -318,6 +339,7 @@
   },
   "admin": {
     "title": "Administration",
+    "viewSite": "View public site",
     "nav": {
       "dashboard": "Dashboard",
       "submit": "Submit a URL",
@@ -500,7 +522,7 @@
       "modelLabel": "Analysis model",
       "modelHint": "Model used for verification, judgement and rewriting. Extraction stays on Haiku.",
       "models": {
-        "sonnet": "Sonnet 4.6 (default, recommended)",
+        "sonnet": "Sonnet 5 (default, recommended)",
         "haiku": "Haiku 4.5 (faster and cheaper)"
       }
     },
@@ -582,6 +604,7 @@
     "review": {
       "title": "Review before publishing",
       "preview": "Preview",
+      "viewPublished": "View published page",
       "headline": "Title",
       "summary": "Summary",
       "originalSummary": "Original article summary (neutral paraphrase)",
@@ -603,6 +626,9 @@
       "scrapedBody": "Scraped body",
       "scrapedBodyChars": "{count, plural, one {# character} other {# characters}}",
       "scrapedBodyEmpty": "No scraped content.",
+      "scrapedBodyEdit": "Edit",
+      "scrapedBodyCancel": "Cancel",
+      "scrapedBodyHint": "Fix up the automatically scraped text (a stray word, ad, or menu left stuck to the article).",
       "scrapeDebug": "Scrape debug",
       "scrapeDebugEmpty": "No scrape diagnostics for this article.",
       "scrapeMethod": "Method",
@@ -737,12 +763,10 @@
   },
   "feed": {
     "empty": "No published articles yet.",
-    "readAnalysis": "Read the analysis",
-    "readArticle": "Read the article",
     "featured": "Featured",
     "allArticles": "All articles",
-    "score": "Score",
     "claimsCount": "{count} claims",
+    "filter": "Filter",
     "verdictFilter": "Verdict",
     "rubricFilter": "Section",
     "all": "All"
@@ -767,9 +791,8 @@
   "article": {
     "originalSource": "Original source",
     "readOriginal": "Read the original article",
-    "score": "Reliability score",
-    "claimsBreakdownTitle": "Analyzed claims",
-    "claimsBreakdownHint": "Status of each checked claim in the article. Full detail below.",
+    "score": "Unbunked Verdict",
+    "howScored": "How we score",
     "claimsTitle": "Claim-by-claim review",
     "readingTitle": "The article, checked paragraph by paragraph",
     "readingIntroTitle": "The article, checked",

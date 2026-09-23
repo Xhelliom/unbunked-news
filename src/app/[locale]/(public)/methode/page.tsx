@@ -33,7 +33,9 @@ export default async function MethodologyPage({
 
   const renderBand = (verdict: Verdict) => {
     const band = VERDICT_BAND[verdict];
-    return band ? t("bandLabel", { min: band[0], max: band[1] }) : t("bandNone");
+    return band
+      ? tv("bandLabel", { min: band[0], max: band[1] })
+      : tv("bandNone");
   };
 
   const renderCriterion = (criterion: ScoreCriterion) => {

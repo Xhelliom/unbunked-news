@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
-import { Eye } from "lucide-react";
+import { Eye, Globe } from "lucide-react";
 import { notFound } from "next/navigation";
+import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { db } from "@/db/client";
@@ -50,6 +51,10 @@ export default async function AdminArticleReviewPage({
   const t = await getTranslations("admin.review");
   const ts = await getTranslations("claimStatus");
   const tRubric = await getTranslations("rubrics");
+  const articleLocale = hasLocale(routing.locales, article.locale)
+    ? article.locale
+    : routing.defaultLocale;
+  const isDeleted = article.deletedAt !== null;
 
   return (
     <div className="space-y-8">
@@ -69,16 +74,31 @@ export default async function AdminArticleReviewPage({
           <h1 className="font-serif text-2xl font-bold tracking-tight">
             {t("title")}
           </h1>
-          <Button asChild variant="outline" size="sm" className="ml-auto">
-            <Link
-              href={`/preview/articles/${article.id}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Eye className="size-3.5" />
-              {t("preview")}
-            </Link>
-          </Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {article.published && !isDeleted && (
+              <Button asChild variant="outline" size="sm">
+                <Link
+                  href={`/article/${article.slug}`}
+                  locale={articleLocale}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Globe className="size-3.5" />
+                  {t("viewPublished")}
+                </Link>
+              </Button>
+            )}
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={`/preview/articles/${article.id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Eye className="size-3.5" />
+                {t("preview")}
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -99,7 +119,7 @@ export default async function AdminArticleReviewPage({
         recencyScore={article.recencyScore}
         contributionsEnabled={article.contributionsEnabled}
         published={article.published}
-        isDeleted={article.deletedAt !== null}
+        isDeleted={isDeleted}
       />
 
       <CriteriaEvidence evidence={article.evidence} />
@@ -108,7 +128,7 @@ export default async function AdminArticleReviewPage({
 
       <ScrapeDebug provenance={article.scrapeDebug} />
 
-      <ScrapedBody content={article.content} />
+      <ScrapedBody id={article.id} content={article.content} />
 
       <div className="space-y-4">
         <h2 className="font-serif text-lg font-bold">

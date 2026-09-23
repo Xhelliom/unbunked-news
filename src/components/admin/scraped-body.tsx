@@ -1,9 +1,18 @@
 import { useTranslations } from "next-intl";
 
-// Read-only dump of the raw scraped article body, collapsed by default, so an
-// operator can spot a bad scrape (paywall teaser, navigation menu) without
-// opening the database. Native <details> keeps this a server component.
-export function ScrapedBody({ content }: { content: string | null }) {
+import { ScrapedBodyEditor } from "@/components/admin/scraped-body-editor";
+
+// Collapsible dump of the raw scraped article body, collapsed by default, so
+// an operator can spot a bad scrape (paywall teaser, navigation menu) without
+// opening the database. Stays a server component; only the edit affordance
+// below needs client JS.
+export function ScrapedBody({
+  id,
+  content,
+}: {
+  id: string;
+  content: string | null;
+}) {
   const t = useTranslations("admin.review");
   const paragraphs = (content ?? "")
     .split(/\n{2,}/)
@@ -18,7 +27,7 @@ export function ScrapedBody({ content }: { content: string | null }) {
           {t("scrapedBodyChars", { count: content?.length ?? 0 })}
         </span>
       </summary>
-      <div className="border-t p-4">
+      <div className="space-y-3 border-t p-4">
         {paragraphs.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             {t("scrapedBodyEmpty")}
@@ -32,6 +41,7 @@ export function ScrapedBody({ content }: { content: string | null }) {
             ))}
           </div>
         )}
+        <ScrapedBodyEditor id={id} content={content} />
       </div>
     </details>
   );
