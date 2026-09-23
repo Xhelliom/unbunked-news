@@ -23,6 +23,7 @@ import {
   withCurrentDate,
   type TokenUsage,
 } from "./client";
+import { BAND_USAGE } from "./criterion-rubric";
 import {
   gatherExternalEvidence,
   formatExternalEvidence,
@@ -59,6 +60,8 @@ const SYSTEM = [
   "signals; (5) refine a score inside that level's band; (6) give a confidence,",
   "a rationale and the source URLs you actually consulted; (7) raise a killswitch",
   "flag only when its condition is demonstrably met.",
+  "",
+  BAND_USAGE,
   "",
   "Always score the five core criteria (factuality, corroboration, sourcing,",
   "completeness, transparency). Omit recency ONLY for timeless content. If",
