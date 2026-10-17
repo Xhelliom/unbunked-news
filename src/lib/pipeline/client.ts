@@ -76,37 +76,43 @@ export function withCurrentDate(system: string): string {
 // of the budget its answer needs — otherwise a long think truncates the JSON.
 export const THINKING_HEADROOM_TOKENS = 8192;
 
-// Reads the JSON object a structured-output request (output_config.format)
-// returned. The API guarantees a schema-valid object only when the model
-// finished. A max_tokens cut yields null: callers that can survive it (extract,
-// rewrite) flag it through their diagnostic, the others fail with the
-// stop_reason. A refusal throws, so a declined phase never passes for an empty
-// one and the paid phases after it don't run on nothing. Text that still fails
-// to parse on a finished turn is a contract break, so it throws too.
-export function structuredOutput(
-  message: Anthropic.Message,
-): Record<string, unknown> | null {
+// A refusal ends the turn with no usable answer. Throwing keeps a declined
+// phase from passing for an empty one, so the paid phases after it never run
+// on nothing.
+export function throwIfRefused(message: Anthropic.Message): void {
   if (message.stop_reason === "refusal") {
     throw new Error(
       `Claude declined the request (refusal category ${message.stop_details?.category ?? "unknown"})`,
     );
   }
-  if (message.stop_reason === "max_tokens") {
+}
+
+// Reads the JSON object a structured-output request (output_config.format)
+// returned. The API guarantees a schema-valid object only when the model
+// finished, so null means exactly one thing: the output was cut at max_tokens.
+// Callers build their diagnostic from the message (which flags the truncation)
+// and let run.ts decide. Anything else that is not an object is a contract
+// break and throws.
+export function structuredOutput(
+  message: Anthropic.Message,
+): Record<string, unknown> | null {
+  throwIfRefused(message);
+  if (messageMeta(message).truncated) {
     return null;
   }
-  const text = collectText(message);
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    parsed = JSON.parse(collectText(message));
   } catch (error) {
     throw new Error(
       `Structured output is not valid JSON (stop_reason ${message.stop_reason})`,
       { cause: error },
     );
   }
-  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-    ? (parsed as Record<string, unknown>)
-    : null;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Structured output is not a JSON object");
+  }
+  return parsed as Record<string, unknown>;
 }
 
 export function collectText(message: Anthropic.Message): string {

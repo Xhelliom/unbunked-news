@@ -1,5 +1,10 @@
 import type { TokenUsage } from "./client";
-import { HAIKU_MODEL, SONNET_MODEL } from "./models";
+import {
+  HAIKU_MODEL,
+  LEGACY_HAIKU_4_5_MODEL,
+  LEGACY_SONNET_5_MODEL,
+  SONNET_MODEL,
+} from "./models";
 
 const TOKENS_PER_MILLION = 1_000_000;
 
@@ -29,11 +34,8 @@ const SONNET_5_5_PRICING: ModelPricing = {
   cacheReadPerMtok: 0.2,
 };
 
-// Models the pipeline no longer calls. Costs are computed at read time from the
-// model id stored on each usage row, so past runs keep their own rates.
-const LEGACY_HAIKU_4_5_MODEL = "claude-haiku-4-5-20251001";
-const LEGACY_SONNET_5_MODEL = "claude-sonnet-5";
-
+// Costs are computed at read time from the model id stored on each usage row,
+// so the models the pipeline no longer calls keep their own rates.
 const HAIKU_4_5_PRICING: ModelPricing = {
   inputPerMtok: 1.0,
   outputPerMtok: 5.0,
@@ -41,18 +43,12 @@ const HAIKU_4_5_PRICING: ModelPricing = {
   cacheReadPerMtok: 0.1,
 };
 
-const SONNET_5_PRICING: ModelPricing = {
-  inputPerMtok: 2.0,
-  outputPerMtok: 10.0,
-  cacheWritePerMtok: 2.5,
-  cacheReadPerMtok: 0.2,
-};
-
 const PRICING_USD: Record<string, ModelPricing> = {
   [HAIKU_MODEL]: HAIKU_5_5_PRICING,
   [SONNET_MODEL]: SONNET_5_5_PRICING,
   [LEGACY_HAIKU_4_5_MODEL]: HAIKU_4_5_PRICING,
-  [LEGACY_SONNET_5_MODEL]: SONNET_5_PRICING,
+  // Sonnet 5.5 kept Sonnet 5's list price.
+  [LEGACY_SONNET_5_MODEL]: SONNET_5_5_PRICING,
 };
 
 // An unknown model still gets a defensible estimate rather than a zero cost.

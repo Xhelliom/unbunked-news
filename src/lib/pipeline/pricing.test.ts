@@ -2,7 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { costForUsage } from "./pricing";
-import { HAIKU_MODEL, SONNET_MODEL } from "./models";
+import {
+  HAIKU_MODEL,
+  LEGACY_HAIKU_4_5_MODEL,
+  LEGACY_SONNET_5_MODEL,
+  SONNET_MODEL,
+} from "./models";
 
 // One million of each token kind makes the per-Mtok rates fall out directly:
 // the cost in USD equals input + output + cacheWrite + cacheRead per Mtok.
@@ -32,8 +37,8 @@ test("Sonnet 5.5 is priced at its list rates", () => {
 
 test("past runs keep the rates of the model they ran on", () => {
   // Haiku 4.5: 1.0 + 5.0 + 1.25 + 0.1; Sonnet 5: 2.0 + 10.0 + 2.5 + 0.2
-  approx(costForUsage("claude-haiku-4-5-20251001", ONE_MTOK_EACH), 7.35);
-  approx(costForUsage("claude-sonnet-5", ONE_MTOK_EACH), 14.7);
+  approx(costForUsage(LEGACY_HAIKU_4_5_MODEL, ONE_MTOK_EACH), 7.35);
+  approx(costForUsage(LEGACY_SONNET_5_MODEL, ONE_MTOK_EACH), 14.7);
 });
 
 test("an unknown model falls back to the Haiku rate, never zero", () => {

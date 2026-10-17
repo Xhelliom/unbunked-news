@@ -85,19 +85,18 @@ export async function structureArticleBody(
     ],
   });
 
-  if (message.stop_reason === "max_tokens") {
+  const input = structuredOutput(message);
+  if (!input) {
     throw new Error(
       "Article structuring was truncated at max_tokens; the selection is unreliable",
     );
   }
-
-  const input = structuredOutput(message);
   // Default to complete when the flag is missing, so a quirk never forces a
   // spurious (paid) whole-page re-extraction.
   const complete =
-    typeof input?.bodyComplete === "boolean" ? input.bodyComplete : true;
+    typeof input.bodyComplete === "boolean" ? input.bodyComplete : true;
   return {
-    blocks: applyStructureSelection(input?.blocks ?? null, blocks),
+    blocks: applyStructureSelection(input.blocks ?? null, blocks),
     complete,
     usage: usageOf(message),
   };

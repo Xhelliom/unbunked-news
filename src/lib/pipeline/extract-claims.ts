@@ -82,7 +82,6 @@ export async function extractClaims(
   const dropped = rawClaims.length - filtered.length;
   const capped = filtered.length - claims.length;
   const warnings: string[] = [];
-  if (!input) warnings.push("no structured claims output returned");
   if (claims.length === 0) warnings.push("no claims extracted");
   if (dropped > 0) warnings.push(`${dropped} malformed/empty claim(s) dropped`);
   if (capped > 0) warnings.push(`${capped} claim(s) over the ${cap} cap dropped`);

@@ -164,12 +164,9 @@ export async function assessClaims(
     })
     .finalMessage();
 
-  const input = structuredOutput(message);
-  if (!input) {
-    throw new Error(
-      `Claim assessment did not return a structured result (stop_reason ${message.stop_reason})`,
-    );
-  }
+  // Truncated (null): no claims are read, and run.ts fails the job from the
+  // diagnostic's truncated flag.
+  const input = structuredOutput(message) ?? {};
 
   const assessed = toClaims(input.claims);
   const factCheckUnknown = external.factCheckStatuses.filter(

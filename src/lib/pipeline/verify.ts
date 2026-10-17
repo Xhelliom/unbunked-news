@@ -9,7 +9,9 @@ import {
   collectText,
   formatArticle,
   getClaude,
+  messageMeta,
   THINKING_HEADROOM_TOKENS,
+  throwIfRefused,
   usageOf,
   withCurrentDate,
   ZERO_USAGE,
@@ -17,7 +19,7 @@ import {
 } from "./client";
 import { type StepDiagnostic } from "./diagnostics";
 import { DEFAULT_MAX_SEARCH_ROUNDS } from "./limits";
-import { SONNET_MODEL } from "./models";
+import { SUPPORTS_DYNAMIC_FILTERING, type ReasoningModel } from "./models";
 import {
   DEFAULT_SEARCH_PROVIDER,
   type AnalysisSource,
@@ -29,18 +31,16 @@ const VERIFY_MAX_TOKENS = 8192;
 
 // Dynamic filtering (web_search_20260209) lets the model filter results in code
 // before they reach its context, which cuts the input tokens that pile up across
-// pause_turn rounds. It runs through programmatic tool calling, which Haiku is
-// not documented to support, so Haiku keeps the basic tool. Both versions emit
-// web_search_tool_result blocks, so collectSources reads either.
-const DYNAMIC_FILTERING_MODELS: readonly string[] = [SONNET_MODEL];
-
+// pause_turn rounds. Both versions emit web_search_tool_result blocks, so
+// collectSources reads either.
 function webSearchTool(
-  model: string,
+  model: ReasoningModel,
   maxUses: number,
 ): Anthropic.Messages.ToolUnion {
-  return DYNAMIC_FILTERING_MODELS.includes(model)
-    ? { type: "web_search_20260209", name: "web_search", max_uses: maxUses }
-    : { type: "web_search_20250305", name: "web_search", max_uses: maxUses };
+  const type = SUPPORTS_DYNAMIC_FILTERING[model]
+    ? "web_search_20260209"
+    : "web_search_20250305";
+  return { type, name: "web_search", max_uses: maxUses };
 }
 
 const SYSTEM =
@@ -97,7 +97,7 @@ function collectSources(content: Anthropic.ContentBlock[]): AnalysisSource[] {
 export async function verifyClaims(
   article: ScrapedArticle,
   claims: string[],
-  model: string,
+  model: ReasoningModel,
   options: VerifyOptions = {},
 ): Promise<VerificationFindings> {
   const maxRounds = options.maxSearchRounds ?? DEFAULT_MAX_SEARCH_ROUNDS;
@@ -160,6 +160,7 @@ export async function verifyClaims(
     await options.onRound?.(round, liveSourceCount());
   }
 
+  throwIfRefused(message);
   const sources = collectSources(allContent);
   // De-duplicate by URL.
   const unique = [...new Map(sources.map((s) => [s.url, s])).values()];
@@ -172,9 +173,9 @@ export async function verifyClaims(
       `web search stopped after ${maxRounds} rounds; findings may be incomplete`,
     );
   }
-  const isTruncated = message.stop_reason === "max_tokens";
-  if (isTruncated) {
-    warnings.push(`findings truncated at max_tokens (${usage.outputTokens})`);
+  const meta = messageMeta(message);
+  if (meta.truncated) {
+    warnings.push(`output truncated at max_tokens (${meta.outputTokens})`);
   }
   if (findings.trim().length === 0) warnings.push("no textual findings returned");
   if (unique.length === 0) warnings.push("no sources found");
@@ -184,7 +185,7 @@ export async function verifyClaims(
     model,
     stopReason: message.stop_reason,
     outputTokens: usage.outputTokens,
-    truncated: isTruncated,
+    truncated: meta.truncated,
     metrics: {
       rounds: guard + 1,
       searchRequests,

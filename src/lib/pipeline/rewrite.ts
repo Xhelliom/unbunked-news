@@ -134,17 +134,11 @@ export async function rewriteArticle(
     })
     .finalMessage();
 
-  const input = structuredOutput(message);
-  // A truncated locale is returned, not thrown, so run.ts still bills its
-  // tokens and records the truncation; it just doesn't persist the body.
-  const isTruncated = message.stop_reason === "max_tokens";
-  if (!input && !isTruncated) {
-    throw new Error(
-      `Rewrite (${locale}) did not return a structured result (stop_reason ${message.stop_reason})`,
-    );
-  }
+  // A truncated locale (null) is returned, not thrown, so run.ts still bills
+  // its tokens and records the truncation; it just doesn't persist the body.
+  const input = structuredOutput(message) ?? {};
 
-  const body = typeof input?.body === "string" ? input.body : "";
+  const body = typeof input.body === "string" ? input.body : "";
   const warnings: string[] = [];
   if (body.trim().length === 0) warnings.push(`empty rewrite body (${locale})`);
 
@@ -159,7 +153,7 @@ export async function rewriteArticle(
   return {
     rewrite: {
       locale,
-      title: typeof input?.title === "string" ? input.title : analysis.title,
+      title: typeof input.title === "string" ? input.title : analysis.title,
       body,
     },
     usage: usageOf(message),

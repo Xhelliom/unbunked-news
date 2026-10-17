@@ -155,12 +155,9 @@ export async function aggregate(
     ],
   });
 
-  const input = structuredOutput(message);
-  if (!input) {
-    throw new Error(
-      `Aggregation did not return a structured analysis (stop_reason ${message.stop_reason})`,
-    );
-  }
+  // Truncated (null): the defensive readers below fall back on every field,
+  // and run.ts fails the job from the diagnostic's truncated flag.
+  const input = structuredOutput(message) ?? {};
 
   const criteria = toCriteria(input.criteria);
   const killswitch = toKillswitch(input.killswitch);
