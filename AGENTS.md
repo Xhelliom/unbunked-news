@@ -96,8 +96,9 @@ you are about to break one, stop and ask.
 ## 11. AI pipeline rules
 
 - **One Claude call = one purpose.** Don't ask one prompt to extract, verify, and reformat. We have distinct phases for a reason; respect them.
-- **Forced structured tool calls** (`tool_choice: { type: "tool", name: ... }`) whenever you need a parsed result. Free-form text + JSON.parse is forbidden.
-- **Validate the tool input** with a small parsing function before trusting it (see `toClaims` in `aggregate.ts`). Claude can produce a wrong shape; the type system can't catch it.
+- **Structured outputs** (`output_config: { format: { type: "json_schema", schema } }`, read with `structuredOutput` from `client.ts`) whenever you need a parsed result. Free-form text + JSON.parse is forbidden. Never force a tool (`tool_choice: { type: "tool" | "any" }`) to get JSON: current Sonnet and Opus models reject it with a 400.
+- **Budget for thinking.** Adaptive thinking is on by default and counts against `max_tokens`: add `THINKING_HEADROOM_TOKENS` to a phase's answer budget, and lower `effort` on mechanical phases instead of disabling thinking.
+- **Validate the structured output** with a small parsing function before trusting it (see `toClaims` in `assess-claims.ts`). Claude can still refuse or be truncated; the type system can't catch it.
 - **Cache the article body** between phases with `cache_control: { type: "ephemeral" }`. Cap the body at `MAX_CONTENT_CHARS` before sending.
 - **Handle `pause_turn`** when web search is active (see `verify.ts`). Don't assume one round-trip.
 - **Never log full prompt or full article content** to stdout in production. Truncate or redact.

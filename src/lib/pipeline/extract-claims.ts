@@ -2,15 +2,16 @@ import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
 import {
-  firstToolInput,
   formatArticle,
   getClaude,
+  structuredOutput,
+  THINKING_HEADROOM_TOKENS,
   usageOf,
   type TokenUsage,
 } from "./client";
-import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
+import { structuredOutputDiagnostic, type StepDiagnostic } from "./diagnostics";
 import { clampMaxClaims, DEFAULT_MAX_CLAIMS } from "./limits";
-import { recordClaimsTool } from "./schemas";
+import { claimsOutputFormat } from "./schemas";
 
 // A length-scaled list (up to the ceiling) of short claim sentences fits easily;
 // the headroom only guards against a long article's list getting cut off
@@ -46,10 +47,9 @@ export async function extractClaims(
   const client = getClaude();
   const message = await client.messages.create({
     model,
-    max_tokens: MAX_TOKENS,
+    max_tokens: MAX_TOKENS + THINKING_HEADROOM_TOKENS,
     system: SYSTEM,
-    tools: [recordClaimsTool],
-    tool_choice: { type: "tool", name: "record_claims" },
+    output_config: { format: claimsOutputFormat, effort: "low" },
     messages: [
       {
         role: "user",
@@ -71,7 +71,7 @@ export async function extractClaims(
     ],
   });
 
-  const input = firstToolInput(message, "record_claims");
+  const input = structuredOutput(message);
   const rawClaims = Array.isArray(input?.claims) ? input.claims : [];
   const filtered = rawClaims.filter(
     (claim): claim is string =>
@@ -82,12 +82,12 @@ export async function extractClaims(
   const dropped = rawClaims.length - filtered.length;
   const capped = filtered.length - claims.length;
   const warnings: string[] = [];
-  if (!input) warnings.push("record_claims tool was not called");
+  if (!input) warnings.push("no structured claims output returned");
   if (claims.length === 0) warnings.push("no claims extracted");
   if (dropped > 0) warnings.push(`${dropped} malformed/empty claim(s) dropped`);
   if (capped > 0) warnings.push(`${capped} claim(s) over the ${cap} cap dropped`);
 
-  const diagnostic = toolCallDiagnostic(
+  const diagnostic = structuredOutputDiagnostic(
     "extracting",
     model,
     message,

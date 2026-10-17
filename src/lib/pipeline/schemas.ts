@@ -89,11 +89,11 @@ export type Rewrite = {
   body: string;
 };
 
-export const recordClaimsTool: Anthropic.Tool = {
-  name: "record_claims",
-  description:
-    "Record the distinct, checkable factual claims made in the article.",
-  input_schema: {
+export const claimsOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Record the distinct, checkable factual claims made in the article.",
     type: "object",
     properties: {
       claims: {
@@ -107,13 +107,13 @@ export const recordClaimsTool: Anthropic.Tool = {
   },
 };
 
-export const structureArticleBodyTool: Anthropic.Tool = {
-  name: "record_article_structure",
-  description:
-    "Record which of the numbered blocks form the article body, in reading " +
-    "order, each tagged with its structural role. Rebuilt verbatim from the " +
-    "chosen blocks — return indices and roles only, never rewrite the text.",
-  input_schema: {
+export const articleStructureOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Record which of the numbered blocks form the article body, in reading " +
+      "order, each tagged with its structural role. Rebuilt verbatim from the " +
+      "chosen blocks — return indices and roles only, never rewrite the text.",
     type: "object",
     properties: {
       blocks: {
@@ -262,13 +262,13 @@ const claimAssessmentItem: Record<string, unknown> = {
   additionalProperties: false,
 };
 
-export const recordClaimsAssessmentTool: Anthropic.Tool = {
-  name: "record_claims_assessment",
-  description:
-    "Record the per-claim verdict: each checkable claim with its status, an " +
-    "explanation grounded in the provided research, the verbatim source quote " +
-    "and the URLs actually consulted.",
-  input_schema: {
+export const claimsAssessmentOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Record the per-claim verdict: each checkable claim with its status, an " +
+      "explanation grounded in the provided research, the verbatim source quote " +
+      "and the URLs actually consulted.",
     type: "object",
     properties: {
       claims: {
@@ -291,12 +291,12 @@ const killswitchProperties = Object.fromEntries(
   KILLSWITCH_FLAGS.map((flag) => [flag, killswitchSignalProperty()]),
 );
 
-export const recordAnalysisTool: Anthropic.Tool = {
-  name: "record_analysis",
-  description:
-    "Record the per-criterion assessment, killswitch flags and descriptors. " +
-    "Do NOT provide an overall reliability score, verdict or global confidence — the code derives those.",
-  input_schema: {
+export const analysisOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Record the per-criterion assessment, killswitch flags and descriptors. " +
+      "Do NOT provide an overall reliability score, verdict or global confidence — the code derives those.",
     type: "object",
     properties: {
       title: {
@@ -378,11 +378,11 @@ export const recordAnalysisTool: Anthropic.Tool = {
   },
 };
 
-export const recordRewriteTool: Anthropic.Tool = {
-  name: "record_rewrite",
-  description:
-    "Record an Unbunked-fiable rewrite of the article in the requested language.",
-  input_schema: {
+export const rewriteOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Record an Unbunked-fiable rewrite of the article in the requested language.",
     type: "object",
     properties: {
       title: {

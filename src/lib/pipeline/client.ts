@@ -71,16 +71,35 @@ export function withCurrentDate(system: string): string {
   );
 }
 
-export function firstToolInput(
+// Adaptive thinking is on by default on the current models and its tokens count
+// against max_tokens, so every structured-output phase reserves this much on top
+// of the budget its answer needs — otherwise a long think truncates the JSON.
+export const THINKING_HEADROOM_TOKENS = 8192;
+
+// Reads the JSON object a structured-output request (output_config.format)
+// returned. The API guarantees a schema-valid object only when the model
+// finished: a refusal or a max_tokens cut yields null (the caller's diagnostic
+// flags the truncation). Text that still fails to parse on a finished turn is a
+// contract break, so it throws rather than being mistaken for an empty result.
+export function structuredOutput(
   message: Anthropic.Message,
-  toolName: string,
 ): Record<string, unknown> | null {
-  for (const block of message.content) {
-    if (block.type === "tool_use" && block.name === toolName) {
-      return block.input as Record<string, unknown>;
-    }
+  if (message.stop_reason === "refusal" || message.stop_reason === "max_tokens") {
+    return null;
   }
-  return null;
+  const text = collectText(message);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new Error(
+      `Structured output is not valid JSON (stop_reason ${message.stop_reason})`,
+      { cause: error },
+    );
+  }
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, unknown>)
+    : null;
 }
 
 export function collectText(message: Anthropic.Message): string {
@@ -127,7 +146,7 @@ export function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
 }
 
 // Response shape worth surfacing for diagnostics. `truncated` means the model
-// hit max_tokens mid-output; for a forced tool call that leaves the tool input
+// hit max_tokens mid-output; for a structured-output phase that leaves the JSON
 // incomplete, so trailing fields (e.g. the claims array) silently go missing.
 export type MessageMeta = {
   stopReason: string | null;

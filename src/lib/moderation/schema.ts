@@ -4,12 +4,12 @@ import type Anthropic from "@anthropic-ai/sdk";
 
 import { AI_MODERATION_VERDICTS } from "@/lib/contributions/constants";
 
-export const classifyContributionTool: Anthropic.Tool = {
-  name: "classify_contribution",
-  description:
-    "Triage a reader-submitted contribution (a correction or source suggestion) " +
-    "to a fact-checking article, for moderation routing only.",
-  input_schema: {
+export const contributionClassificationOutputFormat: Anthropic.JSONOutputFormat = {
+  type: "json_schema",
+  schema: {
+    description:
+      "Triage a reader-submitted contribution (a correction or source suggestion) " +
+      "to a fact-checking article, for moderation routing only.",
     type: "object",
     properties: {
       verdict: {

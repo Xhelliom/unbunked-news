@@ -16,9 +16,10 @@ import {
   type CriterionScores,
 } from "@/lib/score-criteria";
 import {
-  firstToolInput,
   formatArticle,
   getClaude,
+  structuredOutput,
+  THINKING_HEADROOM_TOKENS,
   usageOf,
   withCurrentDate,
   type TokenUsage,
@@ -28,8 +29,8 @@ import {
   gatherExternalEvidence,
   formatExternalEvidence,
 } from "./data-sources";
-import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
-import { recordAnalysisTool, type Analysis } from "./schemas";
+import { structuredOutputDiagnostic, type StepDiagnostic } from "./diagnostics";
+import { analysisOutputFormat, type Analysis } from "./schemas";
 import { recoverSummaries } from "./summary-recovery";
 import { FALLBACK_RUBRIC, isRubric } from "@/lib/rubrics";
 import type { VerificationFindings } from "./verify";
@@ -40,7 +41,7 @@ export type AggregateResult = {
   diagnostic: StepDiagnostic;
 };
 
-// record_analysis emits every criterion (with rationale + sources), the
+// The analysis output emits every criterion (with rationale + sources), the
 // killswitch flags, descriptors, tags and keywords. The per-claim verdicts now
 // live in their own phase (assess-claims) so the two no longer share a budget.
 const MAX_TOKENS = 8192;
@@ -83,7 +84,7 @@ const SYSTEM = [
   "For each claim, copy its sourceQuote verbatim from the article body.",
 ].join(" ");
 
-// Reads the per-criterion assessments from the (untyped) tool input. A missing
+// Reads the per-criterion assessments from the (untyped) structured output. A missing
 // or malformed entry stays null: absent is never coerced to a number.
 function toCriteria(value: unknown): CriterionAssessments {
   const raw =
@@ -123,10 +124,9 @@ export async function aggregate(
 
   const message = await client.messages.create({
     model,
-    max_tokens: MAX_TOKENS,
+    max_tokens: MAX_TOKENS + THINKING_HEADROOM_TOKENS,
     system: withCurrentDate(SYSTEM),
-    tools: [recordAnalysisTool],
-    tool_choice: { type: "tool", name: "record_analysis" },
+    output_config: { format: analysisOutputFormat },
     messages: [
       {
         role: "user",
@@ -155,9 +155,11 @@ export async function aggregate(
     ],
   });
 
-  const input = firstToolInput(message, "record_analysis");
+  const input = structuredOutput(message);
   if (!input) {
-    throw new Error("Aggregation did not return a structured analysis");
+    throw new Error(
+      `Aggregation did not return a structured analysis (stop_reason ${message.stop_reason})`,
+    );
   }
 
   const criteria = toCriteria(input.criteria);
@@ -196,7 +198,7 @@ export async function aggregate(
     contentType: toContentType(descriptors.contentType),
     killswitch,
     evidence: { criteria, killswitch },
-    // The tool enum constrains this, but guard anyway: an off-list or missing
+    // The schema enum constrains this, but guard anyway: an off-list or missing
     // value falls back to the catch-all rubric rather than breaking the insert.
     rubric: isRubric(input.rubric) ? input.rubric : FALLBACK_RUBRIC,
     keywords: Array.isArray(input.keywords)
@@ -213,7 +215,7 @@ export async function aggregate(
     warnings.push(`external databases unavailable: ${external.notes.join("; ")}`);
   }
 
-  const diagnostic = toolCallDiagnostic(
+  const diagnostic = structuredOutputDiagnostic(
     "aggregating",
     model,
     message,

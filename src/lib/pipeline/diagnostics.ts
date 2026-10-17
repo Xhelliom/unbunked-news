@@ -40,10 +40,10 @@ export type RunDiagnostics = {
   steps: StepDiagnostic[];
 };
 
-// Builds the diagnostic for a forced-tool phase (extract, aggregate, rewrite)
-// from its Claude response. A truncated tool call is flagged here so the
+// Builds the diagnostic for a structured-output phase (extract, aggregate,
+// assess, rewrite) from its Claude response. A truncated output is flagged so the
 // orchestrator can fail the run loudly instead of persisting an amputated result.
-export function toolCallDiagnostic(
+export function structuredOutputDiagnostic(
   step: PipelineStep,
   model: string,
   message: Anthropic.Message,
@@ -64,7 +64,7 @@ export function toolCallDiagnostic(
   };
 }
 
-// One locale's rewrite threw (API error, no tool input) while the others may
+// One locale's rewrite threw (API error, no structured output) while the others may
 // have succeeded. Recorded as a non-truncated step carrying the reason so the
 // run can survive a partial rewrite instead of failing wholesale.
 export function rewriteFailureDiagnostic(

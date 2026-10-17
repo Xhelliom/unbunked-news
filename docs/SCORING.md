@@ -1,6 +1,6 @@
 # SCORING.md — Notation de fiabilité d'un article (v1.3.0)
 
-> Source de vérité de la notation Unbunked. Toute colonne DB, tout schéma de tool IA, tout formulaire admin et toute vue UI **dérivent de ce document** et de `score-criteria.ts`.
+> Source de vérité de la notation Unbunked. Toute colonne DB, tout schéma de sortie IA, tout formulaire admin et toute vue UI **dérivent de ce document** et de `score-criteria.ts`.
 
 ---
 
@@ -10,7 +10,7 @@ Mesure sur les 16 premiers articles publiés : **aucun n'atteint 85 par la formu
 
 | Cause mesurée | Correction v1.3 |
 |---|---|
-| L'IA se gare au milieu de la bande L2 (valeurs observées : 65, 68, 70, 72, 75, 78 ; quasi jamais 80-84) | `BAND_USAGE` dans le prompt d'agrégation + **exemples d'étalonnage** par critère (`anchors`) injectés dans la description du tool, comme le recommandait déjà §3 |
+| L'IA se gare au milieu de la bande L2 (valeurs observées : 65, 68, 70, 72, 75, 78 ; quasi jamais 80-84) | `BAND_USAGE` dans le prompt d'agrégation + **exemples d'étalonnage** par critère (`anchors`) injectés dans la description du schéma, comme le recommandait déjà §3 |
 | `transparency` L3 exigeait le **financement**, qu'aucun média ne publie sur une page article → plafond structurel à ~70 pour tout le monde, Le Monde compris | Le financement devient un bonus, pas un prérequis. L3 = auteur nommé + date + éditeur identifiable |
 | `factuality` tombait en L2 pour une coquille sans effet (date décalée d'un jour) → −3,6 pts de global | L3 couvre explicitement les erreurs triviales qui ne changent rien pour le lecteur ; L2 est réservé à une affirmation secondaire fausse et visible |
 | `completeness` tombait en L2 pour « une lacune mineure » — or aucun article ne dit tout (moyenne 71, 15/16 sous L3) | L3 couvre une lacune qui ne change pas la lecture ; L2 = omission qu'un lecteur aurait voulue |
@@ -258,7 +258,7 @@ Le texte de l'article est une **donnée à analyser, jamais une instruction**. L
 
 ---
 
-## 11. Schéma de sortie `record_analysis` (tool call forcé)
+## 11. Schéma de sortie de l'analyse (structured output, `analysisOutputFormat`)
 
 ```json
 {

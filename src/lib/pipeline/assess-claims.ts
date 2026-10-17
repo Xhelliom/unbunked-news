@@ -3,9 +3,10 @@ import "server-only";
 import type { ScrapedArticle } from "@/lib/scrape";
 import { safeHttpUrl } from "@/lib/safe-url";
 import {
-  firstToolInput,
   formatArticle,
   getClaude,
+  structuredOutput,
+  THINKING_HEADROOM_TOKENS,
   usageOf,
   withCurrentDate,
   type TokenUsage,
@@ -14,10 +15,10 @@ import {
   gatherExternalEvidence,
   formatExternalEvidence,
 } from "./data-sources";
-import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
+import { structuredOutputDiagnostic, type StepDiagnostic } from "./diagnostics";
 import {
   CLAIM_STATUSES,
-  recordClaimsAssessmentTool,
+  claimsAssessmentOutputFormat,
   type AnalysisClaim,
   type AnalysisSource,
   type ClaimStatus,
@@ -25,7 +26,7 @@ import {
 import type { VerificationFindings } from "./verify";
 
 // Split out of the aggregate phase so the per-claim verdicts get their own
-// token budget — when claims shared record_analysis they were emitted last and
+// token budget — when claims shared the analysis output they were emitted last and
 // silently dropped on truncation (PR #38). Each verdict carries a verbatim quote
 // and sources (a few hundred tokens), so the budget scales with the claim count
 // rather than a flat ceiling a long list would overrun — run.ts treats that
@@ -92,7 +93,7 @@ function toSources(value: unknown): AnalysisSource[] {
   });
 }
 
-// Validates the (untyped) tool input. A malformed entry is dropped rather than
+// Validates the (untyped) structured output. A malformed entry is dropped rather than
 // coerced into a fake claim; the type system cannot catch a wrong shape here.
 function toClaims(value: unknown): AnalysisClaim[] {
   if (!Array.isArray(value)) return [];
@@ -125,43 +126,49 @@ export async function assessClaims(
     .join("\n");
   const external = await gatherExternalEvidence(article.url, claims);
 
-  const message = await client.messages.create({
-    model,
-    max_tokens: assessMaxTokens(claims.length),
-    system: withCurrentDate(SYSTEM),
-    tools: [recordClaimsAssessmentTool],
-    tool_choice: { type: "tool", name: "record_claims_assessment" },
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: formatArticle(article),
-            cache_control: { type: "ephemeral" },
-          },
-          {
-            type: "text",
-            text: [
-              `CLAIMS:\n${claims.map((c, i) => `${i + 1}. ${c}`).join("\n")}`,
-              "",
-              `RESEARCH FINDINGS:\n${verification.findings}`,
-              "",
-              `SOURCES FOUND:\n${sourceList || "(none)"}`,
-              "",
-              formatExternalEvidence(external),
-              "",
-              "Assess every claim above. Only cite URLs from the sources or databases above.",
-            ].join("\n"),
-          },
-        ],
-      },
-    ],
-  });
+  // Stream rather than a single create(): with the thinking headroom the budget
+  // exceeds the ceiling under which a non-streaming request risks an SDK HTTP
+  // timeout. We only need the assembled result, so collect it with finalMessage().
+  const message = await client.messages
+    .stream({
+      model,
+      max_tokens: assessMaxTokens(claims.length) + THINKING_HEADROOM_TOKENS,
+      system: withCurrentDate(SYSTEM),
+      output_config: { format: claimsAssessmentOutputFormat },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: formatArticle(article),
+              cache_control: { type: "ephemeral" },
+            },
+            {
+              type: "text",
+              text: [
+                `CLAIMS:\n${claims.map((c, i) => `${i + 1}. ${c}`).join("\n")}`,
+                "",
+                `RESEARCH FINDINGS:\n${verification.findings}`,
+                "",
+                `SOURCES FOUND:\n${sourceList || "(none)"}`,
+                "",
+                formatExternalEvidence(external),
+                "",
+                "Assess every claim above. Only cite URLs from the sources or databases above.",
+              ].join("\n"),
+            },
+          ],
+        },
+      ],
+    })
+    .finalMessage();
 
-  const input = firstToolInput(message, "record_claims_assessment");
+  const input = structuredOutput(message);
   if (!input) {
-    throw new Error("Claim assessment did not return a structured result");
+    throw new Error(
+      `Claim assessment did not return a structured result (stop_reason ${message.stop_reason})`,
+    );
   }
 
   const assessed = toClaims(input.claims);
@@ -176,7 +183,7 @@ export async function assessClaims(
     );
   }
 
-  const diagnostic = toolCallDiagnostic(
+  const diagnostic = structuredOutputDiagnostic(
     "assessing-claims",
     model,
     message,
