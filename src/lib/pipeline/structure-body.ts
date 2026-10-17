@@ -3,13 +3,14 @@ import "server-only";
 import type { ArticleBlock } from "@/lib/article-blocks";
 import { applyStructureSelection } from "@/lib/scrape";
 import {
+  THINKING_HEADROOM_TOKENS,
   ZERO_USAGE,
-  firstToolInput,
   getClaude,
+  structuredOutput,
   usageOf,
   type TokenUsage,
 } from "./client";
-import { structureArticleBodyTool } from "./schemas";
+import { articleStructureOutputFormat } from "./schemas";
 
 export type StructuredBody = {
   blocks: ArticleBlock[];
@@ -63,10 +64,9 @@ export async function structureArticleBody(
   const client = getClaude();
   const message = await client.messages.create({
     model,
-    max_tokens: MAX_TOKENS,
+    max_tokens: MAX_TOKENS + THINKING_HEADROOM_TOKENS,
     system: SYSTEM,
-    tools: [structureArticleBodyTool],
-    tool_choice: { type: "tool", name: "record_article_structure" },
+    output_config: { format: articleStructureOutputFormat, effort: "low" },
     messages: [
       {
         role: "user",
@@ -85,19 +85,18 @@ export async function structureArticleBody(
     ],
   });
 
-  if (message.stop_reason === "max_tokens") {
+  const input = structuredOutput(message);
+  if (!input) {
     throw new Error(
       "Article structuring was truncated at max_tokens; the selection is unreliable",
     );
   }
-
-  const input = firstToolInput(message, "record_article_structure");
   // Default to complete when the flag is missing, so a quirk never forces a
   // spurious (paid) whole-page re-extraction.
   const complete =
-    typeof input?.bodyComplete === "boolean" ? input.bodyComplete : true;
+    typeof input.bodyComplete === "boolean" ? input.bodyComplete : true;
   return {
-    blocks: applyStructureSelection(input?.blocks ?? null, blocks),
+    blocks: applyStructureSelection(input.blocks ?? null, blocks),
     complete,
     usage: usageOf(message),
   };

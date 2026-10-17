@@ -1,7 +1,7 @@
 import type { Verdict } from "@/lib/verdicts";
 
 // Single source of truth for the reliability scoring, at the CRITERIA_VERSION
-// declared below. The DB columns, the pipeline tool schema, the admin form and
+// declared below. The DB columns, the pipeline output schema, the admin form and
 // the public UI all derive from the lists, weights and pure functions defined
 // here. The prompt-facing rubric text lives in
 // src/lib/pipeline/criterion-rubric.ts. See docs/SCORING.md.
@@ -254,7 +254,7 @@ function deriveGlobalConfidence(criteria: CriterionAssessments): Confidence {
   return allHigh ? "high" : "medium";
 }
 
-// Validates one raw criterion assessment from the (untyped) tool input. Returns
+// Validates one raw criterion assessment from the (untyped) structured output. Returns
 // null when the shape is wrong or the criterion was omitted — never invents a
 // value.
 export function toAssessment(value: unknown): CriterionAssessment | null {
@@ -278,7 +278,7 @@ export function toAssessment(value: unknown): CriterionAssessment | null {
   };
 }
 
-// Validates the killswitch object from the (untyped) tool input. A flag is only
+// Validates the killswitch object from the (untyped) structured output. A flag is only
 // "raised" when the AI explicitly returns value:true; anything malformed reads
 // as false (we never invent a debunk).
 export function toKillswitch(value: unknown): Killswitch {

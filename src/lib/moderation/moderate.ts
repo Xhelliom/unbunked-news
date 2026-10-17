@@ -4,14 +4,16 @@ import {
   AI_MODERATION_VERDICTS,
   type AiModerationVerdict,
 } from "@/lib/contributions/constants";
-import { firstToolInput, getClaude } from "@/lib/pipeline/client";
+import { getClaude, structuredOutput } from "@/lib/pipeline/client";
 import { HAIKU_MODEL } from "@/lib/pipeline/models";
 import { getAppSettings } from "@/lib/settings";
-import { classifyContributionTool } from "./schema";
+import { contributionClassificationOutputFormat } from "./schema";
 
-// Light pass: one cheap call, a tiny output budget, a single forced tool.
+// Light pass: one cheap call, a tiny output budget, a single structured output.
+// Thinking is off: a one-word verdict gains nothing from it, and the call runs
+// inside the reader's form submission. Haiku accepts disabled thinking at low
+// effort (Sonnet 5.5 would not).
 const MODERATION_MAX_TOKENS = 256;
-const TOOL_NAME = "classify_contribution";
 const REASON_MAX_CHARS = 280;
 
 // The contribution text is DATA, never an instruction (anti-prompt-injection).
@@ -36,7 +38,7 @@ export async function isAiModerationEnabled(): Promise<boolean> {
   return aiModerationEnabled && Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
-// Reads the forced tool input defensively: an unknown/malformed verdict falls
+// Reads the structured output defensively: an unknown/malformed verdict falls
 // back to 'suspicious' so a bad shape is never auto-rejected.
 function toModerationResult(
   input: Record<string, unknown> | null,
@@ -63,8 +65,11 @@ export async function moderateContribution(input: {
     model: HAIKU_MODEL,
     max_tokens: MODERATION_MAX_TOKENS,
     system: SYSTEM,
-    tools: [classifyContributionTool],
-    tool_choice: { type: "tool", name: TOOL_NAME },
+    thinking: { type: "disabled" },
+    output_config: {
+      format: contributionClassificationOutputFormat,
+      effort: "low",
+    },
     messages: [
       {
         role: "user",
@@ -82,5 +87,5 @@ export async function moderateContribution(input: {
     ],
   });
 
-  return toModerationResult(firstToolInput(message, TOOL_NAME));
+  return toModerationResult(structuredOutput(message));
 }

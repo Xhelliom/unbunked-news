@@ -2,16 +2,17 @@ import "server-only";
 
 import type { ScrapedArticle } from "@/lib/scrape";
 import {
-  firstToolInput,
   formatArticle,
   getClaude,
   MAX_CONTENT_CHARS,
+  structuredOutput,
+  THINKING_HEADROOM_TOKENS,
   usageOf,
   type TokenUsage,
 } from "./client";
-import { toolCallDiagnostic, type StepDiagnostic } from "./diagnostics";
+import { structuredOutputDiagnostic, type StepDiagnostic } from "./diagnostics";
 import {
-  recordRewriteTool,
+  rewriteOutputFormat,
   type Analysis,
   type AnalysisClaim,
   type Rewrite,
@@ -20,10 +21,10 @@ import {
 // A full-article rewrite mirrors the source's structure and length, so its
 // output budget has to scale with the article: a flat ceiling (8192, before that
 // 4096) truncated the body on long pieces — dropping the tail and its
-// [[claim:N]] markers, and on the worst cases cutting the forced-tool JSON
+// [[claim:N]] markers, and on the worst cases cutting the structured JSON
 // before `body` was emitted at all, leaving an empty rewrite. Budget the output
 // from the (capped) source length, floored at the ceiling that covered short
-// articles and capped well under Sonnet's 64k output limit so a runaway page
+// articles and capped well under the models' output limit so a runaway page
 // can't request an unbounded completion. 0.4 tokens/char gives ~33% headroom
 // over a same-length French rewrite plus its markers.
 const REWRITE_TOKENS_PER_CHAR = 0.4;
@@ -101,10 +102,10 @@ export async function rewriteArticle(
   const message = await client.messages
     .stream({
       model,
-      max_tokens: rewriteMaxTokens(article.content.length),
+      max_tokens:
+        rewriteMaxTokens(article.content.length) + THINKING_HEADROOM_TOKENS,
       system: SYSTEM,
-      tools: [recordRewriteTool],
-      tool_choice: { type: "tool", name: "record_rewrite" },
+      output_config: { format: rewriteOutputFormat },
       messages: [
         {
           role: "user",
@@ -133,16 +134,15 @@ export async function rewriteArticle(
     })
     .finalMessage();
 
-  const input = firstToolInput(message, "record_rewrite");
-  if (!input) {
-    throw new Error(`Rewrite (${locale}) did not return a structured result`);
-  }
+  // A truncated locale (null) is returned, not thrown, so run.ts still bills
+  // its tokens and records the truncation; it just doesn't persist the body.
+  const input = structuredOutput(message) ?? {};
 
   const body = typeof input.body === "string" ? input.body : "";
   const warnings: string[] = [];
   if (body.trim().length === 0) warnings.push(`empty rewrite body (${locale})`);
 
-  const diagnostic = toolCallDiagnostic(
+  const diagnostic = structuredOutputDiagnostic(
     "rewriting",
     model,
     message,

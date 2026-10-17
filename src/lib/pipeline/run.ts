@@ -28,11 +28,7 @@ import {
   suggestedMaxClaims,
   suggestedMaxSearchRounds,
 } from "./limits";
-import {
-  DEFAULT_REASONING_MODEL,
-  HAIKU_MODEL,
-  isReasoningModel,
-} from "./models";
+import { HAIKU_MODEL, toReasoningModel } from "./models";
 import { extractClaims } from "./extract-claims";
 import { rewriteArticle } from "./rewrite";
 import { structureArticleBody } from "./structure-body";
@@ -97,9 +93,7 @@ export async function runPipeline(jobId: string): Promise<void> {
     // which the submitter may override (else the default Sonnet tier). Web
     // search happens only during verification, so its requests bill against the
     // reasoning model's row.
-    const reasoningModel = isReasoningModel(job.model)
-      ? job.model
-      : DEFAULT_REASONING_MODEL;
+    const reasoningModel = toReasoningModel(job.model);
 
     let structureUsage = ZERO_USAGE;
     // The AI structuring step drives extraction (refine the body, or re-extract

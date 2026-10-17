@@ -2,7 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { costForUsage } from "./pricing";
-import { HAIKU_MODEL, SONNET_MODEL } from "./models";
+import {
+  HAIKU_MODEL,
+  LEGACY_HAIKU_4_5_MODEL,
+  LEGACY_SONNET_5_MODEL,
+  SONNET_MODEL,
+} from "./models";
 
 // One million of each token kind makes the per-Mtok rates fall out directly:
 // the cost in USD equals input + output + cacheWrite + cacheRead per Mtok.
@@ -20,14 +25,20 @@ function approx(actual: number, expected: number): void {
   );
 }
 
-test("Haiku 4.5 is priced at its list rates", () => {
-  // input 1.0 + output 5.0 + cache write 1.25 + cache read 0.1
-  approx(costForUsage(HAIKU_MODEL, ONE_MTOK_EACH), 7.35);
+test("Haiku 5.5 is priced at its list rates", () => {
+  // input 0.1 + output 0.5 + cache write 0.125 + cache read 0.01
+  approx(costForUsage(HAIKU_MODEL, ONE_MTOK_EACH), 0.735);
 });
 
-test("Sonnet 5 is priced at its list rates", () => {
-  // input 3.0 + output 15.0 + cache write 3.75 + cache read 0.3
-  approx(costForUsage(SONNET_MODEL, ONE_MTOK_EACH), 22.05);
+test("Sonnet 5.5 is priced at its list rates", () => {
+  // input 2.0 + output 10.0 + cache write 2.5 + cache read 0.2
+  approx(costForUsage(SONNET_MODEL, ONE_MTOK_EACH), 14.7);
+});
+
+test("past runs keep the rates of the model they ran on", () => {
+  // Haiku 4.5: 1.0 + 5.0 + 1.25 + 0.1; Sonnet 5: 2.0 + 10.0 + 2.5 + 0.2
+  approx(costForUsage(LEGACY_HAIKU_4_5_MODEL, ONE_MTOK_EACH), 7.35);
+  approx(costForUsage(LEGACY_SONNET_5_MODEL, ONE_MTOK_EACH), 14.7);
 });
 
 test("an unknown model falls back to the Haiku rate, never zero", () => {
@@ -51,7 +62,7 @@ test("a tiered run prices each model's row independently then sums", () => {
     cacheCreationTokens: 0,
     cacheReadTokens: 0,
   });
-  approx(haikuRow, 0.5); // 0.5 Mtok × $1
-  approx(sonnetRow, 1.5); // 0.5 Mtok × $3
-  approx(haikuRow + sonnetRow, 2.0);
+  approx(haikuRow, 0.05); // 0.5 Mtok × $0.1
+  approx(sonnetRow, 1.0); // 0.5 Mtok × $2
+  approx(haikuRow + sonnetRow, 1.05);
 });

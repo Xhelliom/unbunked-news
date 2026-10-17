@@ -71,16 +71,48 @@ export function withCurrentDate(system: string): string {
   );
 }
 
-export function firstToolInput(
-  message: Anthropic.Message,
-  toolName: string,
-): Record<string, unknown> | null {
-  for (const block of message.content) {
-    if (block.type === "tool_use" && block.name === toolName) {
-      return block.input as Record<string, unknown>;
-    }
+// Adaptive thinking is on by default on the current models and its tokens count
+// against max_tokens, so every structured-output phase reserves this much on top
+// of the budget its answer needs — otherwise a long think truncates the JSON.
+export const THINKING_HEADROOM_TOKENS = 8192;
+
+// A refusal ends the turn with no usable answer. Throwing keeps a declined
+// phase from passing for an empty one, so the paid phases after it never run
+// on nothing.
+export function throwIfRefused(message: Anthropic.Message): void {
+  if (message.stop_reason === "refusal") {
+    throw new Error(
+      `Claude declined the request (refusal category ${message.stop_details?.category ?? "unknown"})`,
+    );
   }
-  return null;
+}
+
+// Reads the JSON object a structured-output request (output_config.format)
+// returned. The API guarantees a schema-valid object only when the model
+// finished, so null means exactly one thing: the output was cut at max_tokens.
+// Callers build their diagnostic from the message (which flags the truncation)
+// and let run.ts decide. Anything else that is not an object is a contract
+// break and throws.
+export function structuredOutput(
+  message: Anthropic.Message,
+): Record<string, unknown> | null {
+  throwIfRefused(message);
+  if (messageMeta(message).truncated) {
+    return null;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(collectText(message));
+  } catch (error) {
+    throw new Error(
+      `Structured output is not valid JSON (stop_reason ${message.stop_reason})`,
+      { cause: error },
+    );
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Structured output is not a JSON object");
+  }
+  return parsed as Record<string, unknown>;
 }
 
 export function collectText(message: Anthropic.Message): string {
@@ -127,7 +159,7 @@ export function addUsage(a: TokenUsage, b: TokenUsage): TokenUsage {
 }
 
 // Response shape worth surfacing for diagnostics. `truncated` means the model
-// hit max_tokens mid-output; for a forced tool call that leaves the tool input
+// hit max_tokens mid-output; for a structured-output phase that leaves the JSON
 // incomplete, so trailing fields (e.g. the claims array) silently go missing.
 export type MessageMeta = {
   stopReason: string | null;

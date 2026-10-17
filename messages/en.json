@@ -522,8 +522,8 @@
       "modelLabel": "Analysis model",
       "modelHint": "Model used for verification, judgement and rewriting. Extraction stays on Haiku.",
       "models": {
-        "sonnet": "Sonnet 5 (default, recommended)",
-        "haiku": "Haiku 4.5 (faster and cheaper)"
+        "sonnet": "Sonnet 5.5 (default, recommended)",
+        "haiku": "Haiku 5.5 (faster and cheaper)"
       }
     },
     "job": {

@@ -1,7 +1,7 @@
 import { LEVEL_BANDS, type Level, type ScoreCriterion } from "@/lib/score-criteria";
 
 // Prompt-facing rubric: the definition, checklist, level anchors and worked
-// calibration examples the tool schema hands the model for each criterion.
+// calibration examples the output schema hands the model for each criterion.
 // English, like the other pipeline prompts; the user-facing labels live in
 // next-intl (messages/*.json). The numbers, weights and pure functions stay in
 // score-criteria.ts — this file only carries the text the model reads.
