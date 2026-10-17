@@ -9,6 +9,7 @@ import {
   collectText,
   formatArticle,
   getClaude,
+  THINKING_HEADROOM_TOKENS,
   usageOf,
   withCurrentDate,
   ZERO_USAGE,
@@ -16,11 +17,31 @@ import {
 } from "./client";
 import { type StepDiagnostic } from "./diagnostics";
 import { DEFAULT_MAX_SEARCH_ROUNDS } from "./limits";
+import { SONNET_MODEL } from "./models";
 import {
   DEFAULT_SEARCH_PROVIDER,
   type AnalysisSource,
   type SearchProvider,
 } from "./schemas";
+
+// Budget for the written findings of one round, before the thinking headroom.
+const VERIFY_MAX_TOKENS = 8192;
+
+// Dynamic filtering (web_search_20260209) lets the model filter results in code
+// before they reach its context, which cuts the input tokens that pile up across
+// pause_turn rounds. It runs through programmatic tool calling, which Haiku is
+// not documented to support, so Haiku keeps the basic tool. Both versions emit
+// web_search_tool_result blocks, so collectSources reads either.
+const DYNAMIC_FILTERING_MODELS: readonly string[] = [SONNET_MODEL];
+
+function webSearchTool(
+  model: string,
+  maxUses: number,
+): Anthropic.Messages.ToolUnion {
+  return DYNAMIC_FILTERING_MODELS.includes(model)
+    ? { type: "web_search_20260209", name: "web_search", max_uses: maxUses }
+    : { type: "web_search_20250305", name: "web_search", max_uses: maxUses };
+}
 
 const SYSTEM =
   "You are a fact-checking researcher. For each claim, use web search to find " +
@@ -80,9 +101,7 @@ export async function verifyClaims(
   options: VerifyOptions = {},
 ): Promise<VerificationFindings> {
   const maxRounds = options.maxSearchRounds ?? DEFAULT_MAX_SEARCH_ROUNDS;
-  const searchTools: Anthropic.Messages.ToolUnion[] = [
-    { type: "web_search_20250305", name: "web_search", max_uses: maxRounds },
-  ];
+  const searchTools = [webSearchTool(model, maxRounds)];
   const client = getClaude();
   const messages: Anthropic.MessageParam[] = [
     {
@@ -114,7 +133,7 @@ export async function verifyClaims(
   let searchRequests = 0;
   let message = await client.messages.create({
     model,
-    max_tokens: 8192,
+    max_tokens: VERIFY_MAX_TOKENS + THINKING_HEADROOM_TOKENS,
     system: withCurrentDate(SYSTEM),
     tools: searchTools,
     messages,
@@ -128,7 +147,7 @@ export async function verifyClaims(
     messages.push({ role: "assistant", content: message.content });
     message = await client.messages.create({
       model,
-      max_tokens: 8192,
+      max_tokens: VERIFY_MAX_TOKENS + THINKING_HEADROOM_TOKENS,
       system: withCurrentDate(SYSTEM),
       tools: searchTools,
       messages,
@@ -153,6 +172,10 @@ export async function verifyClaims(
       `web search stopped after ${maxRounds} rounds; findings may be incomplete`,
     );
   }
+  const isTruncated = message.stop_reason === "max_tokens";
+  if (isTruncated) {
+    warnings.push(`findings truncated at max_tokens (${usage.outputTokens})`);
+  }
   if (findings.trim().length === 0) warnings.push("no textual findings returned");
   if (unique.length === 0) warnings.push("no sources found");
 
@@ -161,7 +184,7 @@ export async function verifyClaims(
     model,
     stopReason: message.stop_reason,
     outputTokens: usage.outputTokens,
-    truncated: false,
+    truncated: isTruncated,
     metrics: {
       rounds: guard + 1,
       searchRequests,
