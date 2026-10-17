@@ -42,7 +42,7 @@ you are about to break one, stop and ask.
 - Constants live **as close as possible to where they are used**: top of the file if used once, top of the module if shared, in `src/lib/<domain>/constants.ts` if cross-module.
 - The exceptions, always allowed inline: `0`, `1`, `-1`, `2` when truly arithmetic; HTTP status codes used once at a boundary (`return new Response(null, { status: 204 })` is fine).
 - **Time constants in milliseconds carry the `_MS` suffix.** `JOB_TIMEOUT_MS = 30 * 60 * 1000`. Compose units; never write opaque large integers.
-- **Enums and string unions never get duplicated.** A claim status lives in `src/lib/pipeline/schemas.ts` as `CLAIM_STATUSES`. The DB enum, the tool schema, and the runtime check all derive from that one list. If you find yourself typing `"supported" | "false"` in a second file, stop and import the source of truth.
+- **Enums and string unions never get duplicated.** A claim status lives in `src/lib/pipeline/schemas.ts` as `CLAIM_STATUSES`. The DB enum, the output schema, and the runtime check all derive from that one list. If you find yourself typing `"supported" | "false"` in a second file, stop and import the source of truth.
 
 ## 5. Naming
 

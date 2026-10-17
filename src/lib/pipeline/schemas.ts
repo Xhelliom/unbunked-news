@@ -228,9 +228,9 @@ function killswitchSignalProperty(): Record<string, unknown> {
   };
 }
 
-// Per-claim verdict shape, shared by the dedicated claims-assessment tool. The
-// status enum derives from CLAIM_STATUSES so the DB enum, the tool schema and
-// the runtime check stay in lockstep.
+// Per-claim verdict shape of the claims-assessment output. The status enum
+// derives from CLAIM_STATUSES so the DB enum, the output schema and the runtime
+// check stay in lockstep.
 const claimAssessmentItem: Record<string, unknown> = {
   type: "object",
   properties: {

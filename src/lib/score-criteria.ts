@@ -1,7 +1,7 @@
 import type { Verdict } from "@/lib/verdicts";
 
 // Single source of truth for the reliability scoring, at the CRITERIA_VERSION
-// declared below. The DB columns, the pipeline tool schema, the admin form and
+// declared below. The DB columns, the pipeline output schema, the admin form and
 // the public UI all derive from the lists, weights and pure functions defined
 // here. The prompt-facing rubric text lives in
 // src/lib/pipeline/criterion-rubric.ts. See docs/SCORING.md.

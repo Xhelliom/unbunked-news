@@ -4,17 +4,15 @@ import {
   AI_MODERATION_VERDICTS,
   type AiModerationVerdict,
 } from "@/lib/contributions/constants";
-import {
-  getClaude,
-  structuredOutput,
-  THINKING_HEADROOM_TOKENS,
-} from "@/lib/pipeline/client";
+import { getClaude, structuredOutput } from "@/lib/pipeline/client";
 import { HAIKU_MODEL } from "@/lib/pipeline/models";
 import { getAppSettings } from "@/lib/settings";
 import { contributionClassificationOutputFormat } from "./schema";
 
-// Light pass: one cheap call at low effort, a tiny answer budget, a single
-// structured output.
+// Light pass: one cheap call, a tiny output budget, a single structured output.
+// Thinking is off: a one-word verdict gains nothing from it, and the call runs
+// inside the reader's form submission. Haiku accepts disabled thinking at low
+// effort (Sonnet 5.5 would not).
 const MODERATION_MAX_TOKENS = 256;
 const REASON_MAX_CHARS = 280;
 
@@ -65,8 +63,9 @@ export async function moderateContribution(input: {
   const client = getClaude();
   const message = await client.messages.create({
     model: HAIKU_MODEL,
-    max_tokens: MODERATION_MAX_TOKENS + THINKING_HEADROOM_TOKENS,
+    max_tokens: MODERATION_MAX_TOKENS,
     system: SYSTEM,
+    thinking: { type: "disabled" },
     output_config: {
       format: contributionClassificationOutputFormat,
       effort: "low",
