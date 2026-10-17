@@ -78,13 +78,20 @@ export const THINKING_HEADROOM_TOKENS = 8192;
 
 // Reads the JSON object a structured-output request (output_config.format)
 // returned. The API guarantees a schema-valid object only when the model
-// finished: a refusal or a max_tokens cut yields null (the caller's diagnostic
-// flags the truncation). Text that still fails to parse on a finished turn is a
-// contract break, so it throws rather than being mistaken for an empty result.
+// finished. A max_tokens cut yields null: callers that can survive it (extract,
+// rewrite) flag it through their diagnostic, the others fail with the
+// stop_reason. A refusal throws, so a declined phase never passes for an empty
+// one and the paid phases after it don't run on nothing. Text that still fails
+// to parse on a finished turn is a contract break, so it throws too.
 export function structuredOutput(
   message: Anthropic.Message,
 ): Record<string, unknown> | null {
-  if (message.stop_reason === "refusal" || message.stop_reason === "max_tokens") {
+  if (message.stop_reason === "refusal") {
+    throw new Error(
+      `Claude declined the request (refusal category ${message.stop_details?.category ?? "unknown"})`,
+    );
+  }
+  if (message.stop_reason === "max_tokens") {
     return null;
   }
   const text = collectText(message);

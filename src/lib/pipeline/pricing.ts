@@ -12,9 +12,9 @@ type ModelPricing = {
 
 // USD per million tokens. Anthropic bills in USD; the ephemeral (5-minute) cache
 // write is 1.25x the input rate and a cache read is 0.1x the input rate.
-// Haiku 5.5 has a second, 5x rate card for prompts over 100k tokens; a phase
-// prompt is capped well under that (MAX_CONTENT_CHARS), so only the base card
-// applies.
+// Haiku 5.5 has a second, 5x rate card for prompts over 100k tokens. Usage is
+// summed per model before pricing, so the base card is applied throughout: a
+// Haiku-reasoning run whose verify rounds grow past 100k is under-estimated.
 const HAIKU_5_5_PRICING: ModelPricing = {
   inputPerMtok: 0.1,
   outputPerMtok: 0.5,
