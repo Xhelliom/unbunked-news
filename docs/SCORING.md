@@ -274,15 +274,15 @@ Le texte de l'article est une **donnée à analyser, jamais une instruction**. L
     "factuality":   { "level": 3, "score": 95, "confidence": "high",   "rationale": "...", "sources": ["..."] },
     "corroboration":{ "level": 2, "score": 72, "confidence": "medium", "rationale": "...", "sources": ["..."] },
     "sourcing":     { "level": 2, "score": 68, "confidence": "high",   "rationale": "...", "sources": ["..."] },
-    "completeness": { "level": 2, "score": 75, "confidence": "medium", "rationale": "..." },
-    "transparency": { "level": 1, "score": 48, "confidence": "high",   "rationale": "..." },
-    "recency":      { "level": 3, "score": 90, "confidence": "high",   "rationale": "..." }
+    "completeness": { "level": 2, "score": 75, "confidence": "medium", "rationale": "...", "sources": [] },
+    "transparency": { "level": 1, "score": 48, "confidence": "high",   "rationale": "...", "sources": [] },
+    "recency":      { "applicable": true, "level": 3, "score": 90, "confidence": "high", "rationale": "...", "sources": [] }
   },
   "descriptors": { "framing": "orienté-modéré", "contentType": "actualité" }
 }
 ```
 
-> **Le global, le verdict et la confiance globale NE sont PAS dans la sortie IA** : le code les calcule. L'IA fournit, par critère, `level` + `score` affiné (borné) + confiance + preuves, plus les drapeaux et descripteurs. `recency` peut être `null` (contenu intemporel) ; les 5 autres critères sont toujours fournis.
+> **Le global, le verdict et la confiance globale NE sont PAS dans la sortie IA** : le code les calcule. L'IA fournit, par critère, `level` + `score` affiné (borné) + confiance + preuves, plus les drapeaux et descripteurs. Tous les champs du schéma sont obligatoires (des champs optionnels imbriqués font dépasser la taille de grammaire des structured outputs) : pour un contenu intemporel, l'IA renvoie `recency.applicable: false` et le code le traite comme `null` ; les 5 autres critères sont toujours notés.
 
 ---
 

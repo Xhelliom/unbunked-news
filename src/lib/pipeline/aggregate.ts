@@ -84,8 +84,9 @@ const SYSTEM = [
   "For each claim, copy its sourceQuote verbatim from the article body.",
 ].join(" ");
 
-// Reads the per-criterion assessments from the (untyped) structured output. A missing
-// or malformed entry stays null: absent is never coerced to a number.
+// Reads the per-criterion assessments from the (untyped) structured output. A
+// missing or malformed entry, or one flagged not applicable (recency on timeless
+// content), stays null: absent is never coerced to a number.
 function toCriteria(value: unknown): CriterionAssessments {
   const raw =
     value && typeof value === "object"
@@ -93,9 +94,19 @@ function toCriteria(value: unknown): CriterionAssessments {
       : {};
   const criteria: CriterionAssessments = {};
   for (const criterion of SCORE_CRITERIA) {
-    criteria[criterion] = toAssessment(raw[criterion]);
+    criteria[criterion] = isNotApplicable(raw[criterion])
+      ? null
+      : toAssessment(raw[criterion]);
   }
   return criteria;
+}
+
+function isNotApplicable(value: unknown): boolean {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    (value as Record<string, unknown>).applicable === false
+  );
 }
 
 // Projects the assessments onto the flat nullable DB columns (the clamped score
