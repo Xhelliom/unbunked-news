@@ -4,9 +4,9 @@ import { BLOCK_KINDS } from "@/lib/article-blocks";
 import {
   CONFIDENCE_LEVELS,
   CONTENT_TYPE_VALUES,
-  CORE_CRITERIA,
   CRITERION_WEIGHT,
   FRAMING_VALUES,
+  isConditionalCriterion,
   KILLSWITCH_FLAGS,
   LEVELS,
   LEVEL_BANDS,
@@ -160,7 +160,7 @@ export const articleStructureOutputFormat: Anthropic.JSONOutputFormat = {
 };
 
 // Criteria whose evidence (rationale AND sources) is mandatory: you may not
-// score them "from memory". The others still require a rationale.
+// score them "from memory". The others may leave sources empty.
 const EVIDENCE_STRICT: readonly ScoreCriterion[] = [
   "factuality",
   "corroboration",
@@ -182,13 +182,26 @@ function criterionDescription(criterion: ScoreCriterion): string {
   ].join(" ");
 }
 
+// Every property is required: optional fields, nested ones above all, blow up
+// the grammar structured outputs compiles from this schema (the API rejected
+// the analysis schema as too large while recency and some sources were
+// optional). A conditional criterion therefore always comes back, with an
+// `applicable` flag the code reads instead of the criterion's absence.
 function criterionProperty(criterion: ScoreCriterion): Record<string, unknown> {
-  const required = ["level", "score", "confidence", "rationale"];
-  if (EVIDENCE_STRICT.includes(criterion)) required.push("sources");
+  const applicable = isConditionalCriterion(criterion)
+    ? {
+        applicable: {
+          type: "boolean",
+          description:
+            "false for timeless content: the criterion is then ignored and its other fields are placeholders.",
+        },
+      }
+    : {};
   return {
     type: "object",
     description: criterionDescription(criterion),
     properties: {
+      ...applicable,
       level: {
         type: "integer",
         enum: [...LEVELS],
@@ -207,10 +220,19 @@ function criterionProperty(criterion: ScoreCriterion): Record<string, unknown> {
       sources: {
         type: "array",
         items: { type: "string" },
-        description: "URLs you actually consulted. No invented sources.",
+        description: EVIDENCE_STRICT.includes(criterion)
+          ? "URLs you actually consulted; mandatory evidence for this criterion. No invented sources."
+          : "URLs you actually consulted, or empty. No invented sources.",
       },
     },
-    required,
+    required: [
+      ...Object.keys(applicable),
+      "level",
+      "score",
+      "confidence",
+      "rationale",
+      "sources",
+    ],
     additionalProperties: false,
   };
 }
@@ -321,9 +343,9 @@ export const analysisOutputFormat: Anthropic.JSONOutputFormat = {
       criteria: {
         type: "object",
         description:
-          "Per-criterion assessment. Always score the five core criteria; OMIT recency entirely for timeless content.",
+          "Per-criterion assessment. Score every criterion; for timeless content set recency.applicable to false.",
         properties: criteriaProperties,
-        required: [...CORE_CRITERIA],
+        required: [...SCORE_CRITERIA],
         additionalProperties: false,
       },
       killswitch: {
