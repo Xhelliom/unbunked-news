@@ -1,5 +1,7 @@
 import "server-only";
 
+import type Anthropic from "@anthropic-ai/sdk";
+
 import type { ScrapedArticle } from "@/lib/scrape";
 import {
   anyKillswitchRaised,
@@ -20,6 +22,8 @@ import {
   getClaude,
   structuredOutput,
   THINKING_HEADROOM_TOKENS,
+  addUsage,
+  ZERO_USAGE,
   usageOf,
   withCurrentDate,
   type TokenUsage,
@@ -29,8 +33,16 @@ import {
   gatherExternalEvidence,
   formatExternalEvidence,
 } from "./data-sources";
-import { structuredOutputDiagnostic, type StepDiagnostic } from "./diagnostics";
-import { analysisOutputFormat, type Analysis } from "./schemas";
+import {
+  structuredOutputDiagnostic,
+  type StepDiagnostic,
+} from "./diagnostics";
+import {
+  analysisMetaOutputFormat,
+  CRITERIA_CHUNKS,
+  criteriaOutputFormat,
+  type Analysis,
+} from "./schemas";
 import { recoverSummaries } from "./summary-recovery";
 import { FALLBACK_RUBRIC, isRubric } from "@/lib/rubrics";
 import type { VerificationFindings } from "./verify";
@@ -133,44 +145,66 @@ export async function aggregate(
     .join("\n");
   const external = await gatherExternalEvidence(article.url, claims);
 
-  const message = await client.messages.create({
-    model,
-    max_tokens: MAX_TOKENS + THINKING_HEADROOM_TOKENS,
-    system: withCurrentDate(SYSTEM),
-    output_config: { format: analysisOutputFormat },
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: formatArticle(article),
-            cache_control: { type: "ephemeral" },
-          },
-          {
-            type: "text",
-            text: [
-              `CLAIMS:\n${claims.map((c, i) => `${i + 1}. ${c}`).join("\n")}`,
-              "",
-              `RESEARCH FINDINGS:\n${verification.findings}`,
-              "",
-              `SOURCES FOUND:\n${sourceList || "(none)"}`,
-              "",
-              formatExternalEvidence(external),
-              "",
-              "Record the per-criterion assessment. Only cite URLs from the sources or databases above.",
-            ].join("\n"),
-          },
-        ],
-      },
-    ],
-  });
+  // One call per criteria chunk plus one for the rest, run in sequence over the
+  // same system prompt and article block so each reads the first call's cache:
+  // a single grammar for the whole analysis was too large.
+  const recordAnalysis = (
+    format: Anthropic.JSONOutputFormat,
+    instruction: string,
+  ) =>
+    client.messages.create({
+      model,
+      max_tokens: MAX_TOKENS + THINKING_HEADROOM_TOKENS,
+      system: withCurrentDate(SYSTEM),
+      output_config: { format },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: formatArticle(article),
+              cache_control: { type: "ephemeral" },
+            },
+            {
+              type: "text",
+              text: [
+                `CLAIMS:\n${claims.map((c, i) => `${i + 1}. ${c}`).join("\n")}`,
+                "",
+                `RESEARCH FINDINGS:\n${verification.findings}`,
+                "",
+                `SOURCES FOUND:\n${sourceList || "(none)"}`,
+                "",
+                formatExternalEvidence(external),
+                "",
+                `${instruction} Only cite URLs from the sources or databases above.`,
+              ].join("\n"),
+            },
+          ],
+        },
+      ],
+    });
 
   // Truncated (null): the defensive readers below fall back on every field,
   // and run.ts fails the job from the diagnostic's truncated flag.
-  const input = structuredOutput(message) ?? {};
+  const messages: Anthropic.Message[] = [];
+  const criteriaInput: Record<string, unknown> = {};
+  for (const chunk of CRITERIA_CHUNKS) {
+    const message = await recordAnalysis(
+      criteriaOutputFormat(chunk),
+      `Record the assessment of these criteria only: ${chunk.join(", ")}.`,
+    );
+    messages.push(message);
+    Object.assign(criteriaInput, structuredOutput(message)?.criteria);
+  }
+  const metaMessage = await recordAnalysis(
+    analysisMetaOutputFormat,
+    "Record the headline, summaries, killswitch flags, descriptors, rubric and keywords.",
+  );
+  messages.push(metaMessage);
+  const input = structuredOutput(metaMessage) ?? {};
 
-  const criteria = toCriteria(input.criteria);
+  const criteria = toCriteria(criteriaInput);
   const killswitch = toKillswitch(input.killswitch);
   const descriptors =
     input.descriptors && typeof input.descriptors === "object"
@@ -223,18 +257,32 @@ export async function aggregate(
     warnings.push(`external databases unavailable: ${external.notes.join("; ")}`);
   }
 
-  const diagnostic = structuredOutputDiagnostic(
-    "aggregating",
-    model,
-    message,
-    {
+  const stepDiagnostics = messages.map((message) =>
+    structuredOutputDiagnostic("aggregating", model, message, {}, []),
+  );
+  const truncatedStep = stepDiagnostics.find((step) => step.truncated);
+  const diagnostic: StepDiagnostic = {
+    ...(truncatedStep ?? stepDiagnostics[stepDiagnostics.length - 1]),
+    outputTokens: stepDiagnostics.reduce(
+      (total, step) => total + (step.outputTokens ?? 0),
+      0,
+    ),
+    truncated: truncatedStep !== undefined,
+    metrics: {
       sourcesIn: verification.sources.length,
       factChecksFound: external.factChecks.length,
       externalAvailable: external.available,
       verdict: analysis.verdict,
     },
-    warnings,
-  );
+    warnings: [...warnings, ...stepDiagnostics.flatMap((step) => step.warnings)],
+  };
 
-  return { analysis, usage: usageOf(message), diagnostic };
+  return {
+    analysis,
+    usage: messages.reduce(
+      (total, message) => addUsage(total, usageOf(message)),
+      ZERO_USAGE,
+    ),
+    diagnostic,
+  };
 }

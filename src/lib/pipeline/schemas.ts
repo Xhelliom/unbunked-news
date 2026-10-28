@@ -306,19 +306,56 @@ export const claimsAssessmentOutputFormat: Anthropic.JSONOutputFormat = {
   },
 };
 
-const criteriaProperties = Object.fromEntries(
-  SCORE_CRITERIA.map((criterion) => [criterion, criterionProperty(criterion)]),
-);
 const killswitchProperties = Object.fromEntries(
   KILLSWITCH_FLAGS.map((flag) => [flag, killswitchSignalProperty()]),
 );
 
-export const analysisOutputFormat: Anthropic.JSONOutputFormat = {
+// The analysis is recorded in several structured-output calls. Compiled into
+// one grammar the whole schema (64 properties, 59 enum values) was rejected by
+// the API as too large even with every field required, so the criteria are
+// split into chunks and the rest compiles on its own.
+const CRITERIA_PER_CALL = 3;
+export const CRITERIA_CHUNKS: (readonly ScoreCriterion[])[] = Array.from(
+  { length: Math.ceil(SCORE_CRITERIA.length / CRITERIA_PER_CALL) },
+  (_, i) =>
+    SCORE_CRITERIA.slice(i * CRITERIA_PER_CALL, (i + 1) * CRITERIA_PER_CALL),
+);
+
+export function criteriaOutputFormat(
+  criteria: readonly ScoreCriterion[],
+): Anthropic.JSONOutputFormat {
+  return {
+    type: "json_schema",
+    schema: {
+      description:
+        "Record the per-criterion assessment. Do NOT provide an overall reliability score, verdict or global confidence — the code derives those.",
+      type: "object",
+      properties: {
+        criteria: {
+          type: "object",
+          description:
+            "Per-criterion assessment. Score every criterion listed; for timeless content set recency.applicable to false.",
+          properties: Object.fromEntries(
+            criteria.map((criterion) => [
+              criterion,
+              criterionProperty(criterion),
+            ]),
+          ),
+          required: [...criteria],
+          additionalProperties: false,
+        },
+      },
+      required: ["criteria"],
+      additionalProperties: false,
+    },
+  };
+}
+
+export const analysisMetaOutputFormat: Anthropic.JSONOutputFormat = {
   type: "json_schema",
   schema: {
     description:
-      "Record the per-criterion assessment, killswitch flags and descriptors. " +
-      "Do NOT provide an overall reliability score, verdict or global confidence — the code derives those.",
+      "Record the headline, summaries, killswitch flags and descriptors of the analysis.",
     type: "object",
     properties: {
       title: {
@@ -339,14 +376,6 @@ export const analysisOutputFormat: Anthropic.JSONOutputFormat = {
         type: "string",
         description:
           "The language of the article and of your output, as a short code (e.g. 'fr', 'en').",
-      },
-      criteria: {
-        type: "object",
-        description:
-          "Per-criterion assessment. Score every criterion; for timeless content set recency.applicable to false.",
-        properties: criteriaProperties,
-        required: [...SCORE_CRITERIA],
-        additionalProperties: false,
       },
       killswitch: {
         type: "object",
@@ -390,7 +419,6 @@ export const analysisOutputFormat: Anthropic.JSONOutputFormat = {
       "summary",
       "originalSummary",
       "language",
-      "criteria",
       "killswitch",
       "descriptors",
       "rubric",
